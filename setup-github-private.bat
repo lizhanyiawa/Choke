@@ -3,10 +3,11 @@ setlocal
 cd /d "%~dp0"
 title Choke! - create private GitHub repo
 
-set "GH=gh"
-where gh >nul 2>nul
-if errorlevel 1 set "GH=C:\Program Files\GitHub CLI\gh.exe"
-if not exist "%GH%" (
+set "GH="
+for /f "delims=" %%G in ('where gh 2^>nul') do if not defined GH set "GH=%%G"
+if not defined GH if exist "C:\Program Files\GitHub CLI\gh.exe" set "GH=C:\Program Files\GitHub CLI\gh.exe"
+if not defined GH if exist "%LOCALAPPDATA%\Programs\GitHub CLI\gh.exe" set "GH=%LOCALAPPDATA%\Programs\GitHub CLI\gh.exe"
+if not defined GH (
   echo [Choke!] GitHub CLI not found.
   echo Install it with: winget install --id GitHub.cli -e
   pause
@@ -23,6 +24,7 @@ if errorlevel 1 (
     exit /b 1
   )
 )
+"%GH%" auth setup-git >nul 2>nul
 
 "%GH%" repo view Choke >nul 2>nul
 if errorlevel 1 (
