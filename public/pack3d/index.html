@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Choke! · 3D Pack Demo</title>
+<style>
+  :root{
+    --ink:#42464F; --cyan:#3CBADB; --pink:#D9488A; --gold:#FFC24B; --violet:#B98CFF;
+    --rc:#3CBADB; --rc-rgb:60,186,219;
+    --sans:"Inter","Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    --mono:"JetBrains Mono","SFMono-Regular",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; overflow:hidden; color:#ECECF1; font-family:var(--sans);
+    background:radial-gradient(ellipse 70% 55% at 50% 38%, #1b1c23 0%, #101116 45%, #08080b 100%);
+    -webkit-font-smoothing:antialiased; user-select:none; -webkit-user-select:none;
+  }
+  .table{position:fixed; inset:0; pointer-events:none; z-index:0; transition:filter .5s,opacity .5s}
+  .table::before{content:""; position:absolute; inset:-20%;
+    background:
+      repeating-radial-gradient(circle at 50% 44%, rgba(255,255,255,.022) 0 1px, transparent 1px 96px),
+      repeating-linear-gradient(115deg, rgba(255,255,255,.012) 0 1px, transparent 1px 7px);
+    mask-image:radial-gradient(ellipse 60% 55% at 50% 45%, black, transparent 75%);}
+  .table::after{content:""; position:absolute; inset:0;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+    opacity:.055; mix-blend-mode:overlay;}
+  .vignette{position:fixed; inset:0; pointer-events:none; z-index:1;
+    background:radial-gradient(ellipse 70% 60% at 50% 46%, transparent 35%, rgba(0,0,0,.55) 80%, rgba(0,0,0,.82) 100%);
+    transition:background .5s}
+  body.is-focus .vignette{background:radial-gradient(ellipse 55% 50% at 50% 45%, transparent 25%, rgba(0,0,0,.68) 78%, rgba(0,0,0,.9) 100%)}
+
+  #stage{position:fixed; inset:0; z-index:2; touch-action:none; cursor:grab}
+  #stage:active{cursor:grabbing}
+  #stage canvas{display:block; width:100%; height:100%}
+
+  .hud{position:fixed; left:0; right:0; z-index:50; pointer-events:none;
+    display:flex; align-items:center; justify-content:space-between; padding:20px 26px}
+  .hud--top{top:0}
+  .hud--bottom{bottom:0; align-items:flex-end}
+  .brandline{display:flex; align-items:center; gap:10px; opacity:.9}
+  .brandline img.icon{width:26px; height:38px; display:block}
+  .brandline img.wm{width:88px; height:22px; display:block; filter:brightness(1.25)}
+  .brandline small{display:block; margin-top:2px; font:8px/1 var(--mono); letter-spacing:.26em; color:rgba(255,255,255,.4)}
+  .hud__right{display:flex; gap:8px; pointer-events:auto}
+  .ghost{appearance:none; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.03);
+    color:rgba(255,255,255,.72); font:9px/1 var(--mono); letter-spacing:.16em;
+    padding:9px 11px; border-radius:4px; cursor:pointer; transition:.2s}
+  .ghost:hover{color:#fff; border-color:rgba(255,255,255,.4)}
+  .hint{font:11px/1.6 var(--mono); letter-spacing:.14em; color:rgba(255,255,255,.62);
+    padding:8px 12px; border-left:2px solid rgba(var(--rc-rgb),.8);
+    background:linear-gradient(90deg, rgba(var(--rc-rgb),.10), transparent 70%); transition:color .2s}
+  .hint b{color:#fff; font-weight:500}
+  .tier-tag{position:fixed; left:50%; top:4.5%; transform:translate(-50%,-50%); z-index:55;
+    text-align:center; pointer-events:none; opacity:0; transition:opacity .35s, transform .35s}
+  .tier-tag.is-live{opacity:1}
+  .tier-tag span{display:block; font:9px/1 var(--mono); letter-spacing:.4em; color:rgba(255,255,255,.55)}
+  .tier-tag b{display:block; margin-top:8px; font:800 clamp(26px,4vw,44px)/1 var(--sans); letter-spacing:-.03em;
+    color:rgb(var(--rc-rgb)); text-shadow:0 0 34px rgba(var(--rc-rgb),.5)}
+  .tier-tag i{display:block; margin-top:8px; font:9px/1 var(--mono); letter-spacing:.22em; color:rgba(255,255,255,.45); font-style:normal}
+  .err{position:fixed; inset:0; display:none; place-items:center; z-index:80; text-align:center;
+    background:#08080b; color:#ddd; font:14px/1.7 var(--sans); padding:40px}
+  @media (max-width:720px){
+    .hud{padding:14px}
+    .brandline img.wm{width:70px}
+    .hint{font-size:9px; letter-spacing:.1em; max-width:64vw}
+    .tier-tag{top:auto; bottom:96px; transform:translateX(-50%)}
+  }
+  /* Embedded in the desk app: transparent stage, parent owns the chrome. */
+  body.embed{background:transparent}
+  body.embed .table,body.embed .vignette,body.embed .hud{display:none!important}
+  body.embed .tier-tag{top:10%}
+</style>
+</head>
+<body>
+<div class="table"></div>
+<div class="vignette"></div>
+<div id="stage"></div>
+
+<div class="hud hud--top">
+  <div class="brandline">
+    <img class="icon" src="assets/choke-icon.svg" alt="">
+    <div><img class="wm" src="assets/choke-wordmark.svg" alt="Choke!"><small>3D PACK DEMO</small></div>
+  </div>
+  <div class="hud__right">
+    <button class="ghost" id="reset" type="button">RESET</button>
+  </div>
+</div>
+
+<div class="tier-tag" id="tierTag">
+  <span>YOU PULLED</span>
+  <b id="tierName">RARE</b>
+  <i id="tierSub">5 CARDS</i>
+</div>
+
+<div class="hud hud--bottom">
+  <div class="hint" id="hint">拖动旋转 · 点击卡包</div>
+  <div class="hud__right">
+    <button class="ghost" id="again" type="button" style="display:none">再开一包</button>
+  </div>
+</div>
+
+<div class="err" id="err"></div>
+
+<script src="three.min.js"></script>
+<script>
+(() => {
+  "use strict";
+  const $ = (s, el = document) => el.querySelector(s);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  const RARITY = {
+    c:   { name: "COMMON",    color: "#3CBADB", rgb: "60,186,219",  hex: 0x3CBADB },
+    r:   { name: "RARE",      color: "#D9488A", rgb: "217,72,138",  hex: 0xD9488A },
+    sr:  { name: "EPIC",      color: "#FFC24B", rgb: "255,194,75",  hex: 0xFFC24B },
+    ssr: { name: "LEGENDARY", color: "#B98CFF", rgb: "185,140,255", hex: 0xB98CFF },
+  };
+  const TIER_WEIGHT = { c: 50, r: 30, sr: 14, ssr: 6 };
+  const CARD_WEIGHTS = {
+    c:   { c: 62, r: 28, sr: 9,  ssr: 1  },
+    r:   { c: 35, r: 42, sr: 18, ssr: 5  },
+    sr:  { c: 12, r: 38, sr: 38, ssr: 12 },
+    ssr: { c: 0,  r: 25, sr: 45, ssr: 30 },
+  };
+  const POOL = [
+    { n: "Freedom Dive", t: "STREAM", bpm: 222, star: 7.2, g: "F", h: 194 },
+    { n: "The Big Black", t: "JUMP", bpm: 190, star: 7.0, g: "B", h: 12 },
+    { n: "Blue Zenith", t: "STREAM", bpm: 200, star: 7.4, g: "Z", h: 214 },
+    { n: "Yomi Yori", t: "TECH", bpm: 168, star: 6.8, g: "Y", h: 286 },
+    { n: "Everything Will Freeze", t: "SPEED", bpm: 250, star: 7.6, g: "E", h: 172 },
+    { n: "Airman", t: "JUMP", bpm: 180, star: 6.5, g: "A", h: 48 },
+    { n: "Scarlet Rose", t: "TECH", bpm: 155, star: 6.2, g: "S", h: 338 },
+    { n: "Tower of Heaven", t: "GIMMICK", bpm: 145, star: 5.9, g: "T", h: 258 },
+    { n: "mrekk", t: "PLAYER", bpm: 0, star: 8.1, g: "M", h: 198 },
+    { n: "WhiteCat", t: "PLAYER", bpm: 0, star: 8.0, g: "W", h: 186 },
+    { n: "Cookiezi", t: "PLAYER", bpm: 0, star: 8.3, g: "C", h: 320 },
+    { n: "Rafis", t: "PLAYER", bpm: 0, star: 7.9, g: "R", h: 28 },
+  ];
+
+  const params = new URLSearchParams(location.search);
+  const forcedTier = params.get("tier");
+  const forcedCount = Number(params.get("count"));
+  if (params.get("embed")) document.body.classList.add("embed");
+
+  // Optional card payload from the desk app. Encoded as base64(UTF-8 JSON).
+  const EXT_RAW = (() => {
+    const raw = params.get("cards");
+    if (!raw) return null;
+    try {
+      const bin = atob(raw);
+      const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
+      const arr = JSON.parse(new TextDecoder().decode(bytes));
+      return Array.isArray(arr) && arr.length ? arr : null;
+    } catch (_) {
+      return null;
+    }
+  })();
+  const FINISH_MAP = { C: "c", UC: "r", R: "r", E: "sr", L: "sr", Radiant: "ssr", Prismatic: "ssr" };
+  const HEX_MAP = {
+    C: "#8E97A6", UC: "#3CBADB", R: "#D9488A", E: "#FFC24B",
+    L: "#B98CFF", Radiant: "#21E985", Prismatic: "#F4F4F6",
+  };
+  const STAR_MAP = { C: 5.0, UC: 5.5, R: 6.2, E: 7.0, L: 7.6, Radiant: 8.0, Prismatic: 8.5 };
+  const rgbOf = (hex) => {
+    const n = parseInt(hex.slice(1), 16);
+    return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+  };
+  const hashOf = (s) => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return h;
+  };
+  const TIER_RANK = { c: 0, r: 1, sr: 2, ssr: 3 };
+  const RARITY_RANK = { C: 0, UC: 1, R: 2, E: 3, L: 4, Radiant: 5, Prismatic: 6 };
+  const EXT_CARDS = EXT_RAW
+    ? EXT_RAW.map((card) => {
+        const label = String(card.rarity || "C");
+        const color = HEX_MAP[label] || "#3CBADB";
+        const name = String(card.name || "Unknown");
+        const mapped = FINISH_MAP[label] || "c";
+        return {
+          n: name,
+          t: card.mapper || "PLAYER",
+          bpm: 0,
+          star: STAR_MAP[label] || 6,
+          g: (name.trim()[0] || "?").toUpperCase(),
+          h: hashOf(name + label) % 360,
+          rarity: mapped,
+          label,
+          color,
+          rgb: rgbOf(color),
+          hex: parseInt(color.slice(1), 16),
+          mapper: card.mapper || "",
+        };
+      })
+    : null;
+  const EXT_TIER = EXT_CARDS
+    ? EXT_CARDS.reduce((best, c) => (TIER_RANK[c.rarity] > TIER_RANK[best.rarity] ? c : best), EXT_CARDS[0]).rarity
+    : null;
+  const EXT_BEST = EXT_RAW
+    ? EXT_RAW.reduce((best, c) =>
+        (RARITY_RANK[c.rarity] ?? 0) > (RARITY_RANK[best.rarity] ?? 0) ? c : best, EXT_RAW[0])
+    : null;
+
+  const pickTier = () => {
+    if (forcedTier && RARITY[forcedTier]) return forcedTier;
+    let r = Math.random() * 100;
+    for (const [k, w] of Object.entries(TIER_WEIGHT)) if ((r -= w) <= 0) return k;
+    return "c";
+  };
+  const pickCount = () => {
+    if (forcedCount >= 2 && forcedCount <= 10) return Math.floor(forcedCount);
+    return pick([2, 3, 3, 4, 4, 5, 5, 5, 5, 6, 6, 7, 8, 9, 10]);
+  };
+  const rollCardTier = (tier) => {
+    const w = CARD_WEIGHTS[tier];
+    let r = Math.random() * Object.values(w).reduce((a, b) => a + b, 0);
+    for (const [k, v] of Object.entries(w)) if ((r -= v) <= 0) return k;
+    return "c";
+  };
+  const genCards = (tier, count) => {
+    const pool = POOL.slice().sort(() => Math.random() - 0.5);
+    const cards = pool.slice(0, count).map((c) => ({ ...c, rarity: rollCardTier(tier) }));
+    if (!cards.some((c) => c.rarity === tier)) cards[Math.floor(Math.random() * count)].rarity = tier;
+    if (count > 2 && !cards.some((c) => c.rarity === "c")) {
+      const idx = cards.findIndex((c) => c.rarity !== tier);
+      if (idx >= 0) cards[idx].rarity = "c";
+    }
+    return cards;
+  };
+
+  const state = {
+    phase: "idle", // idle | focus | ready | tearing | burst | cards | done
+    tier: EXT_TIER || pickTier(),
+    count: EXT_CARDS ? EXT_CARDS.length : pickCount(),
+    cards: EXT_CARDS || [],
+    progress: 0,
+    dragging: false,
+    dragStartX: 0,
+    dragP0: 0,
+    holdTimer: null,
+    autoAt: 0,
+  };
+  state.cards = state.cards.length ? state.cards : genCards(state.tier, state.count);
+  const R = () => RARITY[state.tier];
+
+  /* ---------------------------------------------------------------- texturing */
+  const CV = (w, h) => {
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    return { c, x: c.getContext("2d") };
+  };
+  const rr = (x, a, b, c, d, r) => {
+    x.beginPath();
+    const rad = Math.min(r, d / 2, c / 2);
+    x.moveTo(a + rad, b);
+    x.arcTo(a + c, b, a + c, b + d, rad);
+    x.arcTo(a + c, b + d, a, b + d, rad);
+    x.arcTo(a, b + d, a, b, rad);
+    x.arcTo(a, b, a + c, b, rad);
+    x.closePath();
+  };
+  const brandMark = (x, cx, cy, h) => {
+    const w = h * 0.67, left = cx - w / 2, top = cy - h / 2, r = w * 0.16;
+    const g = x.createLinearGradient(left, top, left + w, top + h);
+    g.addColorStop(0, "#3CBADB"); g.addColorStop(1, "#D9488A");
+    x.save();
+    x.lineWidth = w * 0.12; x.strokeStyle = g;
+    rr(x, left, top, w, h, r); x.stroke();
+    x.strokeStyle = "rgba(60,186,219,.85)"; x.lineWidth = w * 0.07;
+    x.beginPath(); x.moveTo(left + w * 0.2, top + h * 0.18); x.lineTo(left + w * 0.95, top + h * 0.62); x.stroke();
+    x.strokeStyle = "rgba(217,72,138,.85)";
+    x.beginPath(); x.moveTo(left + w * 0.05, top + h * 0.45); x.lineTo(left + w * 0.78, top + h * 0.95); x.stroke();
+    x.fillStyle = "#F3F3F6"; rr(x, left + w * 0.14, top + h * 0.14, w * 0.72, h * 0.72, r * 0.8); x.fill();
+    const oX = cx - w * 0.06, oY = cy - h * 0.02, oR = w * 0.19;
+    x.strokeStyle = "#23262F"; x.lineWidth = w * 0.12;
+    x.beginPath(); x.arc(oX, oY, oR, 0, Math.PI * 2); x.stroke();
+    x.fillStyle = "#23262F";
+    rr(x, oX + oR * 1.35, oY - oR * 0.95, w * 0.10, oR * 1.55, w * 0.05); x.fill();
+    x.beginPath(); x.arc(oX + oR * 1.85, oY + oR * 0.95, w * 0.055, 0, Math.PI * 2); x.fill();
+    x.restore();
+  };
+  const crimp = (x, y, w, h) => {
+    const g = x.createLinearGradient(0, y, 0, y + h);
+    g.addColorStop(0, "#30313c"); g.addColorStop(.45, "#191a23"); g.addColorStop(1, "#0d0e14");
+    x.fillStyle = g; x.fillRect(0, y, w, h);
+    x.fillStyle = "rgba(0,0,0,.28)";
+    for (let i = 0; i < w; i += 14) x.fillRect(i, y, 6, h);
+    x.fillStyle = "rgba(255,255,255,.10)"; x.fillRect(0, y + 1, w, 2);
+  };
+  const holoLines = (x, w, h) => {
+    x.save(); x.globalAlpha = .08; x.strokeStyle = "#BFEFFF"; x.lineWidth = 1;
+    for (let i = -h; i < w + h; i += 22) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i + h * .5, h); x.stroke(); }
+    x.restore();
+  };
+  // cut a jagged alpha edge so the lid reads as torn off, not folded
+  const jagCut = (canvas, side) => {
+    const x = canvas.getContext("2d"), w = canvas.width, h = canvas.height, n = 52;
+    x.save(); x.globalCompositeOperation = "destination-out";
+    x.beginPath();
+    if (side === "top") {
+      x.moveTo(0, 0); x.lineTo(w, 0);
+      for (let i = n; i >= 0; i--) {
+        const px = (i / n) * w;
+        const py = 2 + Math.abs(Math.sin(i * 1.83)) * 9 + (i % 2 ? 2 : 0);
+        x.lineTo(px, py);
+      }
+    } else {
+      x.moveTo(0, h); x.lineTo(w, h);
+      for (let i = n; i >= 0; i--) {
+        const px = (i / n) * w;
+        const py = h - (2 + Math.abs(Math.sin(i * 1.83)) * 9 + (i % 2 ? 2 : 0));
+        x.lineTo(px, py);
+      }
+    }
+    x.closePath(); x.fill(); x.restore();
+  };
+
+  const frontCanvas = (() => {
+    const { c, x } = CV(1024, 1434);
+    const g = x.createLinearGradient(0, 0, 1024, 1434);
+    g.addColorStop(0, "#20232e"); g.addColorStop(.42, "#12141c"); g.addColorStop(.72, "#0a0b10"); g.addColorStop(1, "#181a23");
+    x.fillStyle = g; x.fillRect(0, 0, 1024, 1434);
+    const cy = x.createRadialGradient(260, 260, 0, 260, 260, 620);
+    cy.addColorStop(0, "rgba(60,186,219,.34)"); cy.addColorStop(.5, "rgba(60,186,219,.06)"); cy.addColorStop(1, "rgba(60,186,219,0)");
+    x.fillStyle = cy; x.fillRect(0, 0, 1024, 1434);
+    const pk = x.createRadialGradient(800, 1080, 0, 800, 1080, 680);
+    pk.addColorStop(0, "rgba(217,72,138,.36)"); pk.addColorStop(.5, "rgba(217,72,138,.07)"); pk.addColorStop(1, "rgba(217,72,138,0)");
+    x.fillStyle = pk; x.fillRect(0, 0, 1024, 1434);
+    holoLines(x, 1024, 1434);
+    const vg = x.createRadialGradient(512, 720, 200, 512, 720, 900);
+    vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.55)");
+    x.fillStyle = vg; x.fillRect(0, 0, 1024, 1434);
+    crimp(x, 0, 1024, 42); crimp(x, 1392, 1024, 42);
+    x.textAlign = "center"; x.fillStyle = "rgba(255,255,255,.44)";
+    x.font = "600 22px Consolas, monospace"; x.letterSpacing = "8px";
+    x.fillText("CHOKE! · TRADING CARD GAME", 512, 96);
+    x.letterSpacing = "0px";
+    brandMark(x, 512, 560, 300);
+    x.fillStyle = "#F0F0F5"; x.font = '700 96px "Fredoka One","Arial Rounded MT Bold",sans-serif';
+    x.fillText("Choke!", 512, 828);
+    x.fillStyle = "rgba(255,255,255,.44)"; x.font = "20px Consolas, monospace"; x.letterSpacing = "6px";
+    x.fillText("BOOSTER · " + state.count + " CARDS", 512, 930);
+    x.fillText("SERIES 01 / 2026", 512, 968);
+    x.letterSpacing = "0px";
+    x.fillStyle = "rgba(255,255,255,.24)"; x.font = "16px Consolas, monospace"; x.letterSpacing = "4px";
+    x.fillText("NO. " + String(Math.floor(rand(100000, 999999))), 512, 1252);
+    x.strokeStyle = "rgba(255,255,255,.08)"; x.lineWidth = 2; rr(x, 1, 1, 1022, 1432, 18); x.stroke();
+    return c;
+  })();
+
+  const backCanvas = (() => {
+    const { c, x } = CV(1024, 1434);
+    const g = x.createLinearGradient(0, 0, 1024, 1434);
+    g.addColorStop(0, "#10121a"); g.addColorStop(.6, "#08090d"); g.addColorStop(1, "#141620");
+    x.fillStyle = g; x.fillRect(0, 0, 1024, 1434);
+    holoLines(x, 1024, 1434);
+    x.save(); x.globalAlpha = .5;
+    brandMark(x, 512, 560, 220); x.restore();
+    x.fillStyle = "rgba(255,255,255,.85)"; x.textAlign = "center";
+    x.font = '700 72px "Fredoka One","Arial Rounded MT Bold",sans-serif';
+    x.fillText("Choke!", 512, 790);
+    x.fillStyle = "rgba(255,255,255,.35)"; x.font = "18px Consolas, monospace"; x.letterSpacing = "5px";
+    x.fillText("TRADING CARD GAME · SERIES 01", 512, 860);
+    x.letterSpacing = "0px";
+    x.fillStyle = "rgba(255,255,255,.20)"; x.font = "15px Consolas, monospace";
+    ["NON-COMMERCIAL FAN PROJECT", "NOT AFFILIATED WITH osu!", "KEEP THIS PACK AWAY FROM WATER"].forEach((t, i) => x.fillText(t, 512, 960 + i * 30));
+    x.fillStyle = "rgba(255,255,255,.6)";
+    let bx = 362;
+    for (let i = 0; i < 60; i++) { const wbar = i % 3 === 0 ? 4 : 2; x.fillRect(bx, 1180, wbar, 110); bx += wbar + 3; }
+    x.fillStyle = "rgba(255,255,255,.3)"; x.font = "14px Consolas, monospace";
+    x.fillText("CHOKE-013 · 2026", 512, 1330);
+    x.strokeStyle = "rgba(255,255,255,.08)"; x.lineWidth = 2; rr(x, 1, 1, 1022, 1432, 18); x.stroke();
+    return c;
+  })();
+
+  const sideCanvas = (() => {
+    const { c, x } = CV(160, 1434);
+    const g = x.createLinearGradient(0, 0, 160, 0);
+    g.addColorStop(0, "#0a0b10"); g.addColorStop(.42, "#343642"); g.addColorStop(.58, "#4a4d5c"); g.addColorStop(1, "#0b0c12");
+    x.fillStyle = g; x.fillRect(0, 0, 160, 1434);
+    x.save(); x.globalAlpha = .6;
+    x.fillStyle = "#3CBADB"; x.fillRect(36, 0, 2, 1434);
+    x.fillStyle = "#D9488A"; x.fillRect(122, 0, 2, 1434);
+    x.restore();
+    x.fillStyle = "rgba(255,255,255,.22)"; x.font = "13px Consolas, monospace";
+    x.save(); x.translate(80, 720); x.rotate(-Math.PI / 2); x.textAlign = "center"; x.fillText("CHOKE! · BOOSTER", 0, 0); x.restore();
+    crimp(x, 0, 160, 42); crimp(x, 1392, 160, 42);
+    return c;
+  })();
+
+  const crimpCanvas = (() => {
+    const { c, x } = CV(1024, 128);
+    crimp(x, 0, 1024, 128);
+    return c;
+  })();
+
+  const tabCanvas = (() => {
+    const { c, x } = CV(256, 256);
+    x.clearRect(0, 0, 256, 256);
+    const g = x.createLinearGradient(60, 40, 200, 220);
+    g.addColorStop(0, "rgba(30,34,46,.96)"); g.addColorStop(1, "rgba(8,9,14,.96)");
+    x.fillStyle = g; x.beginPath(); x.arc(128, 122, 82, 0, Math.PI * 2); x.fill();
+    x.lineWidth = 4; x.strokeStyle = "rgba(255,255,255,.55)"; x.stroke();
+    x.strokeStyle = "#fff"; x.lineWidth = 10; x.lineCap = "round"; x.lineJoin = "round";
+    x.beginPath(); x.moveTo(168, 122); x.lineTo(94, 122); x.moveTo(94, 122); x.lineTo(120, 96); x.moveTo(94, 122); x.lineTo(120, 148); x.stroke();
+    x.fillStyle = "rgba(255,255,255,.72)"; x.font = "22px Consolas, monospace"; x.textAlign = "center";
+    x.fillText("PULL", 128, 224);
+    return c;
+  })();
+
+  const seamCanvas = (() => {
+    const { c, x } = CV(1024, 24);
+    x.clearRect(0, 0, 1024, 24);
+    x.fillStyle = "rgba(255,255,255,.55)";
+    for (let i = 0; i < 1024; i += 22) x.fillRect(i, 11, 10, 2);
+    return c;
+  })();
+
+  const interiorCanvas = (() => {
+    const { c, x } = CV(512, 720);
+    const g = x.createRadialGradient(256, 210, 10, 256, 260, 360);
+    g.addColorStop(0, "rgba(70,76,96,.9)"); g.addColorStop(1, "rgba(4,5,8,1)");
+    x.fillStyle = g; x.fillRect(0, 0, 512, 720);
+    x.strokeStyle = "rgba(255,255,255,.08)"; x.lineWidth = 2;
+    for (let i = 0; i < 4; i++) { rr(x, 80 + i * 6, 300 + i * 10, 352 - i * 12, 380 - i * 8, 10); x.stroke(); }
+    return c;
+  })();
+
+  const glowCanvas = (() => {
+    const { c, x } = CV(256, 256);
+    const g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+    g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(.28, "rgba(255,255,255,.55)");
+    g.addColorStop(.62, "rgba(255,255,255,.12)"); g.addColorStop(1, "rgba(255,255,255,0)");
+    x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+    return c;
+  })();
+
+  function cardFront(c) {
+    const rrC = RARITY[c.rarity];
+    const color = c.color || rrC.color;
+    const rgb = c.rgb || rrC.rgb;
+    const label = c.label || c.rarity.toUpperCase();
+    const { c: cv, x } = CV(512, 716);
+    x.fillStyle = "#0b0c12"; x.fillRect(0, 0, 512, 716);
+    x.strokeStyle = color; x.lineWidth = 5; rr(x, 4, 4, 504, 708, 18); x.stroke();
+    const g = x.createLinearGradient(24, 24, 488, 500);
+    g.addColorStop(0, "hsl(" + c.h + " 55% 26%)");
+    g.addColorStop(.55, "hsl(" + (c.h + 35) + " 60% 18%)");
+    g.addColorStop(1, "hsl(" + (c.h + 70) + " 55% 12%)");
+    x.fillStyle = g; rr(x, 24, 24, 464, 456, 12); x.fill();
+    x.save(); rr(x, 24, 24, 464, 456, 12); x.clip();
+    x.strokeStyle = "rgba(255,255,255,.16)"; x.lineWidth = 1;
+    for (let r = 40; r < 460; r += 26) { x.beginPath(); x.arc(256, 252, r, 0, Math.PI * 2); x.stroke(); }
+    x.fillStyle = "rgba(255,255,255,.92)"; x.textAlign = "center";
+    x.font = '800 150px "Inter","Segoe UI",sans-serif';
+    x.fillText(c.g, 256, 312);
+    x.restore();
+    x.fillStyle = "rgba(0,0,0,.45)"; rr(x, 380, 38, 92, 36, 8); x.fill();
+    x.fillStyle = "#fff"; x.font = "600 22px Consolas, monospace"; x.textAlign = "center";
+    x.fillText("★ " + c.star.toFixed(1), 426, 64);
+    x.fillStyle = "#fff"; x.textAlign = "left"; x.font = '600 30px "Inter","Segoe UI",sans-serif';
+    x.fillText(c.n.length > 22 ? c.n.slice(0, 21) + "…" : c.n, 28, 540);
+    x.fillStyle = "rgba(255,255,255,.45)"; x.font = "17px Consolas, monospace"; x.letterSpacing = "2px";
+    const meta = c.mapper || c.t;
+    x.fillText(meta + (c.bpm ? " · " + c.bpm + " BPM" : ""), 28, 574);
+    x.letterSpacing = "0px";
+    x.fillStyle = color; x.font = "600 18px Consolas, monospace";
+    x.fillText(label, 28, 674);
+    x.fillStyle = "rgba(255,255,255,.9)"; x.textAlign = "right"; x.font = '700 26px "Inter","Segoe UI",sans-serif';
+    x.fillText(String(Math.round(c.star * 120)), 488, 678);
+    return cv;
+  }
+
+  const cardBackCanvas = (() => {
+    const { c, x } = CV(512, 716);
+    const g = x.createLinearGradient(0, 0, 512, 716);
+    g.addColorStop(0, "#1b1d27"); g.addColorStop(.6, "#0a0b10"); g.addColorStop(1, "#161821");
+    x.fillStyle = g; x.fillRect(0, 0, 512, 716);
+    holoLines(x, 512, 716);
+    x.save(); x.globalAlpha = .75; brandMark(x, 256, 280, 160); x.restore();
+    x.fillStyle = "rgba(255,255,255,.8)"; x.textAlign = "center";
+    x.font = '700 54px "Fredoka One","Arial Rounded MT Bold",sans-serif';
+    x.fillText("Choke!", 256, 450);
+    x.fillStyle = "rgba(255,255,255,.28)"; x.font = "16px Consolas, monospace"; x.letterSpacing = "4px";
+    x.fillText("TRADING CARD GAME", 256, 500);
+    x.letterSpacing = "0px";
+    x.strokeStyle = "rgba(255,255,255,.14)"; x.lineWidth = 5; rr(x, 5, 5, 502, 706, 18); x.stroke();
+    return c;
+  })();
+
+  /* ---------------------------------------------------------------- three scene */
+  let renderer, scene, camera, pack, lid, bodyGroup, tab, seamHit, seamLine, glowSprite, glowLight, interior;
+  const W = 1.85, H = 2.59, D = 0.16;
+  const SEAM = H / 2 - (106 / 420) * H;
+  const LID_H = H / 2 - SEAM;
+  const BODY_H = SEAM + H / 2;
+  const TW = [];
+  const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+  const easeInOut = (t) => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+  function getPath(o, p) { return p.split(".").reduce((a, k) => a[k], o); }
+  function setPath(o, p, v) { const ps = p.split("."); let t = o; for (let i = 0; i < ps.length - 1; i++) t = t[ps[i]]; t[ps[ps.length - 1]] = v; }
+  function tween(obj, props, dur, delay, ease, done) {
+    const from = {};
+    for (const k in props) from[k] = getPath(obj, k);
+    TW.push({ obj, props, from, dur: dur * 1000, delay: (delay || 0) * 1000, start: performance.now(), ease: ease || easeOut, done });
+  }
+  function updateTweens(now) {
+    for (let i = TW.length - 1; i >= 0; i--) {
+      const t = TW[i];
+      const k = clamp((now - t.start - t.delay) / t.dur, 0, 1);
+      for (const key in t.props) setPath(t.obj, key, lerp(t.from[key], t.props[key], t.ease(k)));
+      if (k >= 1) { TW.splice(i, 1); if (t.done) t.done(); }
+    }
+  }
+
+  const tex = (canvas) => {
+    const t = new THREE.CanvasTexture(canvas);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    return t;
+  };
+
+  function plane(w, h, mat) {
+    return new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  }
+
+  function build() {
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+    } catch (e) {
+      const err = $("#err");
+      err.style.display = "grid";
+      err.textContent = "这个浏览器/环境没有可用的 WebGL。请用支持 WebGL2 的 Chrome/Edge 打开。";
+      return;
+    }
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.18;
+    $("#stage").appendChild(renderer.domElement);
+
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(0, 0.15, 8.6);
+    camera.lookAt(0, 0, 0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x161826, 0.9));
+    const key = new THREE.DirectionalLight(0xffffff, 2.1); key.position.set(4, 6, 7); scene.add(key);
+    const cy = new THREE.PointLight(0x3CBADB, 8, 22); cy.position.set(-5, 2.5, 5); scene.add(cy);
+    const pk = new THREE.PointLight(0xD9488A, 8, 22); pk.position.set(5, -2, 5); scene.add(pk);
+
+    // fake floor shadow
+    const sh = CV(256, 128); const sg = sh.x.createRadialGradient(128, 64, 4, 128, 64, 120);
+    sg.addColorStop(0, "rgba(0,0,0,.8)"); sg.addColorStop(1, "rgba(0,0,0,0)");
+    sh.x.fillStyle = sg; sh.x.fillRect(0, 0, 256, 128);
+    const shadow = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 1.3), new THREE.MeshBasicMaterial({ map: tex(sh.c), transparent: true, opacity: .9, depthWrite: false }));
+    shadow.rotation.x = -Math.PI / 2; shadow.position.y = -H / 2 - 0.2; shadow.position.z = 0.2; scene.add(shadow);
+
+    const sideT = tex(sideCanvas), crimpT = tex(crimpCanvas);
+    const frontT = tex(frontCanvas), backT = tex(backCanvas);
+
+    // split front into the tear strip + body, matching the texture pixels
+    const seamPx = Math.round(1434 * (106 / 420));
+    const topCv = CV(1024, seamPx);
+    topCv.x.drawImage(frontCanvas, 0, 0, 1024, seamPx, 0, 0, 1024, seamPx);
+    const bodyCv = CV(1024, 1434 - seamPx);
+    bodyCv.x.drawImage(frontCanvas, 0, seamPx, 1024, 1434 - seamPx, 0, 0, 1024, 1434 - seamPx);
+    jagCut(topCv.c, "bottom");
+    jagCut(bodyCv.c, "top");
+
+    const sideMat = new THREE.MeshStandardMaterial({ map: sideT, roughness: .42, metalness: .45 });
+    const crimpMat = new THREE.MeshStandardMaterial({ map: crimpT, roughness: .38, metalness: .55 });
+    const backMat = new THREE.MeshStandardMaterial({ map: backT, roughness: .5, metalness: .25 });
+    const bodyMat = new THREE.MeshStandardMaterial({ map: tex(bodyCv.c), roughness: .5, metalness: .25, alphaTest: .45 });
+    const lidMat = new THREE.MeshStandardMaterial({ map: tex(topCv.c), roughness: .5, metalness: .25, alphaTest: .45, side: THREE.DoubleSide });
+
+    pack = new THREE.Group();
+    pack.position.y = -0.05;
+    scene.add(pack);
+
+    bodyGroup = new THREE.Group(); pack.add(bodyGroup);
+    const frontBody = plane(W, BODY_H, bodyMat);
+    frontBody.position.set(0, (SEAM - H / 2) / 2, D / 2);
+    bodyGroup.add(frontBody);
+
+    const back = plane(W, H, backMat);
+    back.rotation.y = Math.PI; back.position.z = -D / 2;
+    bodyGroup.add(back);
+
+    const left = plane(D, H, sideMat);
+    left.rotation.y = -Math.PI / 2; left.position.x = -W / 2;
+    bodyGroup.add(left);
+    const right = plane(D, H, sideMat);
+    right.rotation.y = Math.PI / 2; right.position.x = W / 2;
+    bodyGroup.add(right);
+
+    const bottom = plane(W, D, crimpMat);
+    bottom.rotation.x = Math.PI / 2; bottom.position.y = -H / 2;
+    bodyGroup.add(bottom);
+
+    lid = new THREE.Group();
+    lid.position.set(0, SEAM, D / 2);
+    pack.add(lid);
+    const lidFront = plane(W, LID_H, lidMat);
+    lidFront.position.y = LID_H / 2;
+    lid.add(lidFront);
+    const lidTop = plane(W, D, crimpMat);
+    lidTop.rotation.x = -Math.PI / 2; lidTop.position.y = LID_H;
+    lid.add(lidTop);
+
+    // interior + glow visible through the opening
+    interior = plane(W - 0.02, H - 0.02, new THREE.MeshBasicMaterial({ map: tex(interiorCanvas), transparent: true, opacity: 1 }));
+    interior.position.z = 0.02;
+    pack.add(interior);
+
+    glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: tex(glowCanvas), color: R().hex, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    glowSprite.position.set(0, SEAM, 0.1);
+    glowSprite.scale.set(3.4, 3.4, 1);
+    pack.add(glowSprite);
+
+    glowLight = new THREE.PointLight(R().hex, 0, 3, 2);
+    glowLight.position.set(0, SEAM, 0.7);
+    pack.add(glowLight);
+
+    // perforation line
+    seamLine = plane(W, 0.025, new THREE.MeshBasicMaterial({ map: tex(seamCanvas), transparent: true, opacity: .55, depthWrite: false }));
+    seamLine.position.set(0, SEAM, D / 2 + 0.006);
+    pack.add(seamLine);
+
+    // tab
+    const tabMat = new THREE.MeshBasicMaterial({ map: tex(tabCanvas), transparent: true, depthWrite: false });
+    tab = plane(0.34, 0.34, tabMat);
+    tab.position.set(W / 2 - 0.21, SEAM, D / 2 + 0.035);
+    tab.visible = false;
+    pack.add(tab);
+
+    // invisible grab zone along the seam
+    seamHit = plane(W, 0.55, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+    seamHit.position.set(0, SEAM, D / 2 + 0.03);
+    seamHit.visible = true;
+    pack.add(seamHit);
+
+    setTierUI();
+    buildCards();
+    fitCamera(true);
+    bindPointer();
+    animate();
+  }
+
+  function setTierUI() {
+    document.documentElement.style.setProperty("--rc", R().color);
+    document.documentElement.style.setProperty("--rc-rgb", R().rgb);
+    if (glowSprite) glowSprite.material.color.setHex(R().hex);
+    if (glowLight) glowLight.color.setHex(R().hex);
+  }
+
+  /* ---------------------------------------------------------------- cards */
+  const CARD_W = 1.5, CARD_H = 2.1, CARD_D = 0.035;
+  const cardObjs = [];
+  let hoveredCard = null;
+  let hoverClearTimer = null;
+
+  /* Holo foil ported from the poke-holo / simeydotme layer recipe:
+     rainbow bands + scanlines + bars + pointer glare, clipped to the art window. */
+  const HOLO_VERT = `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`;
+  const HOLO_FRAG = `
+    uniform sampler2D uMap;
+    uniform vec2 uPointer;
+    uniform float uHover;
+    uniform float uTime;
+    uniform float uRarity;
+    uniform float uFinish;
+    varying vec2 vUv;
+
+    float hash21(vec2 p) {
+      p = fract(p * vec2(123.34, 456.21));
+      p += dot(p, p + 45.32);
+      return fract(p.x * p.y);
+    }
+
+    void main() {
+      vec4 base = texture2D(uMap, vUv);
+      float mx = smoothstep(0.038, 0.055, vUv.x) * (1.0 - smoothstep(0.945, 0.962, vUv.x));
+      float my = smoothstep(0.322, 0.338, vUv.y) * (1.0 - smoothstep(0.958, 0.973, vUv.y));
+      float art = mx * my;
+
+      vec2 p = uPointer - 0.5;
+      float hue = vUv.x * 1.25 + vUv.y * 1.45 + p.x * 1.0 - p.y * 0.85 + uTime * 0.04;
+      vec3 rainbow = 0.5 + 0.5 * cos(6.28318 * (vec3(0.0, 0.33, 0.67) + hue));
+      float scan = 0.5 + 0.5 * sin(vUv.y * 780.0 + p.y * 14.0 + uTime * 1.3);
+      float bars = step(0.5, fract(vUv.x * 24.0 + p.x * 2.6 + uTime * 0.06));
+      float glare = smoothstep(0.55, 0.0, distance(vUv, uPointer)) * uHover;
+      float rest = uFinish >= 2.5 ? 0.34 : uFinish >= 1.5 ? 0.16 : uFinish >= 0.5 ? 0.04 : 0.0;
+      float strength = uRarity * (rest + (1.0 - rest) * uHover);
+
+      float rainbowAmt = 0.01;
+      float scanAmt = 0.0;
+      float barAmt = 0.0;
+      float glossAmt = 0.0;
+      if (uFinish >= 2.5) {
+        rainbowAmt = 0.42; scanAmt = 0.09; barAmt = 0.05; glossAmt = 0.04;
+      } else if (uFinish >= 1.5) {
+        rainbowAmt = 0.30; scanAmt = 0.08; barAmt = 0.03; glossAmt = 0.05;
+      } else if (uFinish >= 0.5) {
+        rainbowAmt = 0.10; scanAmt = 0.0;  barAmt = 0.0;  glossAmt = 0.07;
+      }
+
+      vec3 col = base.rgb;
+      col += rainbow * art * (rainbowAmt * strength);
+      col += (scan - 0.5) * art * scanAmt * strength;
+      col += bars * art * barAmt * strength;
+
+      // broad gloss band: matte cards almost none, rare cards strongest
+      float band = smoothstep(0.30, 0.0, abs(vUv.x - (0.5 + p.x * 0.42 + (vUv.y - 0.5) * 0.18)));
+      col += band * art * glossAmt * (0.25 + 0.75 * uHover);
+
+      // common: matte paper grain
+      if (uFinish < 0.5) {
+        float g = hash21(floor(vUv * vec2(360.0, 520.0)));
+        col += (g - 0.5) * 0.018;
+      }
+
+      // legendary: warm etched foil + sparkle
+      if (uFinish >= 2.5) {
+        col += vec3(1.0, 0.72, 0.28) * art * 0.05 * strength;
+        float h = hash21(floor(vUv * vec2(210.0, 290.0)));
+        float spark = step(0.9965, h) * art * (0.25 + 0.75 * uHover);
+        col += vec3(1.0, 0.96, 0.86) * spark * 1.25;
+      }
+
+      float glareBase = uFinish < 0.5 ? 0.0 : uFinish < 1.5 ? 0.05 : 0.10;
+      float glareHover = uFinish < 0.5 ? 0.0 : uHover;
+      col += glare * art * (glareBase + 0.06 * glareHover);
+      col += glare * art * 0.018 * (uFinish < 0.5 ? uHover : 0.0);
+      col += glare * 0.006 * glareHover;
+
+      gl_FragColor = vec4(col, base.a);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`;
+  const HOLO_RARITY = { c: 0.22, r: 0.52, sr: 0.84, ssr: 1.18 };
+  const HOLO_FINISH = { c: 0, r: 1, sr: 2, ssr: 3 };
+  function holoMaterial(map, rarity, finish) {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        uMap: { value: map },
+        uPointer: { value: new THREE.Vector2(0.5, 0.5) },
+        uHover: { value: 0 },
+        uTime: { value: 0 },
+        uRarity: { value: rarity },
+        uFinish: { value: finish },
+      },
+      vertexShader: HOLO_VERT,
+      fragmentShader: HOLO_FRAG,
+    });
+  }
+
+  function layoutCard(i, n) {
+    const narrow = innerWidth / innerHeight < .85;
+    let rows = narrow ? (n >= 7 ? 3 : n >= 4 ? 2 : 1) : (n > 6 ? 2 : 1);
+    const perRow = Math.ceil(n / rows);
+    const row = Math.floor(i / perRow), col = i % perRow;
+    const count = Math.min(perRow, n - row * perRow);
+    const scale = narrow ? (n >= 7 ? 0.52 : 0.62) : (n <= 3 ? 1.0 : n <= 6 ? 0.84 : 0.74);
+    const step = narrow ? (n >= 7 ? 0.72 : 0.8) : 1.28;
+    return {
+      x: (col - (count - 1) / 2) * step,
+      y: ((rows - 1) / 2 - row) * (CARD_H * scale * 1.12),
+      z: 1.15 + i * 0.08,
+      r: (col - (count - 1) / 2) * 0.035,
+      scale,
+    };
+  }
+
+  function buildCards() {
+    const edgeMat = new THREE.MeshStandardMaterial({ color: 0x0a0b10, roughness: .7, metalness: .1 });
+    cardObjs.length = 0;
+    state.cards.forEach((c, i) => {
+      const frontMat = holoMaterial(tex(cardFront(c)), HOLO_RARITY[c.rarity], HOLO_FINISH[c.rarity]);
+      const backM = new THREE.MeshStandardMaterial({ map: tex(cardBackCanvas), roughness: .6, metalness: .1 });
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(CARD_W, CARD_H, CARD_D), [edgeMat, edgeMat, edgeMat, edgeMat, frontMat, backM]);
+      const tilt = new THREE.Group();
+      tilt.add(mesh);
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: tex(glowCanvas), color: c.hex || RARITY[c.rarity].hex, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      }));
+      glow.position.z = -0.08; glow.scale.set(2.2, 2.2, 1);
+      tilt.add(glow);
+      const group = new THREE.Group();
+      group.add(tilt);
+      group.position.set(0, 0, 0.35);
+      group.rotation.y = Math.PI;
+      group.scale.setScalar(.5);
+      group.visible = false;
+      scene.add(group);
+      cardObjs.push({ c, group, tilt, mesh, glow, frontMat, flipped: false, flipping: false, tiltX: 0, tiltY: 0 });
+    });
+  }
+
+  function hoverCard(o, uv) {
+    if (hoveredCard === o) {
+      if (o && uv) {
+        o.frontMat.uniforms.uPointer.value.set(uv.x, uv.y);
+        o.tiltX = (0.5 - uv.y) * 0.08;
+        o.tiltY = (uv.x - 0.5) * 0.10;
+      }
+      return;
+    }
+    if (hoveredCard) {
+      const old = hoveredCard;
+      old.hovered = false;
+      old.tiltX = 0; old.tiltY = 0;
+      tween(old.frontMat.uniforms, { "uHover.value": 0 }, .3, 0, easeOut);
+    }
+    hoveredCard = o;
+    if (o) {
+      o.hovered = true;
+      o.frontMat.uniforms.uPointer.value.set(uv.x, uv.y);
+      o.tiltX = (0.5 - uv.y) * 0.08;
+      o.tiltY = (uv.x - 0.5) * 0.10;
+      tween(o.frontMat.uniforms, { "uHover.value": 1 }, .26, 0, easeOut);
+    }
+  }
+
+  function showStack() {
+    cardObjs.forEach((o, i) => {
+      o.group.visible = true;
+      o.group.position.set(0, SEAM, 0.05 + i * 0.008);
+      o.group.rotation.set(0, Math.PI, 0);
+      o.group.scale.setScalar(.3);
+      o.tilt.rotation.set(0, 0, 0);
+      o.tilt.position.y = 0;
+    });
+  }
+
+  function revealCards() {
+    const n = cardObjs.length;
+    cardObjs.forEach((o, i) => {
+      const to = layoutCard(i, n);
+      o.group.visible = true;
+      o.group.position.set(0, SEAM, 0.02 + i * 0.004);
+      o.group.rotation.set(0, Math.PI, 0);
+      o.group.scale.setScalar(.3);
+      o.tilt.rotation.set(0, 0, 0);
+      o.tilt.position.y = 0;
+      o.hovered = false;
+      o.frontMat.uniforms.uHover.value = 0;
+      hoveredCard = null;
+      const d = i * 0.12;
+      // 1) rise out of the opening
+      tween(o.group.position, { x: 0, y: SEAM + 0.42, z: 0.78 + i * 0.05 }, .34, d, easeOut);
+      tween(o.group.scale, { x: .95, y: .95, z: .95 }, .34, d, easeOut);
+      // 2) settle into the fan / grid
+      tween(o.group.position, { x: to.x, y: to.y, z: to.z }, .58, d + 0.36, easeInOut);
+      tween(o.group.scale, { x: to.scale, y: to.scale, z: to.scale }, .58, d + 0.36, easeInOut);
+      tween(o.group.rotation, { z: to.r }, .58, d + 0.36, easeOut);
+    });
+    const start = (n - 1) * 120 + 360 + 580 + 220;
+    cardObjs.forEach((o, i) => {
+      setTimeout(() => flipCardObj(o, 0), start + i * 230);
+    });
+  }
+
+  function flipCardObj(o, delay) {
+    if (!o || o.flipped || o.flipping) return;
+    o.flipping = true;
+    tween(o.group.rotation, { y: 0 }, .72, delay || 0, easeInOut, () => {
+      o.flipped = true;
+      o.flipping = false;
+      if (o.c.rarity === "sr" || o.c.rarity === "ssr") tween(o.glow.material, { opacity: .75 }, .5, 0, easeOut);
+      if (cardObjs.every((x) => x.flipped)) setTimeout(showSummary, 480);
+    });
+  }
+
+  function showSummary() {
+    if (state.phase === "done") return;
+    const order = Object.keys(RARITY);
+    const best = state.cards.reduce((a, b) => (order.indexOf(a.rarity) >= order.indexOf(b.rarity) ? a : b));
+    const label = EXT_BEST ? String(EXT_BEST.rarity).toUpperCase() : RARITY[best.rarity].name;
+    $("#tierName").textContent = label;
+    $("#tierSub").textContent = state.count + " CARDS · BEST " + label;
+    if (EXT_BEST) {
+      const color = HEX_MAP[EXT_BEST.rarity] || "#3CBADB";
+      document.documentElement.style.setProperty("--rc-rgb", rgbOf(color));
+    }
+    $("#tierTag").classList.add("is-live");
+    $("#hint").innerHTML = "开完了 · <b>再开一包</b>";
+    $("#again").style.display = "inline-block";
+    state.phase = "done";
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: "choke-pack-done", cards: EXT_RAW || [] }, "*");
+    }
+  }
+
+  /* ---------------------------------------------------------------- camera / focus */
+  function narrow() { return innerWidth / innerHeight < .85; }
+  function idleZ() { return narrow() ? 10.2 : 8.6; }
+  function focusZ() { return narrow() ? 10.4 : 7.7; }
+  function fitCamera(instant) {
+    const z = (state.phase === "idle") ? idleZ() : focusZ();
+    if (instant) { camera.position.z = z; return; }
+    tween(camera.position, { z }, .6, 0, easeInOut);
+  }
+
+  function focusPack() {
+    if (state.phase !== "idle") return;
+    state.phase = "focus";
+    document.body.classList.add("is-focus");
+    tween(pack.rotation, { x: 0, y: 0 }, .62, 0, easeInOut);
+    tween(pack.position, { y: 0.12 }, .62, 0, easeInOut);
+    tween(pack.scale, { x: 1.10, y: 1.10, z: 1.10 }, .62, 0, easeInOut);
+    tween(camera.position, { z: focusZ() }, .62, 0, easeInOut);
+    $("#hint").innerHTML = "拖动拉片，<b>向左撕开</b>";
+    setTimeout(() => {
+      if (state.phase !== "focus") return;
+      state.phase = "ready";
+      tab.visible = true;
+    }, 640);
+  }
+
+  /* ---------------------------------------------------------------- pointer */
+  const ray = new THREE.Raycaster();
+  const ptr = new THREE.Vector2();
+  let drag = null;
+
+  function updatePtr(e) {
+    const r = renderer.domElement.getBoundingClientRect();
+    ptr.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+    ptr.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+  }
+
+  function bindPointer() {
+    const el = renderer.domElement;
+    el.addEventListener("pointerdown", (e) => {
+      if (state.phase === "cards" || state.phase === "done") {
+        updatePtr(e);
+        ray.setFromCamera(ptr, camera);
+        const hits = ray.intersectObjects(cardObjs.map((o) => o.mesh), false);
+        if (hits.length) {
+          const o = cardObjs.find((c) => c.mesh === hits[0].object);
+          if (o) flipCardObj(o, 0);
+        }
+        return;
+      }
+      if (state.phase === "focus" || state.phase === "burst") return;
+      updatePtr(e);
+      ray.setFromCamera(ptr, camera);
+      const hits = ray.intersectObjects([tab, seamHit], false);
+      if (state.phase === "ready" && hits.length) {
+        state.phase = "tearing";
+        state.dragging = true;
+        state.dragStartX = e.clientX;
+        state.dragP0 = state.progress;
+        el.setPointerCapture(e.pointerId);
+        return;
+      }
+      drag = { x: e.clientX, y: e.clientY, moved: 0 };
+      el.setPointerCapture(e.pointerId);
+    });
+
+    el.addEventListener("pointermove", (e) => {
+      if (state.phase === "cards" || state.phase === "done") {
+        updatePtr(e);
+        ray.setFromCamera(ptr, camera);
+        const meshes = cardObjs.filter((o) => o.flipped).map((o) => o.mesh);
+        const hits = meshes.length ? ray.intersectObjects(meshes, false) : [];
+        if (hits.length) {
+          if (hoverClearTimer) { clearTimeout(hoverClearTimer); hoverClearTimer = null; }
+          const o = cardObjs.find((c) => c.mesh === hits[0].object);
+          if (o) hoverCard(o, hits[0].uv);
+        } else if (!hoverClearTimer) {
+          hoverClearTimer = setTimeout(() => {
+            hoverClearTimer = null;
+            hoverCard(null);
+          }, 140);
+        }
+        return;
+      }
+      if (state.phase === "tearing") {
+        const span = Math.max(220, innerWidth * 0.46);
+        setProgress(state.dragP0 + (state.dragStartX - e.clientX) / span);
+        return;
+      }
+      if (!drag) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      drag.x = e.clientX; drag.y = e.clientY;
+      drag.moved += Math.abs(dx) + Math.abs(dy);
+      if (state.phase === "idle" || state.phase === "ready" || state.phase === "focus") {
+        pack.rotation.y += dx * 0.009;
+        pack.rotation.x = clamp(pack.rotation.x + dy * 0.007, -0.55, 0.55);
+        state.autoAt = performance.now() + 1800;
+      }
+    });
+
+    const up = (e) => {
+      if (state.phase === "tearing") {
+        state.dragging = false;
+        if (state.holdTimer) { clearTimeout(state.holdTimer); state.holdTimer = null; }
+        if (state.progress >= 0.96) finishTear();
+        return;
+      }
+      if (!drag) return;
+      const click = drag.moved < 6;
+      drag = null;
+      if (click && state.phase === "idle") focusPack();
+    };
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+    el.addEventListener("pointerleave", () => {
+      if (hoverClearTimer) { clearTimeout(hoverClearTimer); hoverClearTimer = null; }
+      hoverCard(null);
+    });
+
+    window.addEventListener("resize", () => {
+      renderer.setSize(innerWidth, innerHeight);
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      fitCamera(true);
+    });
+  }
+
+  /* ---------------------------------------------------------------- tear */
+  function setProgress(p) {
+    state.progress = clamp(p, 0, 1);
+    const q = state.progress;
+    // pull the strip off the pack, do not hinge it around the seam
+    lid.position.set(-q * 0.9, SEAM + q * 0.72, D / 2 + q * 0.42);
+    lid.rotation.set(-q * 0.28, q * 0.12, q * 0.32);
+    const maxX = W / 2 - 0.21, minX = -W / 2 + 0.21;
+    tab.position.x = lerp(maxX, minX, q);
+    tab.position.z = D / 2 + 0.035 + q * 0.05;
+    seamLine.material.opacity = Math.max(0, .55 - q * 1.2);
+    glowSprite.material.opacity = Math.pow(q, 1.35) * .85;
+    glowSprite.scale.setScalar(2.8 + q * 2.6);
+    glowLight.intensity = q * 7;
+    $("#hint").innerHTML = q >= .985 ? "已到末端 · <b>保持 0.5 秒</b>自动打开" : "拖动拉片，<b>向左撕开</b>";
+    armHold();
+  }
+  function armHold() {
+    if (state.phase !== "tearing") return;
+    if (state.progress >= .985) {
+      if (!state.holdTimer) state.holdTimer = setTimeout(() => {
+        state.holdTimer = null;
+        if (state.phase === "tearing" && state.progress >= .985) finishTear();
+      }, 500);
+    } else if (state.holdTimer) {
+      clearTimeout(state.holdTimer); state.holdTimer = null;
+    }
+  }
+  function finishTear() {
+    if (state.phase === "burst" || state.phase === "cards" || state.phase === "done") return;
+    if (state.holdTimer) { clearTimeout(state.holdTimer); state.holdTimer = null; }
+    state.phase = "burst";
+    setProgress(1);
+    tab.visible = false; seamHit.visible = false;
+    $("#hint").innerHTML = "拆包中…";
+    showStack();
+
+    tween(lid.position, { x: -4.0, y: 4.6, z: -1.4 }, .7, 0, easeOut);
+    tween(lid.rotation, { x: -.9, y: .4, z: -1.8 }, .7, 0, easeOut);
+    tween(lid.scale, { x: .8, y: .8, z: .8 }, .7, 0, easeOut);
+
+    // keep the box around while every card leaves the opening, then let it break away
+    const bodyDelay = 1.2 + (state.count - 1) * 0.12;
+    bodyGroup.children.forEach((m, i) => {
+      const dir = i % 2 ? 1 : -1;
+      tween(m.position, { x: m.position.x + dir * 2.4, y: m.position.y - 1.2, z: m.position.z - 2.6 }, .7, bodyDelay + i * .03, easeOut);
+      tween(m.rotation, { z: dir * .9 }, .7, bodyDelay + i * .03, easeOut);
+    });
+    tween(interior.material, { opacity: 0 }, .5, bodyDelay - .15);
+    tween(glowSprite.material, { opacity: 0 }, .6, bodyDelay - .15);
+    tween(glowLight, { intensity: 0 }, .6, bodyDelay - .15);
+    seamLine.visible = false;
+    setTimeout(() => { lid.visible = false; }, 720);
+    setTimeout(() => { bodyGroup.visible = false; }, (bodyDelay + .75) * 1000);
+    setTimeout(() => { interior.visible = false; glowSprite.visible = false; }, (bodyDelay + .2) * 1000);
+
+    setTimeout(() => {
+      state.phase = "cards";
+      revealCards();
+      $("#hint").innerHTML = "点击卡牌翻开";
+    }, 340);
+  }
+
+  /* ---------------------------------------------------------------- loop */
+  let last = performance.now();
+  function animate() {
+    requestAnimationFrame(animate);
+    const now = performance.now();
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    updateTweens(now);
+
+    if (state.phase === "idle" && now > state.autoAt) {
+      pack.rotation.y += dt * 0.22;
+    }
+    if (state.phase === "idle") {
+      pack.position.y = 0.02 + Math.sin(now * 0.0012) * 0.05;
+    }
+
+    for (const o of cardObjs) {
+      o.frontMat.uniforms.uTime.value = now * 0.001;
+      o.tilt.rotation.x += (o.tiltX - o.tilt.rotation.x) * 0.16;
+      o.tilt.rotation.y += (o.tiltY - o.tilt.rotation.y) * 0.16;
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  $("#reset").addEventListener("click", () => location.reload());
+  $("#again").addEventListener("click", () => location.reload());
+
+  build();
+
+  // debug API for local testing
+  window.__d3 = {
+    state,
+    focus: focusPack,
+    finish: finishTear,
+    progress: setProgress,
+    tabScreen() {
+      if (!tab) return null;
+      const v = new THREE.Vector3();
+      tab.getWorldPosition(v);
+      v.project(camera);
+      return { x: (v.x * .5 + .5) * innerWidth, y: (-v.y * .5 + .5) * innerHeight };
+    },
+    cardScreens() {
+      return cardObjs.map((o) => {
+        const v = new THREE.Vector3();
+        o.group.getWorldPosition(v);
+        v.project(camera);
+        return {
+          x: (v.x * .5 + .5) * innerWidth,
+          y: (-v.y * .5 + .5) * innerHeight,
+          rarity: o.c.rarity,
+          flipped: o.flipped,
+        };
+      });
+    },
+    cards: () => cardObjs.length,
+  };
+})();
+</script>
+</body>
+</html>

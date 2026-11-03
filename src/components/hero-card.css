@@ -1,0 +1,333 @@
+/* =========================================================
+   Choke! — Holo Card
+   结构与分层移植自 pokemon-cards-css (simeydotme)
+   https://github.com/simeydotme/pokemon-cards-css
+   ========================================================= */
+
+.holo-card-scene {
+  width: clamp(252px, min(36vw, 58vh), 420px);
+  display: grid;
+  place-items: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.holo-card {
+  /* 卡片比例 / 圆角（原版配方） */
+  --card-aspect: 0.718;
+  --card-radius: 4.55% / 3.5%;
+  --card-edge: hsl(47 100% 78%);
+  --card-back: hsl(205 100% 25%);
+  --card-glow: hsl(175 100% 90%);
+
+  /* 全息箔色板 */
+  --sunpillar-1: hsl(2 100% 73%);
+  --sunpillar-2: hsl(53 100% 69%);
+  --sunpillar-3: hsl(93 100% 69%);
+  --sunpillar-4: hsl(176 100% 76%);
+  --sunpillar-5: hsl(228 100% 74%);
+  --sunpillar-6: hsl(283 100% 73%);
+
+  --red: #f80e35;
+  --yellow: #eedf10;
+  --green: #21e985;
+  --blue: #0dbde9;
+  --violet: #c929f1;
+
+  /* 卡图窗口裁切（标准卡） */
+  --clip: inset(9.85% 8% 52.85% 8%);
+  --clip-stage: polygon(
+    91.5% 9.85%,
+    57% 9.85%,
+    54% 12%,
+    17% 12%,
+    16% 14%,
+    12% 16%,
+    8% 16%,
+    8% 47.15%,
+    92% 47.15%
+  );
+
+  /* 以下变量由 JS 通过 MotionValue 实时写入 */
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --card-opacity: 0;
+  --rotate-x: 0deg;
+  --rotate-y: 0deg;
+  --background-x: 50%;
+  --background-y: 50%;
+
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--card-aspect);
+  border-radius: var(--card-radius);
+  transform: translate3d(0, 0, 0.01px);
+  transform-style: preserve-3d;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.holo-card,
+.holo-card * {
+  /* 抗锯齿小技巧 */
+  outline: 1px solid transparent;
+}
+
+.holo-card__translater,
+.holo-card__rotator {
+  display: grid;
+  width: 100%;
+  aspect-ratio: var(--card-aspect);
+  border-radius: var(--card-radius);
+  perspective: 600px;
+  transform-origin: center;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.holo-card__rotator {
+  transform: rotateY(var(--rotate-x)) rotateX(var(--rotate-y));
+  pointer-events: auto;
+  cursor: default;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  border: none;
+  padding: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  box-shadow:
+    0 30px 60px -34px rgb(0 0 0 / 0.95),
+    0 6px 18px -8px rgb(0 0 0 / 0.75);
+}
+
+/* 只对叠层（卡背 / 卡面 / 箔层）生效，卡面内部的自定义排版不受影响 */
+.holo-card__rotator > *,
+.holo-card__front > * {
+  width: 100%;
+  display: grid;
+  grid-area: 1 / 1;
+  aspect-ratio: var(--card-aspect);
+  border-radius: var(--card-radius);
+  image-rendering: optimizeQuality;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.holo-card__rotator img {
+  height: auto;
+}
+.holo-card__rotator img:not(.holo-card__back) {
+  transform: translate3d(0, 0, 0.01px);
+}
+
+/* 卡背（本演示不翻面，只作为背面兜底） */
+.holo-card__back {
+  background-color: var(--card-back);
+  transform: rotateY(180deg) translateZ(1px);
+  backface-visibility: visible;
+}
+
+.holo-card__front,
+.holo-card__front * {
+  backface-visibility: hidden;
+}
+
+.holo-card__front {
+  opacity: 1;
+  transform: translate3d(0, 0, 0.01px);
+}
+
+/* =========================================================
+   SHINE / GLARE 基础层（base.css 原配方）
+   ========================================================= */
+
+.holo-card__shine {
+  display: grid;
+  transform: translateZ(1px);
+  overflow: hidden;
+  z-index: 3;
+
+  background: transparent;
+  background-size: cover;
+  background-position: center;
+
+  filter: brightness(0.85) contrast(2.75) saturate(0.65);
+  mix-blend-mode: color-dodge;
+  opacity: var(--card-opacity);
+
+  will-change: transform, opacity, background-image, background-size,
+    background-position, background-blend-mode, filter;
+}
+
+.holo-card__shine:before,
+.holo-card__shine:after {
+  grid-area: 1 / 1;
+  transform: translateZ(1px);
+  border-radius: var(--card-radius);
+}
+
+.holo-card__shine:after {
+  transform: translateZ(1.2px);
+}
+
+.holo-card__glare {
+  transform: translateZ(1.41px);
+  overflow: hidden;
+
+  background-image: radial-gradient(
+    farthest-corner circle at var(--pointer-x) var(--pointer-y),
+    hsla(0, 0%, 100%, 0.8) 10%,
+    hsla(0, 0%, 100%, 0.65) 20%,
+    hsla(0, 0%, 0%, 0.5) 90%
+  );
+
+  opacity: var(--card-opacity);
+  mix-blend-mode: overlay;
+
+  will-change: transform, opacity, background-image, background-size,
+    background-position, background-blend-mode, filter;
+}
+
+/* =========================================================
+   REGULAR HOLO（regular-holo.css 原配方）
+   ========================================================= */
+
+.holo-card[data-rarity="rare holo"][data-subtypes^="stage"] .holo-card__shine,
+.holo-card[data-rarity="rare holo"][data-subtypes^="stage"] .holo-card__glare:after {
+  clip-path: var(--clip-stage);
+}
+
+.holo-card[data-rarity="rare holo"] .holo-card__shine {
+  --scanlines-space: 1px;
+  --scanlines-light: #666;
+  --scanlines-dark: black;
+
+  --bars: 3%;
+  --bar-color: hsla(0, 0%, 70%, 1);
+  --bar-bg: hsla(0, 0%, 0%, 1);
+
+  clip-path: var(--clip);
+
+  background-image:
+    repeating-linear-gradient(
+      110deg,
+      var(--violet),
+      var(--blue),
+      var(--green),
+      var(--yellow),
+      var(--red),
+      var(--violet),
+      var(--blue),
+      var(--green),
+      var(--yellow),
+      var(--red),
+      var(--violet),
+      var(--blue),
+      var(--green),
+      var(--yellow),
+      var(--red)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--scanlines-dark) calc(var(--scanlines-space) * 0),
+      var(--scanlines-dark) calc(var(--scanlines-space) * 2),
+      var(--scanlines-light) calc(var(--scanlines-space) * 2),
+      var(--scanlines-light) calc(var(--scanlines-space) * 4)
+    );
+
+  background-position:
+    calc(((50% - var(--background-x)) * 2.6) + 50%)
+      calc(((50% - var(--background-y)) * 3.5) + 50%),
+    center center;
+
+  background-size:
+    400% 400%,
+    cover;
+
+  background-blend-mode: overlay;
+  filter: brightness(1.1) contrast(1.1) saturate(1.2);
+  mix-blend-mode: color-dodge;
+}
+
+.holo-card[data-rarity="rare holo"] .holo-card__shine:before {
+  content: "";
+
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      var(--bar-bg) calc(var(--bars) * 2),
+      var(--bar-color) calc(var(--bars) * 3),
+      var(--bar-bg) calc(var(--bars) * 3.5),
+      var(--bar-color) calc(var(--bars) * 4),
+      var(--bar-bg) calc(var(--bars) * 5),
+      var(--bar-bg) calc(var(--bars) * 14)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--bar-bg) calc(var(--bars) * 2),
+      var(--bar-color) calc(var(--bars) * 3),
+      var(--bar-bg) calc(var(--bars) * 3.5),
+      var(--bar-color) calc(var(--bars) * 4),
+      var(--bar-bg) calc(var(--bars) * 5),
+      var(--bar-bg) calc(var(--bars) * 10)
+    );
+
+  background-position:
+    calc((((50% - var(--background-x)) * 1.65) + 50%) + (var(--background-y) * 0.5))
+      var(--background-x),
+    calc((((50% - var(--background-x)) * -0.9) + 50%) - (var(--background-y) * 0.75))
+      var(--background-y);
+
+  background-size:
+    200% 200%,
+    200% 200%;
+
+  background-blend-mode: screen;
+  filter: brightness(1.15) contrast(1.1);
+  mix-blend-mode: hard-light;
+}
+
+.holo-card[data-rarity="rare holo"] .holo-card__shine:after {
+  content: "";
+
+  background-image: radial-gradient(
+    farthest-corner circle at var(--pointer-x) var(--pointer-y),
+    hsla(0, 0%, 90%, 0.8) 0%,
+    hsla(0, 0%, 78%, 0.1) 25%,
+    hsl(0, 0%, 0%) 90%
+  );
+
+  background-position: center center;
+  background-size: cover;
+
+  mix-blend-mode: luminosity;
+  filter: brightness(0.6) contrast(4);
+}
+
+.holo-card[data-rarity="rare holo"] .holo-card__glare {
+  opacity: calc(var(--card-opacity) * 0.8);
+  filter: brightness(0.8) contrast(1.5);
+  mix-blend-mode: overlay;
+}
+
+.holo-card[data-rarity="rare holo"] .holo-card__glare:after {
+  content: "";
+
+  background-image: radial-gradient(
+    farthest-corner circle at var(--pointer-x) var(--pointer-y),
+    hsl(180, 100%, 95%) 5%,
+    hsla(0, 0%, 39%, 0.25) 55%,
+    hsla(0, 0%, 0%, 0.36) 110%
+  );
+
+  mix-blend-mode: overlay;
+  filter: brightness(0.6) contrast(3);
+}
+
+@media screen and (max-width: 900px) {
+  .holo-card[data-rarity="rare holo"] .holo-card__shine {
+    --scanlines-space: 0.5px;
+  }
+}

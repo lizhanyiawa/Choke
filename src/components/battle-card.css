@@ -1,0 +1,327 @@
+/* =========================================================
+   战斗台卡牌：沿用 holo 卡面（hero-card.css），
+   但去掉 3D 倾角，选中只做正面悬浮
+   ========================================================= */
+
+.battle-card {
+  --tint: #ed5f9f;
+  container-type: inline-size;
+  position: relative;
+  z-index: 1;
+  width: clamp(122px, 10.4vw, 166px);
+  flex: 0 0 auto;
+  transition: filter 220ms ease;
+}
+
+.battle-card.is-inert {
+  cursor: not-allowed;
+}
+
+/* 悬浮：仅正面抬起，不旋转 */
+.battle-card .holo-card__translater {
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.battle-card:not(.is-inert):not(.is-striking):hover .holo-card__translater,
+.battle-card:not(.is-inert):not(.is-striking):focus-within .holo-card__translater {
+  transform: translateY(-14px) scale(1.035);
+}
+
+.battle-card:not(.is-inert):not(.is-striking):hover .holo-card__rotator,
+.battle-card:not(.is-inert):not(.is-striking):focus-within .holo-card__rotator {
+  box-shadow:
+    0 0 0 1px rgb(237 95 159 / 0.55),
+    0 0 26px -6px rgb(237 95 159 / 0.7),
+    0 30px 50px -26px rgb(0 0 0 / 0.95);
+}
+
+.battle-card:not(.is-inert):not(.is-striking):hover .holo-card__rotator {
+  cursor: pointer;
+}
+
+/* 出牌冲刺时压过所有层 */
+.battle-card.is-striking {
+  z-index: 40;
+  pointer-events: none;
+}
+
+/* 行动结束：压暗 + 去饱和 */
+.battle-card.is-acted {
+  filter: grayscale(0.55) brightness(0.6);
+}
+
+/* 占位卡图偏暗，压一档箔亮度，避免高光糊成白色 */
+.battle-card .holo-card[data-rarity="rare holo"] .holo-card__shine {
+  filter: brightness(0.72) contrast(2) saturate(0.8);
+}
+
+.battle-card__acted {
+  position: absolute !important;
+  inset: auto 0 0 0 !important;
+  height: 24% !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6cqw;
+  aspect-ratio: auto !important;
+  border-radius: 0 !important;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgb(9 8 13 / 0.82) 38%,
+    rgb(9 8 13 / 0.96) 100%
+  );
+  border-top: 1px solid rgb(237 95 159 / 0.35);
+  color: rgb(255 214 231 / 0.9);
+  font-family: var(--font-cn), var(--font-sans);
+  z-index: 12;
+}
+
+.battle-card__acted span:first-child {
+  font-size: 5.4cqw;
+  letter-spacing: 0.18em;
+}
+
+.battle-card__acted span:last-child {
+  font-family: var(--font-mono);
+  font-size: 2.9cqw;
+  letter-spacing: 0.3em;
+  color: rgb(237 95 159 / 0.7);
+}
+
+/* ---------- 卡面 ---------- */
+
+.battle-face {
+  position: relative;
+  container-type: inline-size;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(168deg, rgb(37 34 46 / 0.94) 0%, rgb(22 21 29 / 0.96) 48%, rgb(12 11 17 / 0.98) 100%);
+}
+
+.battle-face__mat {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      86% 58% at 82% -4%,
+      color-mix(in oklab, var(--tint) 30%, transparent),
+      transparent 64%
+    ),
+    radial-gradient(
+      84% 56% at 4% 104%,
+      color-mix(in oklab, #1d5db5 26%, transparent),
+      transparent 62%
+    );
+  pointer-events: none;
+}
+
+/* 顶部标识 */
+.battle-face__top {
+  position: absolute;
+  top: 3.4%;
+  left: 7%;
+  right: 26%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4%;
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 3.1cqw;
+  letter-spacing: 0.2em;
+  color: rgb(255 255 255 / 0.42);
+  white-space: nowrap;
+}
+
+.battle-face__pips {
+  font-size: 3cqw;
+  letter-spacing: 0.1em;
+  color: var(--tint);
+  opacity: 0.8;
+}
+
+/* 画框（与全息箔裁切区一致：top 9.85% / height 37.3% / 左右 8%） */
+.battle-face__art {
+  position: absolute;
+  top: 9.85%;
+  left: 8%;
+  right: 8%;
+  height: 37.3%;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 3px;
+  background: #08070c;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1);
+}
+
+.battle-face__art svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 费用球 */
+.battle-face__cost {
+  position: absolute;
+  top: 3%;
+  right: 4.5%;
+  z-index: 6;
+  width: 19.5%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in oklab, var(--tint) 65%, white);
+  background:
+    radial-gradient(circle at 50% 34%, rgb(255 255 255 / 0.16), transparent 60%),
+    linear-gradient(160deg, rgb(24 23 32 / 0.96), rgb(10 9 15 / 0.98));
+  box-shadow:
+    0 0 16px -4px var(--tint),
+    inset 0 0 8px -2px var(--tint);
+  color: #fff;
+  line-height: 1;
+}
+
+.battle-face__cost b {
+  font-family: var(--font-mono);
+  font-size: 8.4cqw;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.battle-face__cost i {
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 3cqw;
+  letter-spacing: 0.14em;
+  color: var(--tint);
+}
+
+/* 名称 */
+.battle-face__name {
+  position: absolute;
+  top: 49.4%;
+  left: 8%;
+  right: 8%;
+  font-family: var(--font-cn), var(--font-sans);
+  font-size: 8.6cqw;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgb(255 255 255 / 0.94);
+}
+
+.battle-face__en {
+  position: absolute;
+  top: 58%;
+  left: 8%;
+  right: 8%;
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 3.4cqw;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--tint);
+  opacity: 0.85;
+}
+
+/* 数值 */
+.battle-face__stats {
+  position: absolute;
+  top: 64.4%;
+  left: 8%;
+  right: 8%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4%;
+  padding-top: 3.2%;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.battle-face__stats span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8cqw;
+  min-width: 0;
+}
+
+.battle-face__stats i {
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 2.7cqw;
+  letter-spacing: 0.16em;
+  color: rgb(255 255 255 / 0.35);
+}
+
+.battle-face__stats b {
+  font-family: var(--font-mono);
+  font-size: 4cqw;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: rgb(255 255 255 / 0.86);
+  white-space: nowrap;
+}
+
+.battle-face__stats span:last-child b {
+  color: var(--tint);
+}
+
+/* 特性 */
+.battle-face__trait {
+  position: absolute;
+  top: 75.6%;
+  left: 8%;
+  right: 8%;
+  display: flex;
+  align-items: center;
+  gap: 2.2%;
+  padding: 2% 3.2%;
+  border: 1px solid rgb(255 255 255 / 0.09);
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.035);
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 3.1cqw;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  overflow: hidden;
+  color: rgb(255 255 255 / 0.62);
+}
+
+.battle-face__trait-dot {
+  width: 2.2cqw;
+  height: 2.2cqw;
+  flex: 0 0 auto;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, #fff, var(--tint));
+  box-shadow: 0 0 6px var(--tint);
+}
+
+.battle-face__foot {
+  position: absolute;
+  bottom: 3.6%;
+  left: 8%;
+  right: 8%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 2.7cqw;
+  letter-spacing: 0.14em;
+  color: rgb(255 255 255 / 0.3);
+}
+
+/* 行动结束态的额外遮罩 */
+.battle-card.is-acted .battle-face {
+  filter: saturate(0.35);
+}

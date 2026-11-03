@@ -2,11 +2,41 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/outfit";
+@import "@fontsource-variable/jetbrains-mono";
 
 @custom-variant dark (&:is(.dark *));
 
+/* 汉仪文黑：优先使用系统内已安装的字重，缺失时回退到中文黑体 */
+@font-face {
+    font-family: "HYWenHei";
+    src:
+        local("HYWenHei 85W"),
+        local("HYWenHei-85W"),
+        local("HYWenHei 75W"),
+        local("HYWenHei-75W"),
+        local("HYWenHei"),
+        local("汉仪文黑-85W"),
+        local("汉仪文黑-75W");
+    font-display: swap;
+}
+
+@theme {
+    /* Choke! 色彩矩阵 */
+    --color-choke: #18171c;
+    --color-choke-void: #0d0c11;
+    --color-choke-pink: #ed5f9f;
+    --color-choke-blue: #1d5db5;
+    --color-choke-cyan: #7cc4ff;
+
+    /* 中文标题 / 数值字体 */
+    --font-cn: "HYWenHei", "汉仪文黑-85W", "PingFang SC", "Microsoft YaHei",
+        "Noto Sans SC", sans-serif;
+    --font-mono: "JetBrains Mono Variable", "SFMono-Regular", ui-monospace,
+        monospace;
+}
+
 @theme inline {
-    --font-heading: var(--font-sans);
+    --font-heading: "Outfit Variable", "Outfit", sans-serif;
     --font-sans: 'Outfit Variable', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
@@ -84,24 +114,24 @@
 }
 
 .dark {
-    --background: oklch(0.145 0.008 326);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.212 0.019 322.12);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.212 0.019 322.12);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.459 0.187 3.815);
-    --primary-foreground: oklch(0.971 0.014 343.198);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.263 0.024 320.12);
-    --muted-foreground: oklch(0.711 0.019 323.02);
-    --accent: oklch(0.263 0.024 320.12);
-    --accent-foreground: oklch(0.985 0 0);
+    --background: #18171c;
+    --foreground: #f5f2f7;
+    --card: #1e1c24;
+    --card-foreground: #f5f2f7;
+    --popover: #1e1c24;
+    --popover-foreground: #f5f2f7;
+    --primary: #ed5f9f;
+    --primary-foreground: #22101a;
+    --secondary: #26242e;
+    --secondary-foreground: #f5f2f7;
+    --muted: #24222b;
+    --muted-foreground: #9b94a6;
+    --accent: #26242e;
+    --accent-foreground: #f5f2f7;
     --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.542 0.034 322.5);
+    --border: rgb(255 255 255 / 10%);
+    --input: rgb(255 255 255 / 14%);
+    --ring: #ed5f9f;
     --chart-1: oklch(0.823 0.12 346.018);
     --chart-2: oklch(0.656 0.241 354.308);
     --chart-3: oklch(0.592 0.249 0.584);
@@ -123,8 +153,15 @@
     }
   body {
     @apply bg-background text-foreground;
+    background-color: #18171c;
+    -webkit-font-smoothing: antialiased;
     }
   html {
     @apply font-sans;
+    background-color: #18171c;
+    }
+  ::selection {
+    background: color-mix(in srgb, #ed5f9f 34%, transparent);
+    color: #fff;
     }
 }

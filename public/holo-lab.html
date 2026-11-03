@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Choke! · Holo Lab</title>
+<link rel="icon" href="/brand/choke-icon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="/holo-lab/css/cards.css" />
+<link rel="stylesheet" href="/holo-lab/css/base.css" />
+<link rel="stylesheet" href="/holo-lab/css/regular-holo.css" />
+<link rel="stylesheet" href="/holo-lab/css/reverse-holo.css" />
+<link rel="stylesheet" href="/holo-lab/css/cosmos-holo.css" />
+<link rel="stylesheet" href="/holo-lab/css/rainbow-holo.css" />
+<link rel="stylesheet" href="/holo-lab/css/rainbow-alt.css" />
+<link rel="stylesheet" href="/holo-lab/css/radiant-holo.css" />
+<link rel="stylesheet" href="/holo-lab/css/amazing-rare.css" />
+<link rel="stylesheet" href="/holo-lab/css/secret-rare.css" />
+<link rel="stylesheet" href="/holo-lab/css/shiny-rare.css" />
+<link rel="stylesheet" href="/holo-lab/css/shiny-v.css" />
+<link rel="stylesheet" href="/holo-lab/css/shiny-vmax.css" />
+<link rel="stylesheet" href="/holo-lab/css/v-star.css" />
+<link rel="stylesheet" href="/holo-lab/css/v-regular.css" />
+<link rel="stylesheet" href="/holo-lab/css/v-full-art.css" />
+<link rel="stylesheet" href="/holo-lab/css/v-max.css" />
+<link rel="stylesheet" href="/holo-lab/css/trainer-full-art.css" />
+<link rel="stylesheet" href="/holo-lab/css/trainer-gallery-holo.css" />
+<link rel="stylesheet" href="/holo-lab/css/trainer-gallery-secret-rare.css" />
+<link rel="stylesheet" href="/holo-lab/css/trainer-gallery-v-max.css" />
+<link rel="stylesheet" href="/holo-lab/css/trainer-gallery-v-regular.css" />
+<link rel="stylesheet" href="/holo-lab/css/swsh-pikachu.css" />
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #111217;
+    --cream: #f4f4f6;
+    --ink: #42464f;
+    --cyan: #3cbadb;
+    --pink: #d9488a;
+  }
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(ellipse 70% 55% at 50% -10%, rgba(60, 186, 219, .14), transparent 65%),
+      radial-gradient(ellipse 55% 45% at 80% 20%, rgba(217, 72, 138, .12), transparent 65%),
+      var(--bg);
+    color: var(--cream);
+    font-family: "Outfit", "Segoe UI", system-ui, sans-serif;
+  }
+  .lab {
+    width: min(1380px, 100%);
+    margin: 0 auto;
+    padding: 34px 26px 90px;
+  }
+  .lab__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 22px;
+    padding-bottom: 22px;
+    border-bottom: 2px solid rgba(244, 244, 246, .14);
+  }
+  .lab__brand {
+    font-family: "Fredoka", "Outfit", sans-serif;
+    font-weight: 700;
+    font-size: 34px;
+    letter-spacing: -.02em;
+  }
+  .lab__brand b { color: var(--cyan); }
+  .lab__sub {
+    margin-top: 6px;
+    max-width: 680px;
+    color: rgba(244, 244, 246, .56);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .lab__sub a { color: var(--cyan); text-underline-offset: 3px; }
+  .lab__picked {
+    padding: 8px 14px;
+    border: 2px solid rgba(244, 244, 246, .22);
+    border-radius: 999px;
+    color: rgba(244, 244, 246, .7);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .lab__picked b { color: var(--cyan); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 34px 26px;
+    padding-top: 34px;
+  }
+  @media (max-width: 1180px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 820px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+
+  .slot { min-width: 0; cursor: pointer; }
+  .slot__frame { position: relative; padding: 10px; border-radius: 20px; transition: background .18s ease, box-shadow .18s ease; }
+  .slot:hover .slot__frame { background: rgba(244, 244, 246, .045); }
+  .slot.is-picked .slot__frame {
+    background: rgba(60, 186, 219, .1);
+    box-shadow: 0 0 0 2px var(--cyan), 0 0 34px rgba(60, 186, 219, .28);
+  }
+  .slot__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 12px 2px 0;
+  }
+  .slot__name { font-size: 13px; font-weight: 600; letter-spacing: .02em; }
+  .slot__name small { display: block; margin-top: 3px; color: rgba(244, 244, 246, .42); font-size: 10px; font-weight: 500; letter-spacing: .04em; }
+  .slot__pick {
+    flex: 0 0 auto;
+    height: 28px;
+    padding: 0 11px;
+    border: 1px solid rgba(244, 244, 246, .28);
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(244, 244, 246, .7);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .slot.is-picked .slot__pick { border-color: var(--cyan); color: #0d1117; background: var(--cyan); }
+
+  /* ------------------------------------------------------------------
+     The original cards use a Pokémon art window. Our card art sits at
+     inset(3.6% 5.1% 33.2% 5.1%), so remap the clips to our card.
+     ------------------------------------------------------------------ */
+  .card {
+    width: 100%;
+    --card-scale: 1;
+    --translate-x: 0px;
+    --translate-y: 0px;
+    --card-opacity: 1;
+    --pointer-x: 62%;
+    --pointer-y: 38%;
+    --background-x: 53%;
+    --background-y: 41%;
+    --rotate-x: 0deg;
+    --rotate-y: 0deg;
+    --pointer-from-center: .24;
+    --pointer-from-top: .38;
+    --pointer-from-left: .62;
+    --clip: inset(3.6% 5.1% 33.2% 5.1%);
+    --clip-invert: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0 66.8%, 94.9% 66.8%, 94.9% 3.6%, 5.1% 3.6%, 5.1% 66.8%, 0 66.8%);
+    --clip-stage: var(--clip);
+    --clip-stage-invert: var(--clip-invert);
+    --clip-trainer: var(--clip);
+    --clip-borders: inset(2.8% 4% round 2.55% / 1.5%);
+    --foil: none;
+    --cosmosbg: 140px 210px;
+    --card-edge: #b98cff;
+    --card-glow: #b98cff;
+  }
+  .card__translater,
+  .card__rotator { width: 100%; }
+  .card__rotator {
+    cursor: crosshair;
+    box-shadow: 0 18px 40px -24px #000;
+  }
+  .slot:hover .card__rotator { box-shadow: 0 24px 54px -28px #000; }
+  .slot.is-picked .card__rotator { box-shadow: 0 0 0 1px var(--cyan), 0 22px 50px -26px #000; }
+  .slot--matte .card__shine,
+  .slot--matte .card__glare { display: none; }
+
+  .footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin-top: 38px;
+    padding-top: 24px;
+    border-top: 2px solid rgba(244, 244, 246, .14);
+  }
+  .btn {
+    height: 40px;
+    padding: 0 18px;
+    border: 2px solid #42464f;
+    border-radius: 999px;
+    background: var(--cream);
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 3px 3px 0 #0b0d10;
+  }
+  .btn--primary { background: var(--cyan); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .footer__status { color: rgba(244, 244, 246, .58); font-size: 12px; line-height: 1.6; }
+  .footer__status b { color: var(--cyan); }
+  .footer__spacer { flex: 1; }
+  .footer__src { color: rgba(244, 244, 246, .38); font-size: 11px; text-decoration: none; }
+  .footer__src:hover { color: var(--cyan); }
+</style>
+</head>
+<body>
+<main class="lab">
+  <header class="lab__head">
+    <div>
+      <div class="lab__brand">Choke! <b>/ HOLO LAB</b></div>
+      <p class="lab__sub">
+        原配方来自
+        <a href="https://github.com/simeydotme/pokemon-cards-css" target="_blank" rel="noreferrer">simeydotme/pokemon-cards-css</a>。
+        用同一张 Choke! 卡面预览 24 种效果。鼠标移到卡上查看光影，点卡或“选择”记录你想要的覆膜；
+        回桌面刷新即可继续。
+      </p>
+    </div>
+    <div class="lab__picked">当前选择：<b id="pickedName">未选择</b></div>
+  </header>
+
+  <section class="grid" id="grid" aria-label="Holo effects"></section>
+
+  <footer class="footer">
+    <button type="button" class="btn btn--primary" id="apply" disabled>记住这个效果</button>
+    <a class="btn" href="/">返回桌面</a>
+    <div class="footer__status" id="status">先选一张卡面，再确定。</div>
+    <div class="footer__spacer"></div>
+    <a class="footer__src" href="https://github.com/simeydotme/pokemon-cards-css" target="_blank" rel="noreferrer">source · MIT · simeydotme</a>
+  </footer>
+</main>
+
+<script>
+  const EFFECTS = [
+    { id: "regular",     label: "Regular Holo", note: "标准全息", rarity: "rare holo" },
+    { id: "reverse",     label: "Reverse Holo", note: "反闪 / 边框箔", rarity: "rare reverse holo" },
+    { id: "cosmos",      label: "Cosmos Holo",  note: "宇宙星点", rarity: "rare holo cosmos" },
+    { id: "rainbow",     label: "Rainbow Rare", note: "彩虹秘密稀有", rarity: "rare rainbow" },
+    { id: "rainbow-alt", label: "Rainbow Alt",  note: "彩虹 alt / 大图", rarity: "rare rainbow alt" },
+    { id: "radiant",     label: "Radiant Rare", note: "光辉 / 斜纹", rarity: "radiant rare" },
+    { id: "amazing",     label: "Amazing Rare", note: "奇迹 / 彩色箔", rarity: "amazing rare" },
+    { id: "secret",      label: "Secret Rare",  note: "金箔 / 秘密稀有", rarity: "rare secret" },
+    { id: "shiny-rare",  label: "Shiny Rare",   note: "闪光稀有", rarity: "rare shiny" },
+    { id: "shiny-v",     label: "Shiny V",      note: "闪光 V", rarity: "rare shiny v" },
+    { id: "shiny-vmax",  label: "Shiny VMAX",   note: "闪光 VMAX", rarity: "rare shiny vmax" },
+    { id: "v-star",      label: "V-Star",       note: "V-STAR / 星耀", rarity: "rare holo vstar" },
+    { id: "v-regular",   label: "V Regular",    note: "V 普版", rarity: "rare holo v" },
+    { id: "v-union",     label: "V-UNION",      note: "V-UNION / 合体", rarity: "rare holo v", subtypes: "v-union" },
+    { id: "v-full-art",  label: "V Full Art",   note: "V 全图", rarity: "rare ultra", supertype: "pokémon", subtypes: "basic" },
+    { id: "v-max",       label: "VMAX",         note: "VMAX / 极巨化", rarity: "rare holo vmax", supertype: "pokémon" },
+    { id: "trainer-gallery-holo", label: "Trainer Gallery Holo", note: "训练家画廊", rarity: "trainer gallery rare holo" },
+    { id: "trainer-gallery-secret", label: "Trainer Gallery Secret", note: "训练家画廊·金", rarity: "rare secret", gallery: true },
+    { id: "trainer-gallery-vmax", label: "Trainer Gallery VMAX", note: "训练家画廊·VMAX", rarity: "rare holo vmax", gallery: true },
+    { id: "trainer-gallery-v", label: "Trainer Gallery V", note: "训练家画廊·V", rarity: "rare holo v", gallery: true },
+    { id: "trainer-full-art", label: "Trainer Full Art", note: "训练家全图", rarity: "rare ultra", supertype: "trainer", subtypes: "supporter" },
+    { id: "pikachu",     label: "Pikachu Special", note: "皮卡丘特殊版", rarity: "rare secret", set: "swsh12pt5", number: "160" },
+    { id: "basic",       label: "Basic",       note: "基础卡 / 无箔", rarity: "common" },
+    { id: "matte",       label: "Matte",       note: "哑光 / Choke 基准", rarity: "common" }
+  ];
+
+  const clamp = (v, a = 0, b = 100) => Math.min(b, Math.max(a, v));
+  const grid = document.getElementById("grid");
+  const pickedName = document.getElementById("pickedName");
+  const status = document.getElementById("status");
+  const apply = document.getElementById("apply");
+  const STORE = "choke.holo.effect";
+  let selected = null;
+  let pickedLabel = "";
+
+  const cardMarkup = (e) => {
+    const attrs = [
+      `data-rarity="${e.rarity}"`,
+      `data-subtypes="${e.subtypes || "basic"}"`,
+      `data-supertype="${e.supertype || "pokémon"}"`,
+      `data-number="${e.number || "1"}"`,
+      `data-trainer-gallery="${e.gallery ? "true" : "false"}"`,
+      e.set ? `data-set="${e.set}"` : ""
+    ].filter(Boolean).join(" ");
+    return `
+    <div class="slot__frame">
+      <div class="card interactive" ${attrs}>
+        <div class="card__translater">
+          <button type="button" class="card__rotator" aria-label="${e.label} holo preview">
+            <div class="card__front">
+              <img src="/holo-lab/demo-card.svg" width="512" height="716" alt="" draggable="false" />
+              <div class="card__shine"></div>
+              <div class="card__glare"></div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="slot__meta">
+      <div class="slot__name">${e.label}<small>${e.note}</small></div>
+      <button type="button" class="slot__pick">选择</button>
+    </div>`;
+  };
+
+  function showcase(card) {
+    const s = card.style;
+    s.setProperty("--pointer-x", "62%");
+    s.setProperty("--pointer-y", "38%");
+    s.setProperty("--background-x", "53%");
+    s.setProperty("--background-y", "41%");
+    s.setProperty("--rotate-x", "0deg");
+    s.setProperty("--rotate-y", "0deg");
+    s.setProperty("--pointer-from-center", ".24");
+    s.setProperty("--pointer-from-top", ".38");
+    s.setProperty("--pointer-from-left", ".62");
+    s.setProperty("--card-opacity", "1");
+  }
+
+  function aim(card, e) {
+    const r = card.getBoundingClientRect();
+    const x = clamp(((e.clientX - r.left) / r.width) * 100);
+    const y = clamp(((e.clientY - r.top) / r.height) * 100);
+    const cx = x - 50;
+    const cy = y - 50;
+    const s = card.style;
+    s.setProperty("--pointer-x", x + "%");
+    s.setProperty("--pointer-y", y + "%");
+    s.setProperty("--background-x", (37 + (x / 100) * 26) + "%");
+    s.setProperty("--background-y", (33 + (y / 100) * 34) + "%");
+    s.setProperty("--rotate-x", (-cx / 3.5) + "deg");
+    s.setProperty("--rotate-y", (cy / 3.5) + "deg");
+    s.setProperty("--pointer-from-center", String(Math.min(1, Math.hypot(cx, cy) / 50)));
+    s.setProperty("--pointer-from-top", String(y / 100));
+    s.setProperty("--pointer-from-left", String(x / 100));
+    s.setProperty("--card-opacity", "1");
+  }
+
+  function select(id, silent = false) {
+    const effect = EFFECTS.find((e) => e.id === id);
+    if (!effect) return;
+    selected = id;
+    pickedLabel = effect.label;
+    pickedName.textContent = effect.label;
+    apply.disabled = false;
+    document.querySelectorAll(".slot").forEach((s) => s.classList.toggle("is-picked", s.dataset.effect === id));
+    if (!silent) status.textContent = `已选：${effect.label}（${effect.note}）。点“记住这个效果”保存。`;
+  }
+
+  EFFECTS.forEach((effect) => {
+    const slot = document.createElement("article");
+    slot.className = "slot" + (effect.id === "matte" ? " slot--matte" : "");
+    slot.dataset.effect = effect.id;
+    slot.dataset.label = effect.label;
+    slot.innerHTML = cardMarkup(effect);
+    grid.appendChild(slot);
+
+    const card = slot.querySelector(".card");
+    const rotator = slot.querySelector(".card__rotator");
+    showcase(card);
+    rotator.addEventListener("pointermove", (e) => aim(card, e));
+    rotator.addEventListener("pointerleave", () => showcase(card));
+    rotator.addEventListener("click", () => select(effect.id));
+    slot.querySelector(".slot__pick").addEventListener("click", () => select(effect.id));
+  });
+
+  const saved = localStorage.getItem(STORE);
+  if (saved) select(saved, true);
+
+  apply.addEventListener("click", () => {
+    if (!selected) return;
+    localStorage.setItem(STORE, selected);
+    status.innerHTML = `已记录 <b>${pickedLabel}</b>。关掉这页，回到桌面刷新；下一步再把它接进桌面卡和开包卡。`;
+  });
+</script>
+</body>
+</html>

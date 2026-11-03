@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Choke! 品牌资产</title>
+<style>
+  :root { --ink:#42464F; --cyan:#3CBADB; --pink:#D9488A; --line:#E4E4E8; --dim:#6E6E7A; --bg:#F7F7F8; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.7 "Inter","Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif; }
+  .wrap { max-width:1160px; margin:0 auto; padding:0 40px; }
+  header { padding:72px 0 40px; }
+  .kicker { font:11px/1 ui-monospace,Consolas,monospace; letter-spacing:.2em; text-transform:uppercase; color:var(--pink); }
+  h1 { font-size:clamp(36px,5vw,60px); letter-spacing:-.04em; line-height:1; margin:16px 0 14px; }
+  .lede { margin:0; max-width:640px; color:var(--dim); }
+  section { border-top:1px solid var(--line); padding:40px 0; }
+  h2 { font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); margin:0 0 24px; font-weight:600; }
+  .hero { background:#fff; border:1px solid var(--line); border-radius:10px; display:grid; place-items:center; padding:72px 40px; }
+  .hero img { width:220px; height:auto; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+  .tile { background:#fff; border:1px solid var(--line); border-radius:8px; padding:28px; display:flex; flex-direction:column; gap:18px; min-height:190px; }
+  .tile .label { margin-top:auto; font:11px/1.4 ui-monospace,Consolas,monospace; color:var(--dim); }
+  .tile img { max-width:100%; max-height:96px; width:auto; align-self:center; margin:auto 0; }
+  .dark { background:#111114; border-color:#232329; }
+  .dark .label { color:#8A8A96; }
+  .dark img { max-height:120px; }
+  .swatches { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+  .sw { border-radius:8px; overflow:hidden; border:1px solid var(--line); background:#fff; }
+  .sw .chip { height:82px; }
+  .sw .meta { padding:12px 14px; font:12px/1.6 ui-monospace,Consolas,monospace; }
+  .sw .meta b { display:block; font:600 13px/1.4 "Inter","Segoe UI",sans-serif; font-family:inherit; }
+  .notes { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:28px; }
+  .note h3 { margin:0 0 8px; font-size:15px; }
+  .note p { margin:0; color:var(--dim); font-size:13.5px; }
+  code { font:12px/1.6 ui-monospace,Consolas,monospace; background:#EEEEF1; padding:2px 6px; border-radius:4px; }
+  pre { background:#16161A; color:#E8E8EE; padding:18px 20px; border-radius:8px; overflow:auto; font:12px/1.7 ui-monospace,Consolas,monospace; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); }
+  th { font:600 11px/1 ui-monospace,Consolas,monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); }
+  td code { background:none; padding:0; color:var(--ink); }
+  .clear-space { position:relative; background:#fff; border:1px solid var(--line); border-radius:8px; padding:70px; display:inline-block; }
+  .clear-space::before { content:""; position:absolute; inset:70px; border:1px dashed var(--pink); border-radius:4px; }
+  .clear-space img { width:170px; display:block; }
+  footer { padding:32px 0 72px; color:var(--dim); font-size:12px; }
+  @media (max-width:700px) { .wrap { padding:0 20px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Brand assets / v1</div>
+    <h1>Choke! 标识资产</h1>
+    <p class="lede">全部为纯路径 SVG，不依赖字体、无背景、已裁到内容边界。直接 <code>&lt;img&gt;</code> 或内联即可用；深色界面用 <code>-light</code> 或 <code>-white</code>。</p>
+  </header>
+
+  <section>
+    <h2>主标识</h2>
+    <div class="hero"><img src="choke-lockup.svg" alt="Choke! 主标识"></div>
+  </section>
+
+  <section>
+    <h2>组合</h2>
+    <div class="grid">
+      <div class="tile"><img src="choke-lockup-horizontal.svg" alt="横版"><div class="label">choke-lockup-horizontal.svg</div></div>
+      <div class="tile"><img src="choke-icon.svg" alt="图标"><div class="label">choke-icon.svg</div></div>
+      <div class="tile"><img src="choke-wordmark.svg" alt="字标"><div class="label">choke-wordmark.svg</div></div>
+      <div class="tile"><img src="choke-lockup-mono.svg" alt="单色"><div class="label">choke-lockup-mono.svg · currentColor</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>深色界面</h2>
+    <div class="grid">
+      <div class="tile dark"><img src="choke-lockup-light.svg" alt="深底彩色"><div class="label">choke-lockup-light.svg</div></div>
+      <div class="tile dark"><img src="choke-lockup-white.svg" alt="纯白"><div class="label">choke-lockup-white.svg</div></div>
+      <div class="tile dark" style="background:#0A0A0C"><img src="choke-lockup.svg" alt="原色在深底"><div class="label">原色直接放深底（墨色会吃掉，需换版）</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>颜色</h2>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#3CBADB"></div><div class="meta"><b>Cyan</b>#3CBADB</div></div>
+      <div class="sw"><div class="chip" style="background:#D9488A"></div><div class="meta"><b>Pink</b>#D9488A</div></div>
+      <div class="sw"><div class="chip" style="background:#42464F"></div><div class="meta"><b>Ink</b>#42464F</div></div>
+      <div class="sw"><div class="chip" style="background:#F4F4F6;border-bottom:1px solid var(--line)"></div><div class="meta"><b>Light</b>#F4F4F6</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>留白与最小尺寸</h2>
+    <div class="notes">
+      <div class="note">
+        <h3>安全边距</h3>
+        <p>四周至少留出标识总高度的 22%（虚线区域）。不要在边距内放文字、边框或其他元素。</p>
+      </div>
+      <div class="note">
+        <h3>最小尺寸</h3>
+        <p>图标 ≥ 24px；堆叠标识 ≥ 160px 宽；横版 ≥ 200px 宽。更小就只用图标。</p>
+      </div>
+      <div class="note">
+        <h3>不要做</h3>
+        <p>不要拉伸、描边、加投影、改渐变，或把墨色部分单独换成其他颜色。</p>
+      </div>
+    </div>
+    <div style="margin-top:28px">
+      <div class="clear-space"><img src="choke-lockup.svg" alt="留白示意"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>用法</h2>
+    <pre>&lt;!-- 直接引用（推荐给静态页面） --&gt;
+&lt;img src="brand/choke-lockup.svg" alt="Choke!" width="220"&gt;
+
+&lt;!-- 需要跟随文字颜色时：内联 + currentColor --&gt;
+&lt;svg class="logo"&gt;…choke-lockup-mono.svg 的内容…&lt;/svg&gt;
+&lt;style&gt;.logo { color: #fff; width: 180px; height: auto; }&lt;/style&gt;
+
+&lt;!-- 深色底 --&gt;
+&lt;img src="brand/choke-lockup-light.svg" alt="Choke!" width="220"&gt;</pre>
+  </section>
+
+  <section>
+    <h2>文件</h2>
+    <table>
+      <tr><th>文件</th><th>用途</th></tr>
+      <tr><td><code>choke-lockup.svg</code></td><td>默认主标识，浅底</td></tr>
+      <tr><td><code>choke-lockup-horizontal.svg</code></td><td>导航栏 / 页头，横向空间</td></tr>
+      <tr><td><code>choke-icon.svg</code></td><td>图标、头像、加载态</td></tr>
+      <tr><td><code>choke-wordmark.svg</code></td><td>只保留字标</td></tr>
+      <tr><td><code>choke-lockup-mono.svg</code></td><td>单色，跟随 <code>currentColor</code></td></tr>
+      <tr><td><code>choke-icon-mono.svg</code></td><td>单色图标</td></tr>
+      <tr><td><code>choke-lockup-light.svg</code></td><td>深色底，保留青/粉</td></tr>
+      <tr><td><code>choke-lockup-white.svg</code></td><td>深色底，纯白单色</td></tr>
+      <tr><td><code>png/</code>、<code>favicon.ico</code></td><td>栅格、社交头像、浏览器图标</td></tr>
+    </table>
+  </section>
+
+  <footer>
+    字标使用 Fredoka One（SIL OFL，可商用）轮廓化；图标几何来自原 Vector Magic 输出。
+  </footer>
+</div>
+</body>
+</html>
