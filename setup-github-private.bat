@@ -14,6 +14,23 @@ if not defined GH (
   exit /b 1
 )
 
+rem GitHub direct is usually blocked here; reuse the Windows system proxy
+rem (Clash Verge currently uses 127.0.0.1:7897).
+set "SYSPROXY="
+for /f "tokens=2,*" %%A in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer 2^>nul') do set "SYSPROXY=%%B"
+if defined CHOKE_PROXY set "SYSPROXY=%CHOKE_PROXY%"
+if defined SYSPROXY (
+  if /i not "%SYSPROXY:~0,7%"=="http://" set "SYSPROXY=http://%SYSPROXY%"
+  set "HTTP_PROXY=%SYSPROXY%"
+  set "HTTPS_PROXY=%SYSPROXY%"
+  set "ALL_PROXY=%SYSPROXY%"
+  echo [Choke!] Using proxy: %SYSPROXY%
+  git config --global http.https://github.com.proxy "%SYSPROXY%"
+  git config --global https.https://github.com.proxy "%SYSPROXY%"
+) else (
+  echo [Choke!] No system proxy detected; trying direct GitHub access.
+)
+
 "%GH%" auth status >nul 2>nul
 if errorlevel 1 (
   echo [Choke!] GitHub login is required. A browser window will open.
