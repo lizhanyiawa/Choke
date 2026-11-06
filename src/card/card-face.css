@@ -197,7 +197,7 @@
 .cf__lv b {
   font-family: var(--font-heading), var(--font-sans);
   font-size: 7.6cqw;
-  font-weight: 400;
+  font-weight: 350;
   line-height: 0.9;
   letter-spacing: 0;
   color: var(--ink);
@@ -305,7 +305,7 @@
   align-items: center;
   justify-content: space-between;
   padding-left: 2.2cqw;
-  border-left: 1px solid rgb(255 255 255 / 0.2);
+  border-left: 1px solid rgb(255 255 255 / 0.3);
 }
 
 .cf__star {
@@ -367,15 +367,15 @@
   place-items: center;
   width: 8.2cqw;
   height: 8.2cqw;
-  border: 1px solid color-mix(in srgb, var(--el, #8a9099) 34%, #5c5549);
+  border: 1px solid var(--line);
   border-radius: 1cqw;
-  color: color-mix(in srgb, var(--el, #8a9099) 38%, #2f2b24);
-  background: rgb(255 255 255 / 0.3);
+  color: color-mix(in srgb, var(--el, #8a9099) 26%, #2b2721);
+  background: rgb(255 255 255 / 0.34);
 }
 
 .cf__el svg {
-  width: 64%;
-  height: 64%;
+  width: 70%;
+  height: 70%;
   display: block;
 }
 
@@ -517,7 +517,7 @@
 .cf__bp b {
   font-family: var(--font-heading), var(--font-sans);
   font-size: 7.6cqw;
-  font-weight: 400;
+  font-weight: 350;
   line-height: 1;
   letter-spacing: 0.01em;
 }

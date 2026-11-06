@@ -36,6 +36,7 @@ if (opts.help) {
   --out <file>    输出文件，默认 data/osu-players.json
   --limit <n>     本次最多处理 n 个输入
   --rankings <n>  从 osu! 表现排行榜补充前 n 个玩家 id
+  --rankings-page <n> 从排行榜第 n 页开始取，默认 1
   --rate <ms>     每次请求间隔，默认 ${DEFAULT_RATE}ms（官方建议约 1 次/秒）
   --refresh       不跳过输出里已有的玩家
   --no-cache      忽略 .cache/osu-token.json
@@ -64,9 +65,9 @@ try {
 }
 
 if (opts.rankings) {
-  const ranked = await fetchRankings(opts.rankings, token)
+  const ranked = await fetchRankings(opts.rankings, token, opts.rankingsPage ?? 1)
   ids.push(...ranked)
-  console.log(`排行榜补充 ${ranked.length} 个 id`)
+  console.log(`排行榜第 ${opts.rankingsPage ?? 1} 页起补充 ${ranked.length} 个 id`)
 }
 
 const uniqueIds = [...new Set(ids)]
@@ -180,6 +181,9 @@ function parseArgs(argv) {
         break
       case "--rankings":
         opts.rankings = Number(next()) || 0
+        break
+      case "--rankings-page":
+        opts.rankingsPage = Math.max(1, Number(next()) || 1)
         break
       case "--rate":
         opts.rate = Math.max(0, Number(next()) || DEFAULT_RATE)
@@ -382,6 +386,7 @@ function toRow(user) {
       : null,
     avatarUrl: user.avatar_url ?? null,
     coverUrl: user.cover?.url ?? null,
+    lastSyncedAt: new Date().toISOString(),
   }
 }
 

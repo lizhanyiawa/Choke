@@ -51,6 +51,8 @@ npm run sync:osu -- --ids ids.txt
 | `--ids <file>` | — | 额外 id 列表，可叠加 |
 | `--out <file>` | `data/osu-players.json` | 输出位置 |
 | `--limit <n>` | 全部 | 本次最多处理多少条 |
+| `--rankings <n>` | 0 | 从表现排行榜补充前 n 个 id |
+| `--rankings-page <n>` | 1 | 从排行榜第 n 页开始取 |
 | `--rate <ms>` | 1100 | 请求间隔，官方建议约每秒 1 次 |
 | `--refresh` | 关 | 重新拉已经同步过的人 |
 | `--no-cache` | 关 | 不复用 `.cache/osu-token.json` |
@@ -69,6 +71,19 @@ npm run sync:osu -- --ids ids.txt
 ## 6. 速度
 
 10 万条按 1100ms 算是 30 小时左右。建议分几天跑，每天 `--limit` 一段；脚本会自动跳过已完成的人。真要压缩时间，先把 `--rate` 降到 800ms 试，别再低。
+
+## 6.1 抽样
+
+只取排行榜第 1 页会全是顶级玩家，稀有度分布会失真。要验证分布，按分段各取一页：
+
+```bash
+npm run sync:osu -- --rankings 50 --rankings-page 1   --out data/rank-1.json
+npm run sync:osu -- --rankings 50 --rankings-page 10  --out data/rank-500.json
+npm run sync:osu -- --rankings 50 --rankings-page 100 --out data/rank-5000.json
+npm run sync:osu -- --rankings 50 --rankings-page 400 --out data/rank-20000.json
+```
+
+实测参考：第 1 页约 3 万 pp、十万粉；第 100 页约 1 万 pp、几十到几百粉。两端的 signal 差一个数量级，只拿一端做样本会把档位全推到顶端。
 
 ## 7. 输出字段
 
