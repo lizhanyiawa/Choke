@@ -332,7 +332,7 @@ async function fetchUser(id, getCurrentToken, setToken, attempt = 0) {  const to
   return res.json()
 }
 
-async function fetchRankings(limit, token, page = 1, collected = []) {
+async function fetchRankings(limit, token, page = 1, collected = [], seen = new Set()) {
   if (collected.length >= limit) return collected.slice(0, limit)
   const res = await fetch(`${API}/rankings/osu/performance?page=${page}&filter=all`, {
     headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
@@ -340,7 +340,7 @@ async function fetchRankings(limit, token, page = 1, collected = []) {
   if (res.status === 429) {
     const wait = Number(res.headers.get("retry-after")) * 1000 || 5000
     await sleep(Math.min(wait, 60_000))
-    return fetchRankings(limit, token, page, collected)
+    return fetchRankings(limit, token, page, collected, seen)
   }
   if (!res.ok) {
     console.error(`排行榜拉取失败 HTTP ${res.status}，跳过这一部分。`)
@@ -348,15 +348,21 @@ async function fetchRankings(limit, token, page = 1, collected = []) {
   }
   const data = await res.json()
   const rows = data.ranking ?? []
+  let added = 0
   for (const row of rows) {
     const id = row.user?.id
-    if (typeof id === "number") collected.push(id)
+    if (typeof id === "number" && !seen.has(id)) {
+      seen.add(id)
+      collected.push(id)
+      added += 1
+    }
     if (collected.length >= limit) break
   }
-  if (rows.length === 0) return collected.slice(0, limit)
+  // 超过约 200 页后接口会重复返回最后一页，added 为 0 就停。
+  if (added === 0 || page >= 200) return collected.slice(0, limit)
   if (collected.length >= limit) return collected.slice(0, limit)
   await sleep(opts.rate)
-  return fetchRankings(limit, token, page + 1, collected)
+  return fetchRankings(limit, token, page + 1, collected, seen)
 }
 
 function toRow(user) {
