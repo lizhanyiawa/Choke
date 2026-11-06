@@ -28,4 +28,9 @@ dist-ssr
 .trae-html-share-packages/
 .tools/
 .testshots/
+
+# Secrets and sync output
+.env
+.cache/
+data/
 .tmp_holo/

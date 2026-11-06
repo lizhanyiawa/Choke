@@ -6,7 +6,7 @@ const KEY = "choke.desk.v2"
 export const ITEM_SIZE: Record<DeskItem["kind"], { w: number; h: number }> = {
   album: { w: 150, h: 200 },
   pack: { w: 170, h: 240 },
-  card: { w: 180, h: 252 },
+  card: { w: 168, h: 252 },
   mainline: { w: 170, h: 170 },
   market: { w: 150, h: 150 },
 }

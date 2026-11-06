@@ -1,0 +1,678 @@
+/* =========================================================
+   卡面 v0.3
+   全部内部尺寸以卡宽 = 100cqw 计量，卡高恒为 150cqw（2:3）
+   版式取自参照图实测：顶栏描边框（大圆徽章 + Lv + MOD）
+   插画窗 / 三条独立技能框 / 底栏一条 / 居中品牌
+   ========================================================= */
+
+.cf {
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 4% / 2.667%;
+  background: var(--frame-grad, #ded8cb);
+  box-shadow:
+    0 14px 34px -20px rgb(0 0 0 / 0.6),
+    0 0 0 0.4px rgb(0 0 0 / 0.28);
+  --paper: #ece6d9;
+  --ink: #3b362d;
+  --ink-soft: #6d665a;
+  --line: rgb(58 52 43 / 0.4);
+  --frame-w: 1.6cqw;
+  --rank-ink: #8e97a6;
+  color: var(--ink);
+  font-family: var(--font-heading), var(--font-cn), var(--font-sans);
+  user-select: none;
+  isolation: isolate;
+}
+
+/* ---------- 卡框材质（稀有度主识别） ---------- */
+
+.cf[data-rarity="C"] {
+  --frame-grad: linear-gradient(135deg, #e9e4da, #d6d0c2 55%, #eae5db);
+  --frame-w: 1.3cqw;
+  --rank-ink: #8e97a6;
+}
+
+.cf[data-rarity="UC"] {
+  --frame-grad: linear-gradient(135deg, #ded9cc, #bfb9a9 48%, #e4dfd2);
+  --frame-w: 1.6cqw;
+  --rank-ink: #3f9dbb;
+}
+
+.cf[data-rarity="R"] {
+  --frame-grad: linear-gradient(135deg, #f7e8bc, #c9a24e 38%, #f6edc9 55%, #b58b36 78%, #f0dfa9);
+  --frame-w: 1.9cqw;
+  --rank-ink: #b8862f;
+}
+
+.cf[data-rarity="E"] {
+  --frame-grad: linear-gradient(135deg, #f1f4f8, #a9b4c0 36%, #edf1f6 58%, #8c98a6 82%, #e4e9f0);
+  --frame-w: 2cqw;
+  --rank-ink: #78848f;
+}
+
+.cf[data-rarity="L"] {
+  --frame-grad: conic-gradient(from 215deg, #efe6fa, #c9b6e9, #f7f2fc, #b7a0df, #efe6fa);
+  --frame-w: 2.1cqw;
+  --rank-ink: #8a6ac8;
+}
+
+.cf[data-rarity="Radiant"] {
+  --frame-grad: linear-gradient(120deg, #d6f2e6, #8fd9bc 30%, #f0fcf7 52%, #71c4a4 74%, #cdeedf);
+  --frame-w: 2.2cqw;
+  --rank-ink: #2e9e74;
+}
+
+.cf[data-rarity="Prismatic"] {
+  --frame-grad: conic-gradient(from 80deg, #f5c2d0, #c9d8f5, #bfeedd, #f5edbf, #f5d2bf, #e3c2f0, #f5c2d0);
+  --frame-w: 2.3cqw;
+  --rank-ink: #6e6a86;
+}
+
+/* ---------- 卡身 ---------- */
+
+.cf__body {
+  position: absolute;
+  inset: var(--frame-w);
+  display: flex;
+  flex-direction: column;
+  gap: 3cqw;
+  box-sizing: border-box;
+  padding: 3.2cqw 3cqw 2.4cqw;
+  border-radius: 2.4cqw;
+  background: var(--paper);
+  overflow: hidden;
+}
+
+/* 纸面：极轻的斜光与边缘压暗 */
+.cf__body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 88% at 16% -6%, rgb(255 255 255 / 0.5), transparent 58%),
+    radial-gradient(96% 74% at 104% 106%, rgb(122 112 96 / 0.1), transparent 62%);
+}
+
+/* 内嵌细线：木刻感 */
+.cf__body::after {
+  content: "";
+  position: absolute;
+  inset: 1.2cqw;
+  border: 1px solid rgb(58 52 43 / 0.24);
+  border-radius: 1.8cqw;
+  pointer-events: none;
+}
+
+/* ---------- 顶栏：一个描边框，大圆徽章在左，右侧两行 ---------- */
+
+.cf__head {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 19cqw;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 2.2cqw;
+  padding: 1.6cqw 2.4cqw 1.6cqw 1.8cqw;
+  border: 1px solid var(--line);
+  border-radius: 1.4cqw;
+  background: rgb(255 255 255 / 0.16);
+}
+
+.cf__badge {
+  flex: 0 0 15.5cqw;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 15.5cqw;
+  height: 15.5cqw;
+  border: 1px solid color-mix(in srgb, var(--rank-ink) 62%, #4e473d);
+  border-radius: 50%;
+  color: color-mix(in srgb, var(--rank-ink) 55%, var(--ink));
+  background: linear-gradient(160deg, rgb(255 255 255 / 0.92), rgb(236 230 217 / 0.55));
+  box-shadow: inset 0 0 0 0.7cqw rgb(255 255 255 / 0.5);
+}
+
+.cf__badge svg {
+  width: 62%;
+  height: 62%;
+  display: block;
+}
+
+.cf__head-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.6cqw;
+}
+
+.cf__hd {
+  display: flex;
+  align-items: center;
+  gap: 1.6cqw;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.cf__rank-name {
+  flex: 0 1 auto;
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 2.8cqw;
+  font-weight: 450;
+  letter-spacing: 0.2em;
+  color: color-mix(in srgb, var(--rank-ink) 62%, #4e483e);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 品阶与等级之间那条横线 */
+.cf__rule {
+  flex: 1 1 auto;
+  height: 1px;
+  min-width: 2cqw;
+  margin: 0 0.4cqw;
+  background: var(--line);
+}
+
+.cf__lv {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 1.1cqw;
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 3.4cqw;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+}
+
+.cf__lv b {
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 7.6cqw;
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+.cf__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-heading), var(--font-cn), var(--font-sans);
+  font-size: 6.2cqw;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cf__mods {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0.9cqw;
+}
+
+.cf__mod {
+  display: grid;
+  place-items: center;
+  min-width: 6.4cqw;
+  height: 5.2cqw;
+  padding: 0 0.8cqw;
+  border: 1px solid var(--line);
+  border-radius: 0.9cqw;
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 3.2cqw;
+  font-weight: 450;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  background: rgb(255 255 255 / 0.34);
+}
+
+/* ---------- 插画窗 ---------- */
+
+.cf__art {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 1.6cqw;
+  overflow: hidden;
+  background: #171717;
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.55),
+    inset 0 1cqw 3cqw -2cqw rgb(0 0 0 / 0.7);
+}
+
+.cf__art-svg,
+.cf__art-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cf__art-banner {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.72;
+}
+
+.cf__art-avatar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 56%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  transform: translate(-50%, -50%);
+  border: 1cqw solid rgb(255 255 255 / 0.16);
+  border-radius: 50%;
+  box-shadow: 0 2cqw 6cqw -2cqw rgb(0 0 0 / 0.7);
+}
+
+.cf__art-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgb(0 0 0 / 0.28), transparent 18%, transparent 78%, rgb(0 0 0 / 0.42)),
+    radial-gradient(110% 80% at 50% 44%, transparent 52%, rgb(0 0 0 / 0.34));
+}
+
+/* 命座：插画窗右侧一竖列，六颗铺满高度，左侧带分隔细线 */
+.cf__stars {
+  position: absolute;
+  top: 3%;
+  bottom: 3%;
+  right: 9.5cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 2.2cqw;
+  border-left: 1px solid rgb(255 255 255 / 0.2);
+}
+
+.cf__star {
+  width: 7.2cqw;
+  height: 7.2cqw;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.75));
+}
+
+.cf__star--empty path {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.5);
+  stroke-width: 1.2;
+}
+
+.cf__star--copper path {
+  fill: #c08452;
+  stroke: #ecbf92;
+  stroke-width: 0.8;
+}
+
+.cf__star--prism path {
+  stroke: #f2e7ff;
+  stroke-width: 0.8;
+  fill-opacity: 0.72;
+}
+
+/* ---------- 技能区：每条一个独立框 ---------- */
+
+.cf__skills {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 38cqw;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2.6cqw;
+}
+
+.cf__skill {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 2cqw;
+  padding: 0 2.4cqw;
+  border: 1px solid var(--line);
+  border-radius: 1.2cqw;
+  background: rgb(255 255 255 / 0.14);
+}
+
+.cf__skill--empty {
+  opacity: 0.32;
+}
+
+.cf__el {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 8.2cqw;
+  height: 8.2cqw;
+  border: 1px solid color-mix(in srgb, var(--el, #8a9099) 34%, #5c5549);
+  border-radius: 1cqw;
+  color: color-mix(in srgb, var(--el, #8a9099) 38%, #2f2b24);
+  background: rgb(255 255 255 / 0.3);
+}
+
+.cf__el svg {
+  width: 64%;
+  height: 64%;
+  display: block;
+}
+
+/* 元素图标后的竖分隔线 */
+.cf__el-sep {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 1px;
+  margin: 1.5cqw 0;
+  background: var(--line);
+}
+
+.cf__skill-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-cn), var(--font-heading), var(--font-sans);
+  font-size: 4.8cqw;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cf__cost {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2.6cqw;
+  font-family: var(--font-heading), var(--font-sans);
+}
+
+.cf__ap,
+.cf__mp {
+  display: flex;
+  align-items: center;
+  gap: 1.2cqw;
+  white-space: nowrap;
+}
+
+.cf__ap i,
+.cf__mp i {
+  font-style: normal;
+  font-size: 3.6cqw;
+  font-weight: 450;
+  letter-spacing: 0.1em;
+  opacity: 0.78;
+}
+
+.cf__ap b,
+.cf__mp b {
+  font-size: 6cqw;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.cf__ap em,
+.cf__mp em {
+  width: 4.4cqw;
+  height: 4.4cqw;
+  border-radius: 0.5cqw;
+  transform: rotate(45deg);
+}
+
+.cf__ap {
+  color: #8e6218;
+}
+
+.cf__ap em {
+  background: #d9a63c;
+}
+
+.cf__mp {
+  color: #2b5f9e;
+}
+
+.cf__mp em {
+  background: #5b9bd5;
+}
+
+.cf__passive {
+  font-family: var(--font-cn), var(--font-heading), var(--font-sans);
+  font-size: 3.4cqw;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+}
+
+/* ---------- 底栏：一条描边框 ---------- */
+
+.cf__foot {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 12cqw;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 2.4cqw;
+  padding: 0 2.6cqw 0 2.4cqw;
+  border: 1px solid var(--line);
+  border-radius: 1.4cqw;
+  background: rgb(255 255 255 / 0.14);
+}
+
+.cf__job {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 9.4cqw;
+  height: 9.4cqw;
+  border: 1px solid color-mix(in srgb, var(--job) 58%, #45403a);
+  border-radius: 50%;
+  color: color-mix(in srgb, var(--job) 70%, #332f28);
+  background: rgb(255 255 255 / 0.34);
+}
+
+.cf__job svg {
+  width: 56%;
+  height: 56%;
+  display: block;
+}
+
+.cf__bp {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1.1cqw;
+  color: var(--bp);
+}
+
+.cf__bp i {
+  font-style: normal;
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 3.6cqw;
+  font-weight: 450;
+  letter-spacing: 0.14em;
+}
+
+.cf__bp b {
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 7.6cqw;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.cf__no {
+  margin-left: auto;
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 4.4cqw;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* ---------- 品牌位（居中） ---------- */
+
+.cf__brand {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 3.4cqw;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3.4cqw;
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 2.6cqw;
+  font-weight: 400;
+  letter-spacing: 0.26em;
+  color: #8c8679;
+}
+
+/* ---------- 箔面反光（静态，不做脉冲） ---------- */
+
+.cf__sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: soft-light;
+  background: linear-gradient(
+    116deg,
+    transparent 16%,
+    rgb(255 255 255 / 0.34) 34%,
+    rgb(255 255 255 / 0.05) 44%,
+    transparent 58%
+  );
+}
+
+.cf[data-rarity="R"] .cf__sheen {
+  opacity: 0.42;
+}
+
+.cf[data-rarity="E"] .cf__sheen {
+  opacity: 0.52;
+}
+
+.cf[data-rarity="L"] .cf__sheen {
+  opacity: 0.62;
+}
+
+.cf[data-rarity="Radiant"] .cf__sheen {
+  opacity: 0.7;
+}
+
+.cf[data-rarity="Prismatic"] .cf__sheen {
+  opacity: 0.82;
+}
+
+.cf__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* ---------- 战斗态：隐藏顶栏 / 底栏 / 品牌 ---------- */
+
+.cf[data-mode="battle"] .cf__head,
+.cf[data-mode="battle"] .cf__foot,
+.cf[data-mode="battle"] .cf__brand {
+  display: none;
+}
+
+.cf[data-mode="battle"] .cf__body {
+  padding: 2cqw;
+  gap: 2cqw;
+}
+
+.cf[data-mode="battle"] .cf__body::after {
+  inset: 0.8cqw;
+}
+
+.cf[data-mode="battle"] .cf__skills {
+  flex: 0 0 38cqw;
+}
+
+.cf[data-mode="battle"] .cf__skill {
+  border-color: rgb(255 255 255 / 0.16);
+  background: rgb(12 12 14 / 0.78);
+}
+
+.cf[data-mode="battle"] .cf__skill-name {
+  color: #f2efe9;
+}
+
+.cf[data-mode="battle"] .cf__passive {
+  color: rgb(242 239 233 / 0.6);
+}
+
+.cf[data-mode="battle"] .cf__el {
+  border-color: rgb(255 255 255 / 0.28);
+  background: rgb(255 255 255 / 0.1);
+  color: #f2efe9;
+}
+
+.cf[data-mode="battle"] .cf__el-sep {
+  background: rgb(255 255 255 / 0.16);
+}
+
+.cf[data-mode="battle"] .cf__ap {
+  color: #e8b25c;
+}
+
+.cf[data-mode="battle"] .cf__mp {
+  color: #7db6ea;
+}
+
+/* ---------- 小尺寸：只留立绘 + 技能图标 ---------- */
+
+@container (max-width: 140px) {
+  .cf__skill-name,
+  .cf__cost,
+  .cf__el-sep {
+    display: none;
+  }
+
+  .cf__skills {
+    flex: 0 0 30cqw;
+    gap: 1.6cqw;
+  }
+
+  .cf[data-mode="battle"] .cf__skills {
+    flex: 0 0 32cqw;
+  }
+
+  .cf[data-mode="battle"] .cf__skill {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .cf__el {
+    width: 11cqw;
+    height: 11cqw;
+  }
+}

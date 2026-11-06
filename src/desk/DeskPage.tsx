@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react"
+import { CardFace } from "@/card/CardFace"
+
+import { cardFromDesk } from "./cardFace"
 import { CommandPanel } from "./CommandPanel"
-import { HoloCard2D } from "./HoloCard2D"
 import { POOL_META, POOL_ORDER, rollPack } from "./rarity"
 import { SidePanel, type PanelRow } from "./SidePanel"
 import { DEFAULT_SKIN } from "./skins"
@@ -300,8 +302,11 @@ export function DeskPage() {
             >
               快速收卡
             </button>
+            <a className="desk-button desk-button--link" href="/card-lab">
+              卡面
+            </a>
             <a className="desk-button desk-button--link" href="/holo-lab.html" target="_blank" rel="noreferrer">
-              卡面实验室
+              全息参考
             </a>
             <button type="button" className="desk-button" onClick={reset}>
               重置桌面
@@ -363,7 +368,7 @@ export function DeskPage() {
               role="group"
               aria-label={labelOf(item)}
             >
-              <ItemView item={item} dragging={dragging} />
+              <ItemView item={item} />
             </div>
           )
         })}
@@ -479,7 +484,7 @@ function labelOf(item: DeskItem) {
   }
 }
 
-function ItemView({ item, dragging }: { item: DeskItem; dragging: boolean }) {
+function ItemView({ item }: { item: DeskItem }) {
   switch (item.kind) {
     case "pack": {
       const meta = POOL_META[item.pool ?? "normal"]
@@ -519,13 +524,6 @@ function ItemView({ item, dragging }: { item: DeskItem; dragging: boolean }) {
         </div>
       )
     case "card":
-      return item.card ? (
-        <HoloCard2D
-          card={item.card}
-          width={ITEM_SIZE.card.w}
-          height={ITEM_SIZE.card.h}
-          tilt={!dragging}
-        />
-      ) : null
+      return item.card ? <CardFace card={cardFromDesk(item.card)} /> : null
   }
 }

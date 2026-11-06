@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, type PointerEvent } from "react"
-import { HoloCard2D } from "../HoloCard2D"
+import { CardFace } from "@/card/CardFace"
+import { cardFromDesk } from "../cardFace"
 import { RARITY_COLOR } from "../rarity"
 import type { CardData, Rarity } from "../types"
 
@@ -126,7 +127,9 @@ export function Pack2D({ cards, onDone, onQuick, onCancel, label = "卡包", acc
                   }}
                 >
                   <div className="opener-2d__card-inner" style={{ animationDelay: `${i * 90}ms` }}>
-                    <HoloCard2D card={card} width={140} height={196} />
+                    <div style={{ width: 140 }}>
+                      <CardFace card={cardFromDesk(card)} />
+                    </div>
                   </div>
                 </div>
               )
