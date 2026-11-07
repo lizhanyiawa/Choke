@@ -18,7 +18,7 @@
 
 :root {
   
-  --card-aspect: 0.718;
+  --card-aspect: 0.6667;
   --card-radius: 4.55% / 3.5%;
   --card-edge: hsl(47, 100%, 78%);
   --card-back: hsl(205, 100%, 25%);
