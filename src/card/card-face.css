@@ -1,8 +1,6 @@
 /* =========================================================
-   卡面 v0.3
+   卡面 v0.5 — 异形分块版
    全部内部尺寸以卡宽 = 100cqw 计量，卡高恒为 150cqw（2:3）
-   版式取自参照图实测：顶栏描边框（大圆徽章 + Lv + MOD）
-   插画窗 / 三条独立技能框 / 底栏一条 / 居中品牌
    ========================================================= */
 
 .cf {
@@ -10,243 +8,223 @@
   position: relative;
   width: 100%;
   aspect-ratio: 2 / 3;
-  border-radius: 4% / 2.667%;
-  background: var(--frame-grad, #ded8cb);
+  /* 注意：.cf 自身是 container 根节点，自身属性不可用 cqw（否则会按视口宽度计算导致小卡变椭圆），必须用百分比 */
+  border-radius: 5.4% / 3.6%;
+  background: var(--frame-grad, #e9e4da);
   box-shadow:
-    0 14px 34px -20px rgb(0 0 0 / 0.6),
-    0 0 0 0.4px rgb(0 0 0 / 0.28);
-  --paper: #e9e2d5;
-  --panel: #2b2721;
-  --panel-ink: #f4efe6;
-  --panel-line: rgb(255 255 255 / 0.16);
-  --slot-ink: #2f2a23;
-  --accent: #9a8f7d;
-  --accent-ink: #241f18;
-  --ink: #3b362d;
-  --ink-soft: #6d665a;
-  --line: rgb(58 52 43 / 0.4);
-  --frame-w: 1.6cqw;
-  --pad-x: 4cqw;
-  --rank-ink: #8e97a6;
-  color: var(--ink);
+    0 16px 38px -18px rgb(0 0 0 / 0.65),
+    inset 0 0 0 1px var(--frame-rim, rgb(255 255 255 / 0.45)),
+    0 0 0 0.5px rgb(0 0 0 / 0.32);
+  --paper: #fcfbf9;
+  --panel: #211c48;
+  --panel-ink: #ffffff;
+  --slot-ink: #12101b;
+  --accent: #d4b263;
+  --frame-w: 2.2cqw;
+  --pad-x: 1.8cqw;
+  color: var(--slot-ink);
   font-family: var(--font-heading), var(--font-cn), var(--font-sans);
   user-select: none;
   isolation: isolate;
 }
 
-/* ---------- 卡框材质（稀有度主识别） ---------- */
+/* ---------- 七档稀有度色板：外框材质 + 外框描边 + --panel + --accent ---------- */
 
 .cf[data-rarity="C"] {
-  --frame-grad: linear-gradient(135deg, #e9e4da, #d6d0c2 55%, #eae5db);
-  --frame-w: 1.3cqw;
-  --rank-ink: #8e97a6;
-  --panel: #2b2721;
-  --accent: #9a8f7d;
+  --frame-grad: linear-gradient(135deg, #d8d0c2, #b5ab99 52%, #e2dcd0);
+  --frame-rim: #9e9483;
+  --frame-w: 2.2cqw;
+  --panel: #2b2823;
+  --accent: #a69880;
 }
 
 .cf[data-rarity="UC"] {
-  --frame-grad: linear-gradient(135deg, #ded9cc, #bfb9a9 48%, #e4dfd2);
-  --frame-w: 1.6cqw;
-  --rank-ink: #3f9dbb;
-  --panel: #222a2c;
+  --frame-grad: linear-gradient(135deg, #b8dce6, #5ca8bc 48%, #cce8f0);
+  --frame-rim: #4996ab;
+  --frame-w: 2.3cqw;
+  --panel: #192d33;
   --accent: #4fb3cc;
 }
 
 .cf[data-rarity="R"] {
-  --frame-grad: linear-gradient(135deg, #f7e8bc, #c9a24e 38%, #f6edc9 55%, #b58b36 78%, #f0dfa9);
-  --frame-w: 1.9cqw;
-  --rank-ink: #b8862f;
-  --panel: #2d2418;
-  --accent: #c9a24e;
+  --frame-grad: linear-gradient(135deg, #f6dc96, #c4922e 38%, #faecc2 55%, #a8761c 78%, #efd282);
+  --frame-rim: #c99838;
+  --frame-w: 2.4cqw;
+  --panel: #302215;
+  --accent: #d4a64a;
 }
 
 .cf[data-rarity="E"] {
-  --frame-grad: linear-gradient(135deg, #f1f4f8, #a9b4c0 36%, #edf1f6 58%, #8c98a6 82%, #e4e9f0);
-  --frame-w: 2cqw;
-  --rank-ink: #78848f;
-  --panel: #252932;
-  --accent: #a9b4c0;
+  --frame-grad: linear-gradient(135deg, #d8e3f2, #7e94b0 36%, #e8eff8 58%, #647b99 82%, #cad8ec);
+  --frame-rim: #748aa6;
+  --frame-w: 2.5cqw;
+  --panel: #1e2536;
+  --accent: #a9b7c9;
 }
 
 .cf[data-rarity="L"] {
-  --frame-grad: conic-gradient(from 215deg, #efe6fa, #c9b6e9, #f7f2fc, #b7a0df, #efe6fa);
-  --frame-w: 2.1cqw;
-  --rank-ink: #8a6ac8;
-  --panel: #24203a;
-  --accent: #c9a24e;
+  --frame-grad: conic-gradient(from 215deg, #dfcffa, #9e7be0, #f0e6fd, #8862d2, #dfcffa);
+  --frame-rim: #9b78de;
+  --frame-w: 2.6cqw;
+  --panel: #211c48;
+  --accent: #d4b263;
 }
 
 .cf[data-rarity="Radiant"] {
-  --frame-grad: linear-gradient(120deg, #d6f2e6, #8fd9bc 30%, #f0fcf7 52%, #71c4a4 74%, #cdeedf);
-  --frame-w: 2.2cqw;
-  --rank-ink: #2e9e74;
-  --panel: #173029;
-  --accent: #21e985;
+  --frame-grad: linear-gradient(120deg, #b0eed4, #45c496 30%, #e0fbf0 52%, #2fa87d 74%, #a4e8cb);
+  --frame-rim: #36b88a;
+  --frame-w: 2.7cqw;
+  --panel: #132d25;
+  --accent: #35df8e;
 }
 
 .cf[data-rarity="Prismatic"] {
-  --frame-grad: conic-gradient(from 80deg, #f5c2d0, #c9d8f5, #bfeedd, #f5edbf, #f5d2bf, #e3c2f0, #f5c2d0);
-  --frame-w: 2.3cqw;
-  --rank-ink: #6e6a86;
-  --panel: #2a2033;
-  --accent: #e3c2f0;
+  --frame-grad: conic-gradient(from 80deg, #f29cb3, #9dbbf2, #94e3ca, #f2e194, #f2b494, #d199eb, #f29cb3);
+  --frame-rim: #c997e6;
+  --frame-w: 2.8cqw;
+  --panel: #2a1c38;
+  --accent: #e3bcf2;
 }
 
-/* ---------- 卡身 ---------- */
+/* ---------- 卡身与统一异形内框 ---------- */
 
 .cf__body {
   position: absolute;
   inset: var(--frame-w);
-  display: flex;
-  flex-direction: column;
-  gap: 2.6cqw;
   box-sizing: border-box;
-  padding: 2.6cqw var(--pad-x) 2.4cqw;
-  border-radius: 2.4cqw;
+  padding: var(--pad-x);
+  border-radius: 3.9cqw;
   background: var(--paper);
   color: var(--slot-ink);
+  box-shadow: 0 0 0 0.25cqw rgb(0 0 0 / 0.14);
   overflow: hidden;
 }
 
-/* 纸面：极轻的斜光与边缘压暗 */
-.cf__body::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    radial-gradient(120% 88% at 16% -6%, rgb(255 255 255 / 0.5), transparent 58%),
-    radial-gradient(96% 74% at 104% 106%, rgb(122 112 96 / 0.1), transparent 62%);
+/* 92cqw × 142cqw 内容骨架容器 */
+.cf__frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
 }
 
-/* ---------- 顶栏：圆圈向引出两条横线，右侧内容 ---------- */
+.cf__frame-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ---------- 1. 头部：左上深蓝异形块 + 大圆立体徽章 + 右侧白底信息 ---------- */
 
 .cf__head {
   position: relative;
   z-index: 2;
-  flex: 0 0 33cqw;
+  flex: 0 0 29cqw;
   min-height: 0;
-  display: flex;
-  align-items: center;
-  gap: 2.2cqw;
-  padding: 2cqw;
-  border-radius: 2cqw;
-  background: var(--panel);
-  color: var(--panel-ink);
 }
 
+/* 顶部深蓝条内的稀有度英文 */
+.cf__rank-name {
+  position: absolute;
+  top: 0.2cqw;
+  left: 28cqw;
+  width: 32cqw;
+  height: 5.8cqw;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 2.75cqw;
+  font-weight: 500;
+  letter-spacing: 0.26em;
+  color: var(--panel-ink);
+  white-space: nowrap;
+}
+
+/* 右上角等级 Lv. 68 */
+.cf__lv {
+  position: absolute;
+  top: 1.2cqw;
+  right: 2.4cqw;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6cqw;
+  font-family: var(--font-heading), var(--font-sans);
+  color: var(--slot-ink);
+}
+
+.cf__lv i {
+  font-style: normal;
+  font-size: 4cqw;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.cf__lv b {
+  font-size: 6.8cqw;
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+
+/* 左上角大圆立体徽章 */
 .cf__badge {
-  flex: 0 0 15cqw;
-  align-self: center;
-  display: grid;
-  place-items: center;
-  width: 15cqw;
-  height: 15cqw;
-  border: 0.7cqw solid var(--accent);
+  position: absolute;
+  top: 1.6cqw;
+  left: 1.8cqw;
+  z-index: 3;
+  width: 25.4cqw;
+  height: 25.4cqw;
   border-radius: 50%;
-  color: var(--accent);
-  background:
-    radial-gradient(80% 80% at 32% 24%, rgb(255 255 255 / 0.1), transparent 58%),
-    var(--panel);
-  box-shadow:
-    inset 0 0 0 0.3cqw rgb(0 0 0 / 0.35),
-    0 0.4cqw 1cqw -0.4cqw rgb(0 0 0 / 0.5);
+  filter: drop-shadow(0 0.5cqw 0.9cqw rgb(0 0 0 / 0.32));
 }
 
 .cf__badge svg {
-  width: 62%;
-  height: 62%;
+  width: 100%;
+  height: 100%;
   display: block;
 }
 
+/* 右侧白卡信息区 */
 .cf__head-info {
-  flex: 1 1 auto;
-  min-width: 0;
+  position: absolute;
+  top: 6.3cqw;
+  left: 29.2cqw;
+  right: 2.2cqw;
+  bottom: 0.2cqw;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0;
 }
 
 .cf__name-card {
   display: flex;
   flex-direction: column;
-  gap: 1cqw;
-  padding: 1.4cqw 1.8cqw;
-  border-radius: 1.6cqw;
-  background: var(--paper);
+  gap: 0.65cqw;
+  background: transparent;
   color: var(--slot-ink);
 }
 
-.cf__rank-row {
-  display: flex;
-  align-items: center;
-  gap: 1.4cqw;
-  min-height: 0;
-}
-
-.cf__meta-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.6cqw;
-  min-height: 4.4cqw;
-}
-
-.cf__rank-name {
-  flex: 0 1 auto;
-  font-family: var(--font-heading), var(--font-sans);
-  font-size: 3.1cqw;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  color: color-mix(in srgb, var(--accent) 62%, #241f18);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 品阶与等级之间那条横线 */
-.cf__rule {
-  flex: 1 1 auto;
-  height: 1px;
-  min-width: 2cqw;
-  margin: 0 0.4cqw;
-  background: rgb(0 0 0 / 0.16);
-}
-
-.cf__lv {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: baseline;
-  gap: 0.7cqw;
-  font-family: var(--font-heading), var(--font-sans);
-  font-size: 3cqw;
-  font-weight: 450;
-  letter-spacing: 0.1em;
-  color: rgb(0 0 0 / 0.45);
-}
-
-.cf__lv b {
-  font-family: var(--font-heading), var(--font-sans);
-  font-size: 5.6cqw;
-  font-weight: 500;
-  line-height: 0.9;
-  letter-spacing: 0;
-  color: var(--slot-ink);
-}
-
-/* 卡名：无框大字，直接压在纸面上 */
 .cf__name {
   display: block;
   width: 100%;
   min-width: 0;
   margin: 0;
   font-family: var(--font-heading), var(--font-cn), var(--font-sans);
-  font-size: 6.6cqw;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.01em;
+  font-size: 8.2cqw;
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
   color: var(--slot-ink);
   text-align: left;
   text-decoration: none;
@@ -255,318 +233,312 @@
   text-overflow: ellipsis;
 }
 
-/* 身份行：国家 / 全球排名 / pp */
-.cf__meta {
+.cf__meta-row {
   display: flex;
   align-items: center;
-  gap: 2.4cqw;
-  min-height: 5.2cqw;
+  justify-content: space-between;
+  gap: 1.2cqw;
+  min-height: 3.8cqw;
 }
 
 .cf__identity {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
-  align-items: baseline;
-  gap: 1.1cqw;
+  align-items: center;
+  gap: 0.9cqw;
   font-family: var(--font-heading), var(--font-sans);
   font-variant-numeric: tabular-nums;
-  font-size: 3.2cqw;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: rgb(0 0 0 / 0.55);
+  font-size: 3.25cqw;
+  font-weight: 600;
+  color: var(--slot-ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .cf__identity > span + span::before {
-  content: "";
-  display: inline-block;
-  width: 0.7cqw;
-  height: 0.7cqw;
-  margin-right: 1.1cqw;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.45;
-  vertical-align: middle;
+  content: "·";
+  margin-right: 0.9cqw;
+  font-weight: 700;
+  opacity: 0.65;
 }
 
 .cf__country {
   font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--slot-ink);
+  letter-spacing: 0.04em;
 }
 
-.cf__grank {
-  color: var(--slot-ink);
+.cf__sub-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2cqw;
+  min-height: 4.8cqw;
+  margin-top: 0.15cqw;
 }
 
-.cf__ppnum {
-  color: color-mix(in srgb, var(--accent) 70%, #241f18);
+/* 预留给后续扩展元素的左侧槽位 */
+.cf__head-slot {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 1.2cqw;
 }
 
+/* MOD 胶囊：放大 + 深色面板背景衬浅色文字 */
 .cf__mods {
   flex: 0 0 auto;
+  margin-left: auto;
   display: flex;
-  gap: 0.6cqw;
+  align-items: center;
+  gap: 0.75cqw;
 }
 
 .cf__mod {
   display: grid;
   place-items: center;
-  min-width: 4.8cqw;
-  height: 4.2cqw;
-  padding: 0 0.6cqw;
-  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
-  border-radius: 0.7cqw;
+  min-width: 6.2cqw;
+  height: 4.4cqw;
+  padding: 0 1cqw;
+  border: 0.25cqw solid color-mix(in srgb, var(--accent) 55%, var(--panel));
+  border-radius: 1.15cqw;
   font-family: var(--font-heading), var(--font-sans);
-  font-size: 2.8cqw;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+  font-size: 2.85cqw;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--panel-ink);
+  background: var(--panel);
+  box-shadow: 0 0.25cqw 0.5cqw rgb(0 0 0 / 0.16);
 }
 
-/* ---------- 插画窗 ---------- */
+/* ---------- 2. 插画窗：深蓝底框 + 一体化金色阶梯内描边 + 命座六星 ---------- */
 
 .cf__art {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   flex: 1 1 auto;
   min-height: 0;
-  border-radius: 2cqw;
+  margin: 0.6cqw 1.8cqw 0;
+  border-radius: 2.2cqw;
   overflow: hidden;
-  background: #0c0b10;
-  box-shadow:
-    inset 0 0 0 1px rgb(0 0 0 / 0.55),
-    inset 0 1cqw 3cqw -2cqw rgb(0 0 0 / 0.7);
+  background: var(--panel);
 }
 
-/* 插画框：深蓝 → 白 → 深蓝 → 金 的多层描边 */
-.cf__art::after {
-  content: "";
+.cf__art-screen {
   position: absolute;
-  inset: 0;
-  z-index: 5;
-  border-radius: inherit;
-  pointer-events: none;
-  box-shadow:
-    inset 0 0 0 0.7cqw var(--panel),
-    inset 0 0 0 1.15cqw #f2ecdf,
-    inset 0 0 0 1.75cqw var(--panel),
-    inset 0 0 0 2.15cqw var(--accent),
-    inset 0 0 0 2.5cqw var(--panel);
+  inset: 1.2cqw;
+  border-radius: 1.4cqw;
+  overflow: hidden;
+  background: #040407;
 }
 
-/* 从金线内侧延出的一层渐变，让边框不是死的 */
-.cf__art::before {
-  content: "";
-  position: absolute;
-  inset: 2.5cqw;
-  z-index: 4;
-  border-radius: 1.2cqw;
-  pointer-events: none;
-  padding: 0.22cqw;
-  background: linear-gradient(180deg, var(--accent), transparent 45%, transparent 60%, var(--accent));
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-}
-
-.cf__art-svg,
-.cf__art-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
+/* 玩家主页 banner 作为立绘背景铺满 */
 .cf__art-banner {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.72;
+  opacity: 0.78;
 }
 
+/* 玩家头像始终居于立绘窗正中央 */
 .cf__art-avatar {
   position: absolute;
-  top: 50%;
+  top: 45%;
   left: 50%;
-  width: 56%;
+  width: 52%;
   aspect-ratio: 1;
   object-fit: cover;
   transform: translate(-50%, -50%);
-  border: 1cqw solid rgb(255 255 255 / 0.16);
+  border: 0.85cqw solid rgb(255 255 255 / 0.22);
   border-radius: 50%;
-  box-shadow: 0 2cqw 6cqw -2cqw rgb(0 0 0 / 0.7);
+  box-shadow: 0 2cqw 6cqw -2cqw rgb(0 0 0 / 0.75);
 }
 
 .cf__art-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(180deg, rgb(0 0 0 / 0.28), transparent 18%, transparent 78%, rgb(0 0 0 / 0.42)),
-    radial-gradient(110% 80% at 50% 44%, transparent 52%, rgb(0 0 0 / 0.34));
+  background: radial-gradient(120% 90% at 50% 45%, transparent 58%, rgb(0 0 0 / 0.38));
 }
 
-/* 命座：立绘框底部深色条 + 白色圆弧凹槽 */
+/* 一体化金色阶梯边框 SVG */
+.cf__art-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* 底部梯形凹槽内的六颗星 */
 .cf__stars-strip {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 50%;
   bottom: 0;
-  z-index: 6;
-  height: 8cqw;
-  border-radius: 0 0 2cqw 2cqw;
-  background: var(--panel);
+  transform: translateX(-50%);
+  z-index: 5;
+  width: 58cqw;
+  height: 7.7cqw;
+  pointer-events: none;
 }
 
 .cf__stars {
   position: absolute;
   left: 50%;
-  bottom: 0;
+  bottom: 1.05cqw;
   transform: translateX(-50%);
-  height: 5.4cqw;
-  padding: 0 2.4cqw;
   display: flex;
   align-items: center;
-  gap: 0.8cqw;
-  border-radius: 2.7cqw 2.7cqw 0 0;
-  background: var(--paper);
+  gap: 1.55cqw;
 }
 
 .cf__star {
-  width: 4.2cqw;
-  height: 4.2cqw;
+  width: 4.4cqw;
+  height: 4.4cqw;
   display: block;
 }
 
-.cf__star--empty path {
-  fill: none;
-  stroke: rgb(0 0 0 / 0.32);
-  stroke-width: 1.2;
+.cf__star path {
+  stroke-linejoin: round;
+  stroke-linecap: round;
 }
 
 .cf__star--copper path {
-  fill: #c08452;
-  stroke: #ecbf92;
-  stroke-width: 0.8;
-}
-
-.cf__star--prism path {
-  stroke: #f2e7ff;
-  stroke-width: 0.8;
-  fill-opacity: 0.72;
-}
-
-.cf__stars-count {
-  margin-left: 0.6cqw;
-  font-family: var(--font-heading), var(--font-sans);
-  font-variant-numeric: tabular-nums;
-  font-size: 2.4cqw;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: rgb(0 0 0 / 0.55);
-}
-
-.cf__star--empty path {
-  fill: none;
-  stroke: rgb(255 255 255 / 0.5);
+  fill: #ffffff;
+  stroke: #ffffff;
   stroke-width: 1.2;
 }
 
-.cf__star--copper path {
-  fill: #c08452;
-  stroke: #ecbf92;
-  stroke-width: 0.8;
+.cf__star--empty path {
+  fill: #ffffff;
+  stroke: #ffffff;
+  stroke-width: 1.2;
+  opacity: 0.34;
 }
 
 .cf__star--prism path {
-  stroke: #f2e7ff;
-  stroke-width: 0.8;
-  fill-opacity: 0.72;
+  stroke: #ffffff;
+  stroke-width: 1;
 }
 
-/* ---------- 技能区：每条一个独立框 ---------- */
+/* ---------- 3. 技能区：三条双层异形胶囊 ---------- */
 
 .cf__skills {
   position: relative;
   z-index: 2;
-  flex: 0 0 34cqw;
+  flex: 0 0 36.2cqw;
   min-height: 0;
+  margin: 1.9cqw 1.8cqw;
   display: flex;
   flex-direction: column;
-  gap: 2.6cqw;
+  gap: 2.05cqw;
 }
 
 .cf__skill {
   flex: 1 1 0;
   min-height: 0;
+  box-sizing: border-box;
+  padding: 0.42cqw;
+  border: 0.28cqw solid #aba8b5;
+  border-radius: 2.2cqw;
+  background: linear-gradient(180deg, #ffffff 0%, #dfdde6 100%);
+  box-shadow: 0 0.45cqw 0.8cqw rgb(0 0 0 / 0.1);
+}
+
+.cf__skill-track {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
-  gap: 0;
-  padding: 0.5cqw;
-  border-radius: 999px;
-  background: var(--panel);
+  border-radius: 1.75cqw;
+  background: #0a0a0f;
+  overflow: hidden;
 }
 
 .cf__skill-body {
-  flex: 1 1 auto;
+  flex: 0 0 71%;
   min-width: 0;
   align-self: stretch;
   display: flex;
   align-items: center;
   gap: 2cqw;
-  padding: 0 2.4cqw;
-  border-radius: 999px;
-  background: var(--paper);
+  padding: 0 2.6cqw 0 1cqw;
+  border-radius: 1.65cqw 999px 999px 1.65cqw;
+  background: #ffffff;
   color: var(--slot-ink);
+  box-shadow:
+    0.55cqw 0 0 #cfccd8,
+    0.85cqw 0 0.25cqw rgb(0 0 0 / 0.45);
+}
+
+.cf__skill--mp .cf__skill-body {
+  flex: 0 0 54%;
+}
+
+.cf__skill--mp .cf__cost {
+  gap: 0.7cqw;
+  padding-right: 1.5cqw;
+}
+
+.cf__skill--mp .cf__ap i,
+.cf__skill--mp .cf__mp i {
+  width: auto;
+  font-size: 2.7cqw;
+}
+
+.cf__skill--mp .cf__ap b,
+.cf__skill--mp .cf__mp b {
+  width: 2.8cqw;
+  font-size: 4.8cqw;
+}
+
+.cf__skill--mp .cf__ap-gem {
+  width: 2.5cqw;
+  height: 3.7cqw;
 }
 
 .cf__skill--empty {
-  opacity: 0.32;
+  opacity: 0.35;
 }
 
 .cf__el {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 8.2cqw;
-  height: 8.2cqw;
-  border: 1px solid color-mix(in srgb, var(--el, #8a9099) 45%, #1a1712);
-  border-radius: 1cqw;
-  color: color-mix(in srgb, var(--el, #8a9099) 78%, #1a1712);
-  background: color-mix(in srgb, var(--el, #8a9099) 16%, #f4efe6);
+  width: 7.4cqw;
+  height: 7.4cqw;
+  border-radius: 1.45cqw;
+  color: var(--accent);
+  background: #0b0b10;
 }
 
 .cf__el svg {
-  width: 70%;
-  height: 70%;
+  width: 68%;
+  height: 68%;
   display: block;
 }
 
-/* 元素图标后的竖分隔线 */
 .cf__el-sep {
   flex: 0 0 auto;
-  align-self: stretch;
-  width: 1px;
-  margin: 1.5cqw 0;
-  background: rgb(0 0 0 / 0.16);
+  width: 0.28cqw;
+  height: 5.2cqw;
+  border-radius: 999px;
+  background: #c5c2ce;
 }
 
 .cf__skill-name {
   flex: 1 1 auto;
   min-width: 0;
   font-family: var(--font-cn), var(--font-heading), var(--font-sans);
-  font-size: 5.6cqw;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-size: 5.1cqw;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--slot-ink);
   white-space: nowrap;
   overflow: hidden;
@@ -574,176 +546,187 @@
 }
 
 .cf__cost {
-  flex: 0 0 22cqw;
-  margin-left: auto;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 1.2cqw;
+  gap: 1cqw;
+  padding-right: 2.1cqw;
   font-family: var(--font-heading), var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
 }
 
+/* 固定列宽：保证不同行的 AP 字母与字母垂直对齐、数字与数字垂直对齐 */
 .cf__ap,
 .cf__mp {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.6cqw;
-  min-width: 8cqw;
+  gap: 0.55cqw;
   white-space: nowrap;
 }
 
 .cf__ap i,
 .cf__mp i {
+  display: inline-block;
+  width: 4.8cqw;
+  text-align: right;
   font-style: normal;
-  font-size: 2.8cqw;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  opacity: 0.6;
+  font-size: 3.3cqw;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #ffffff;
 }
 
 .cf__ap b,
 .cf__mp b {
-  font-size: 7cqw;
-  font-weight: 500;
+  display: inline-block;
+  width: 3.5cqw;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 5.8cqw;
+  font-weight: 700;
   line-height: 1;
+  color: #ffffff;
 }
 
-.cf__ap em,
-.cf__mp em {
-  width: 4.2cqw;
-  height: 4.2cqw;
-  border-radius: 0.5cqw;
-  transform: rotate(45deg);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.28);
-}
-
-.cf__ap {
+.cf__ap-gem {
+  width: 3.1cqw;
+  height: 4.5cqw;
   color: var(--accent);
+  flex: 0 0 auto;
 }
 
-.cf__ap em {
-  background: var(--accent);
-}
-
-.cf__mp {
-  color: #7db6ea;
-}
-
-.cf__mp em {
-  background: #7db6ea;
+.cf__mp i,
+.cf__mp b {
+  color: #8cc4f8;
 }
 
 .cf__passive {
-  margin-left: auto;
-  font-family: var(--font-cn), var(--font-heading), var(--font-sans);
-  font-size: 4cqw;
-  letter-spacing: 0.14em;
-  color: color-mix(in srgb, var(--panel-ink) 70%, transparent);
+  font-family: var(--font-heading), var(--font-cn), var(--font-sans);
+  font-size: 3.9cqw;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #ffffff;
 }
 
-/* ---------- 底栏：职业圆 + BP 主数字 + 编号 ---------- */
+/* ---------- 4. 底栏：左大右小深蓝异形块 + 右侧编号胶囊 + 底部品牌缺口 ---------- */
 
 .cf__foot {
   position: relative;
   z-index: 2;
-  flex: 0 0 16cqw;
+  flex: 0 0 17.8cqw;
   width: 100%;
   min-height: 0;
+}
+
+.cf__foot-main {
+  position: absolute;
+  top: 0.2cqw;
+  left: 3.4cqw;
+  width: 52cqw;
+  height: 13.2cqw;
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: 2.4cqw;
-  margin: 0;
-  padding: 2cqw 2.4cqw 3.8cqw;
-  border-radius: 2cqw;
-  background: var(--panel);
-}
-
-.cf__bp {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 1.2cqw;
-  white-space: nowrap;
-  color: var(--accent);
-}
-
-.cf__bp i {
-  font-style: normal;
-  font-family: var(--font-heading), var(--font-sans);
-  font-size: 3.4cqw;
-  font-weight: 450;
-  letter-spacing: 0.14em;
-}
-
-.cf__bp b {
-  font-family: var(--font-heading), var(--font-sans);
-  font-size: 7.4cqw;
-  font-weight: 350;
-  line-height: 1;
-  letter-spacing: 0.01em;
+  gap: 1.6cqw;
+  color: var(--panel-ink);
 }
 
 .cf__job {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 10cqw;
-  height: 10cqw;
-  border: 0.6cqw solid var(--accent);
-  border-radius: 50%;
-  color: var(--accent);
-  background: var(--panel);
-  box-shadow: inset 0 0 0 0.3cqw rgb(0 0 0 / 0.35);
+  width: 5.8cqw;
+  height: 5.8cqw;
+  color: var(--panel-ink);
 }
 
 .cf__job svg {
-  width: 56%;
-  height: 56%;
+  width: 100%;
+  height: 100%;
   display: block;
 }
 
-.cf__no {
+.cf__foot-sep {
   flex: 0 0 auto;
+  width: 0.26cqw;
+  height: 5.4cqw;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.65);
+}
+
+.cf__bp {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.9cqw;
+  white-space: nowrap;
+  color: var(--panel-ink);
+}
+
+.cf__bp i {
+  font-style: normal;
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 3.5cqw;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.cf__bp b {
+  font-family: var(--font-heading), var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-size: 6.4cqw;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+/* 右侧独立编号胶囊 */
+.cf__no {
+  position: absolute;
+  top: 4.8cqw;
+  right: 2.2cqw;
+  z-index: 2;
   display: flex;
   align-items: center;
-  height: 4.6cqw;
-  padding: 0 1.1cqw;
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  border-radius: 0.9cqw;
-  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+  justify-content: center;
+  height: 5.2cqw;
+  padding: 0 1.8cqw;
+  border-radius: 1.4cqw;
+  background: var(--panel);
   color: var(--panel-ink);
   font-family: var(--font-heading), var(--font-sans);
   font-variant-numeric: tabular-nums;
-  font-size: 2.9cqw;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-size: 2.55cqw;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   white-space: nowrap;
 }
 
-/* ---------- 品牌条 ---------- */
-
+/* 底部品牌文字：嵌在 SVG 原生异形缺口内，严格居中 */
 .cf__brand {
   position: absolute;
-  left: 50%;
-  bottom: -0.2cqw;
-  transform: translateX(-50%);
-  max-width: 72%;
-  padding: 0.4cqw 2.4cqw;
-  border-radius: 2.4cqw 2.4cqw 0 0;
-  background: var(--paper);
+  left: 18%;
+  right: 18%;
+  bottom: 0.1cqw;
+  z-index: 3;
+  height: 3.6cqw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--slot-ink);
   font-family: var(--font-heading), var(--font-sans);
-  font-size: 1.8cqw;
-  letter-spacing: 0.06em;
+  font-size: 2.02cqw;
+  font-weight: 600;
+  letter-spacing: 0.015em;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   pointer-events: none;
 }
 
-/* ---------- 箔面反光（静态，不做脉冲） ---------- */
+/* ---------- 箔面反光 ---------- */
 
 .cf__sheen {
   position: absolute;
@@ -763,23 +746,23 @@
 }
 
 .cf[data-rarity="R"] .cf__sheen {
-  opacity: 0.42;
+  opacity: 0.35;
 }
 
 .cf[data-rarity="E"] .cf__sheen {
-  opacity: 0.52;
+  opacity: 0.42;
 }
 
 .cf[data-rarity="L"] .cf__sheen {
-  opacity: 0.62;
+  opacity: 0.45;
 }
 
 .cf[data-rarity="Radiant"] .cf__sheen {
-  opacity: 0.7;
+  opacity: 0.55;
 }
 
 .cf[data-rarity="Prismatic"] .cf__sheen {
-  opacity: 0.82;
+  opacity: 0.72;
 }
 
 /* ---------- 调试参考线（?guides=1） ---------- */
@@ -833,65 +816,46 @@
   overflow: hidden;
 }
 
-/* ---------- 战斗态：隐藏顶栏 / 底栏 / 品牌 ---------- */
+/* ---------- 战斗态：隐藏顶栏 / 底栏 / 外骨架 ---------- */
 
 .cf[data-mode="battle"] .cf__head,
 .cf[data-mode="battle"] .cf__foot,
-.cf[data-mode="battle"] .cf__brand {
+.cf[data-mode="battle"] .cf__frame-svg {
   display: none;
 }
 
 .cf[data-mode="battle"] .cf__body {
   padding: 2cqw;
+}
+
+.cf[data-mode="battle"] .cf__frame {
   gap: 2cqw;
 }
 
-.cf[data-mode="battle"] .cf__body::after {
-  inset: 0.8cqw;
+.cf[data-mode="battle"] .cf__art {
+  margin: 0;
 }
 
 .cf[data-mode="battle"] .cf__skills {
   flex: 0 0 38cqw;
+  margin: 0;
 }
 
-.cf[data-mode="battle"] .cf__skill {
-  border-color: rgb(255 255 255 / 0.16);
-  background: rgb(12 12 14 / 0.78);
-}
-
-.cf[data-mode="battle"] .cf__skill-name {
-  color: #f2efe9;
-}
-
-.cf[data-mode="battle"] .cf__passive {
-  color: rgb(242 239 233 / 0.6);
-}
-
-.cf[data-mode="battle"] .cf__el {
-  border-color: rgb(255 255 255 / 0.28);
-  background: rgb(255 255 255 / 0.1);
-  color: #f2efe9;
-}
-
-.cf[data-mode="battle"] .cf__el-sep {
-  background: rgb(255 255 255 / 0.16);
-}
-
-.cf[data-mode="battle"] .cf__ap {
-  color: #e8b25c;
-}
-
-.cf[data-mode="battle"] .cf__mp {
-  color: #7db6ea;
-}
-
-/* ---------- 小尺寸：只留立绘 + 技能图标 ---------- */
+/* ---------- 小尺寸适配 ---------- */
 
 @container (max-width: 140px) {
   .cf__skill-name,
   .cf__cost,
   .cf__el-sep {
     display: none;
+  }
+
+  .cf__skill-body {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 0;
+    border-radius: 1.6cqw;
+    box-shadow: none;
   }
 
   .cf__skills {
@@ -903,13 +867,8 @@
     flex: 0 0 32cqw;
   }
 
-  .cf[data-mode="battle"] .cf__skill {
-    justify-content: center;
-    padding: 0;
-  }
-
   .cf__el {
-    width: 11cqw;
-    height: 11cqw;
+    width: 8.8cqw;
+    height: 8.8cqw;
   }
 }
