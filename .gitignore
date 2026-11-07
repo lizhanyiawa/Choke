@@ -33,4 +33,5 @@ dist-ssr
 .env
 .cache/
 data/
+apps/api/.data/
 .tmp_holo/
