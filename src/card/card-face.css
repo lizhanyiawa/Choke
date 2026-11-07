@@ -103,12 +103,12 @@
 .cf__head {
   position: relative;
   z-index: 2;
-  flex: 0 0 25cqw;
+  flex: 0 0 26cqw;
   min-height: 0;
   display: flex;
   align-items: center;
-  gap: 2.4cqw;
-  padding: 1.6cqw 0;
+  gap: 2.6cqw;
+  padding: 0;
   border: 0;
   background: none;
 }
@@ -128,12 +128,12 @@
 }
 
 .cf__badge {
-  flex: 0 0 16.5cqw;
+  flex: 0 0 15cqw;
   align-self: center;
   display: grid;
   place-items: center;
-  width: 16.5cqw;
-  height: 16.5cqw;
+  width: 15cqw;
+  height: 15cqw;
   border: 1px solid color-mix(in srgb, var(--rank-ink) 62%, #4e473d);
   border-radius: 50%;
   color: color-mix(in srgb, var(--rank-ink) 55%, var(--ink));
@@ -147,38 +147,28 @@
   display: block;
 }
 
-.cf__head-main {
+.cf__head-info {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1.1cqw;
-}
-
-.cf__hd {
-  display: flex;
-  align-items: center;
-  gap: 1.6cqw;
-  min-height: 0;
-}
-
-/* 卡名框与 MOD 之间、MOD 内部的间距一致，整行垂直居中 */
-.cf__hd--bottom {
   gap: 0.9cqw;
 }
 
-/* 卡名对齐框：名字在框内居中 */
-.cf__nameplate {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: grid;
-  place-items: center;
-  height: 6.2cqw;
-  padding: 0 2.2cqw;
-  border: 1px solid var(--line);
-  border-radius: 1cqw;
-  background: rgb(255 255 255 / 0.18);
+.cf__rank-row {
+  display: flex;
+  align-items: center;
+  gap: 1.4cqw;
+  min-height: 0;
+}
+
+.cf__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.6cqw;
+  min-height: 4.4cqw;
 }
 
 .cf__rank-name {
@@ -206,20 +196,18 @@
   flex: 0 0 auto;
   display: flex;
   align-items: baseline;
-  gap: 0.8cqw;
-  padding-left: 1.8cqw;
-  border-left: 1px solid var(--line);
+  gap: 0.7cqw;
   font-family: var(--font-heading), var(--font-sans);
-  font-size: 3.2cqw;
-  font-weight: 400;
+  font-size: 3cqw;
+  font-weight: 450;
   letter-spacing: 0.1em;
   color: var(--ink-soft);
 }
 
 .cf__lv b {
   font-family: var(--font-heading), var(--font-sans);
-  font-size: 6.4cqw;
-  font-weight: 350;
+  font-size: 5.6cqw;
+  font-weight: 400;
   line-height: 0.9;
   letter-spacing: 0;
   color: var(--ink);
@@ -232,9 +220,9 @@
   min-width: 0;
   margin: 0;
   font-family: var(--font-heading), var(--font-cn), var(--font-sans);
-  font-size: 6.4cqw;
+  font-size: 6.6cqw;
   font-weight: 600;
-  line-height: 0.95;
+  line-height: 1;
   letter-spacing: 0.01em;
   color: var(--ink);
   text-align: left;
@@ -257,10 +245,10 @@
   min-width: 0;
   display: flex;
   align-items: baseline;
-  gap: 1.2cqw;
+  gap: 1.1cqw;
   font-family: var(--font-heading), var(--font-sans);
   font-variant-numeric: tabular-nums;
-  font-size: 3.4cqw;
+  font-size: 3.2cqw;
   font-weight: 500;
   letter-spacing: 0.02em;
   color: var(--ink-soft);
@@ -298,23 +286,23 @@
 .cf__mods {
   flex: 0 0 auto;
   display: flex;
-  gap: 0.8cqw;
+  gap: 0.6cqw;
 }
 
 .cf__mod {
   display: grid;
   place-items: center;
-  min-width: 5cqw;
-  height: 4.2cqw;
-  padding: 0 0.7cqw;
+  min-width: 4.2cqw;
+  height: 3.8cqw;
+  padding: 0 0.5cqw;
   border: 1px solid var(--line);
-  border-radius: 0.8cqw;
+  border-radius: 0.7cqw;
   font-family: var(--font-heading), var(--font-sans);
-  font-size: 2.9cqw;
-  font-weight: 450;
-  letter-spacing: 0.1em;
+  font-size: 2.6cqw;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   color: var(--ink-soft);
-  background: rgb(255 255 255 / 0.34);
+  background: rgb(255 255 255 / 0.24);
 }
 
 /* ---------- 插画窗 ---------- */
@@ -362,25 +350,6 @@
   box-shadow: 0 2cqw 6cqw -2cqw rgb(0 0 0 / 0.7);
 }
 
-/* MOD 浮在插画左上角，不占头部宽度 */
-.cf__art-mods {
-  position: absolute;
-  top: 2.4cqw;
-  left: 2.4cqw;
-  z-index: 2;
-  display: flex;
-  gap: 0.7cqw;
-}
-
-.cf__art-mods .cf__mod {
-  min-width: 4.6cqw;
-  height: 4cqw;
-  border-color: rgb(255 255 255 / 0.3);
-  background: rgb(0 0 0 / 0.4);
-  color: rgb(255 255 255 / 0.88);
-  backdrop-filter: blur(4px);
-}
-
 .cf__art-vignette {
   position: absolute;
   inset: 0;
@@ -390,29 +359,39 @@
     radial-gradient(110% 80% at 50% 44%, transparent 52%, rgb(0 0 0 / 0.34));
 }
 
-/* 命座：插画右侧独立竖条，六颗等距居中 */
+/* 命座：插画右侧独立竖条，六颗等距 + 数字 */
 .cf__stars {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
-  width: 11.5cqw;
+  width: 13cqw;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.7cqw;
+  gap: 0.8cqw;
   padding: 0;
   border-left: 1px solid rgb(255 255 255 / 0.18);
   border-radius: 0 1.6cqw 1.6cqw 0;
-  background: rgb(0 0 0 / 0.34);
+  background: rgb(0 0 0 / 0.36);
 }
 
 .cf__star {
-  width: 6.2cqw;
-  height: 6.2cqw;
+  width: 7cqw;
+  height: 7cqw;
   display: block;
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.75));
+}
+
+.cf__stars-count {
+  margin-top: 0.6cqw;
+  font-family: var(--font-heading), var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-size: 2.8cqw;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgb(255 255 255 / 0.82);
 }
 
 .cf__star--empty path {
@@ -523,23 +502,23 @@
 .cf__ap i,
 .cf__mp i {
   font-style: normal;
-  font-size: 4cqw;
-  font-weight: 450;
-  letter-spacing: 0.1em;
-  opacity: 0.78;
+  font-size: 2.8cqw;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  opacity: 0.6;
 }
 
 .cf__ap b,
 .cf__mp b {
-  font-size: 6.4cqw;
-  font-weight: 400;
+  font-size: 7cqw;
+  font-weight: 500;
   line-height: 1;
 }
 
 .cf__ap em,
 .cf__mp em {
-  width: 4.8cqw;
-  height: 4.8cqw;
+  width: 4.2cqw;
+  height: 4.2cqw;
   border-radius: 0.5cqw;
   transform: rotate(45deg);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.28);
@@ -575,12 +554,12 @@
   position: relative;
   z-index: 2;
   flex: 0 0 14cqw;
-  width: auto;
+  width: 100%;
   min-height: 0;
   display: flex;
   align-items: center;
   gap: 2.6cqw;
-  margin: 0 -1.8cqw;
+  margin: 0;
 }
 
 .cf__bp {
@@ -613,8 +592,8 @@
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 12cqw;
-  height: 12cqw;
+  width: 10cqw;
+  height: 10cqw;
   border: 1px solid color-mix(in srgb, var(--job) 58%, #45403a);
   border-radius: 50%;
   color: color-mix(in srgb, var(--job) 70%, #332f28);

@@ -40,8 +40,8 @@ export function CardFace({ card, mode = "collection", className }: Props) {
           <span className="cf__badge" aria-hidden>
             <RarityGlyph rarity={card.rarity} />
           </span>
-          <div className="cf__head-main">
-            <div className="cf__hd cf__hd--top">
+          <div className="cf__head-info">
+            <div className="cf__rank-row">
               <span className="cf__rank-name">{RARITY_LABEL[card.rarity]}</span>
               <span className="cf__rule" aria-hidden />
               <span className="cf__lv">
@@ -65,8 +65,8 @@ export function CardFace({ card, mode = "collection", className }: Props) {
               </h3>
             )}
 
-            {(card.country || card.globalRank != null || card.pp != null) && (
-              <div className="cf__identity">
+            <div className="cf__meta-row">
+              <span className="cf__identity">
                 {card.country && <span className="cf__country">{card.country}</span>}
                 {card.globalRank != null && <span className="cf__grank">#{card.globalRank}</span>}
                 {card.pp != null && (
@@ -74,21 +74,21 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                     {Math.round(card.pp).toLocaleString("en-US")}pp
                   </span>
                 )}
-              </div>
-            )}
+              </span>
+              {card.mods.length > 0 && (
+                <span className="cf__mods">
+                  {card.mods.map((mod) => (
+                    <span key={mod} className="cf__mod">
+                      {mod}
+                    </span>
+                  ))}
+                </span>
+              )}
+            </div>
           </div>
         </header>
 
         <div className="cf__art">
-          {card.mods.length > 0 && (
-            <div className="cf__art-mods">
-              {card.mods.map((mod) => (
-                <span key={mod} className="cf__mod">
-                  {mod}
-                </span>
-              ))}
-            </div>
-          )}
           {card.banner && (
             <img
               className="cf__art-banner"
@@ -114,6 +114,7 @@ export function CardFace({ card, mode = "collection", className }: Props) {
             {stars.map((state, i) => (
               <Star key={i} state={state} gid={prismId} />
             ))}
+            <span className="cf__stars-count">{card.constellation}/6</span>
           </div>
         </div>
 
