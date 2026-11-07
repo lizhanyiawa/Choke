@@ -640,6 +640,7 @@
   gap: 18px 12px;
 }
 .album-panel__slot {
+  position: relative;
   min-width: 0;
   cursor: pointer;
   border-radius: 12px;
