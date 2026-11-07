@@ -49,41 +49,43 @@ export function CardFace({ card, mode = "collection", className }: Props) {
               </span>
             </div>
 
-            {card.profileUrl ? (
-              <a
-                className="cf__name"
-                href={card.profileUrl}
-                title={card.name}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {card.name}
-              </a>
-            ) : (
-              <h3 className="cf__name" title={card.name}>
-                {card.name}
-              </h3>
-            )}
+            <div className="cf__name-card">
+              {card.profileUrl ? (
+                <a
+                  className="cf__name"
+                  href={card.profileUrl}
+                  title={card.name}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {card.name}
+                </a>
+              ) : (
+                <h3 className="cf__name" title={card.name}>
+                  {card.name}
+                </h3>
+              )}
 
-            <div className="cf__meta-row">
-              <span className="cf__identity">
-                {card.country && <span className="cf__country">{card.country}</span>}
-                {card.globalRank != null && <span className="cf__grank">#{card.globalRank}</span>}
-                {card.pp != null && (
-                  <span className="cf__ppnum">
-                    {Math.round(card.pp).toLocaleString("en-US")}pp
+              <div className="cf__meta-row">
+                <span className="cf__identity">
+                  {card.country && <span className="cf__country">{card.country}</span>}
+                  {card.globalRank != null && <span className="cf__grank">#{card.globalRank}</span>}
+                  {card.pp != null && (
+                    <span className="cf__ppnum">
+                      {Math.round(card.pp).toLocaleString("en-US")}pp
+                    </span>
+                  )}
+                </span>
+                {card.mods.length > 0 && (
+                  <span className="cf__mods">
+                    {card.mods.map((mod) => (
+                      <span key={mod} className="cf__mod">
+                        {mod}
+                      </span>
+                    ))}
                   </span>
                 )}
-              </span>
-              {card.mods.length > 0 && (
-                <span className="cf__mods">
-                  {card.mods.map((mod) => (
-                    <span key={mod} className="cf__mod">
-                      {mod}
-                    </span>
-                  ))}
-                </span>
-              )}
+              </div>
             </div>
           </div>
         </header>
