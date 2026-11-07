@@ -80,7 +80,7 @@
   flex-direction: column;
   gap: 3cqw;
   box-sizing: border-box;
-  padding: 3.2cqw 3cqw 2.4cqw;
+  padding: 3.2cqw 3cqw 2.6cqw;
   border-radius: 2.4cqw;
   background: var(--paper);
   overflow: hidden;
@@ -108,7 +108,7 @@
   display: flex;
   align-items: center;
   gap: 2.4cqw;
-  padding: 1.6cqw 2.4cqw 1.6cqw 0;
+  padding: 1.6cqw 0;
   border: 0;
   background: none;
 }
@@ -207,6 +207,8 @@
   display: flex;
   align-items: baseline;
   gap: 0.8cqw;
+  padding-left: 1.8cqw;
+  border-left: 1px solid var(--line);
   font-family: var(--font-heading), var(--font-sans);
   font-size: 3.2cqw;
   font-weight: 400;
@@ -254,12 +256,13 @@
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 0.9cqw;
-  font-family: var(--font-mono), var(--font-sans);
-  font-size: 3.2cqw;
+  align-items: baseline;
+  gap: 1.2cqw;
+  font-family: var(--font-heading), var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-size: 3.4cqw;
   font-weight: 500;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   color: var(--ink-soft);
   white-space: nowrap;
   overflow: hidden;
@@ -267,10 +270,15 @@
 }
 
 .cf__identity > span + span::before {
-  content: "·";
-  margin-right: 0.9cqw;
-  color: var(--ink-soft);
-  opacity: 0.5;
+  content: "";
+  display: inline-block;
+  width: 0.7cqw;
+  height: 0.7cqw;
+  margin-right: 1.2cqw;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.45;
+  vertical-align: middle;
 }
 
 .cf__country {
@@ -382,24 +390,27 @@
     radial-gradient(110% 80% at 50% 44%, transparent 52%, rgb(0 0 0 / 0.34));
 }
 
-/* 命座：插画窗右侧一竖列，六颗铺满高度，底衬渐隐 */
+/* 命座：插画右侧独立竖条，六颗等距居中 */
 .cf__stars {
   position: absolute;
-  top: 3%;
-  bottom: 3%;
-  right: 4.8cqw;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 11.5cqw;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 1.4cqw 1.4cqw 1.4cqw 2cqw;
-  border-radius: 1cqw;
-  background: linear-gradient(90deg, transparent, rgb(0 0 0 / 0.32) 34%);
+  justify-content: center;
+  gap: 0.7cqw;
+  padding: 0;
+  border-left: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 0 1.6cqw 1.6cqw 0;
+  background: rgb(0 0 0 / 0.34);
 }
 
 .cf__star {
-  width: 7.6cqw;
-  height: 7.6cqw;
+  width: 6.2cqw;
+  height: 6.2cqw;
   display: block;
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.75));
 }
@@ -490,13 +501,12 @@
 }
 
 .cf__cost {
-  flex: 0 0 auto;
+  flex: 0 0 24cqw;
   margin-left: auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 2.6cqw;
-  min-width: 17cqw;
+  gap: 1.6cqw;
   font-family: var(--font-heading), var(--font-sans);
 }
 
@@ -504,7 +514,9 @@
 .cf__mp {
   display: flex;
   align-items: center;
-  gap: 1.2cqw;
+  justify-content: flex-end;
+  gap: 1.1cqw;
+  min-width: 8.4cqw;
   white-space: nowrap;
 }
 
@@ -550,6 +562,7 @@
 }
 
 .cf__passive {
+  margin-left: auto;
   font-family: var(--font-cn), var(--font-heading), var(--font-sans);
   font-size: 4cqw;
   letter-spacing: 0.14em;
@@ -562,11 +575,12 @@
   position: relative;
   z-index: 2;
   flex: 0 0 14cqw;
-  width: 100%;
+  width: auto;
   min-height: 0;
   display: flex;
   align-items: center;
   gap: 2.6cqw;
+  margin: 0 -1.8cqw;
 }
 
 .cf__bp {
@@ -615,15 +629,17 @@
 
 .cf__no {
   flex: 0 0 auto;
+  margin-left: auto;
   display: flex;
   align-items: center;
-  height: 4.9cqw;
+  height: 4.6cqw;
   padding: 0 1.1cqw;
   border: 1px solid var(--line);
   border-radius: 0.9cqw;
   background: rgb(255 255 255 / 0.28);
   font-family: var(--font-heading), var(--font-sans);
-  font-size: 3.2cqw;
+  font-variant-numeric: tabular-nums;
+  font-size: 2.9cqw;
   font-weight: 450;
   letter-spacing: 0.02em;
   color: var(--ink-soft);
