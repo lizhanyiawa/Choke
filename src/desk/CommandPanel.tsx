@@ -1,9 +1,32 @@
 import { useState } from "react"
 
+import { CardFace } from "@/card/CardFace"
+import { faceFromDef } from "@/card/def"
+import type { CardSkill, Job, Rarity } from "@/card/types"
+
 import { AlbumPanel } from "./AlbumPanel"
 import { POOL_META, POOL_ORDER } from "./rarity"
 
 export type PanelId = "album" | "packs" | "mainline" | "market" | "account"
+
+export interface HeroCard {
+  id: string
+  name: string
+  rarity: Rarity
+  job: Job
+  no: number
+  total: number
+  country: string | null
+  globalRank: number | null
+  pp: string | null
+  profileUrl: string | null
+  art: string | null
+  banner: string | null
+  skills: CardSkill[]
+  level: number
+  constellation: number
+  userCardId: number
+}
 
 interface Entry {
   id: PanelId
@@ -29,6 +52,7 @@ export interface PanelRequest {
 interface Props {
   userId: string | null
   username: string | null
+  hero?: HeroCard | null
   /** 桌面物件双击时直接进入的子界面（配合 key 重新挂载） */
   initialStage?: Stage
   initialPanel?: PanelId
@@ -39,6 +63,7 @@ interface Props {
 export function CommandPanel({
   userId,
   username,
+  hero,
   initialStage = "closed",
   initialPanel = "album",
   onLogout,
@@ -150,7 +175,7 @@ export function CommandPanel({
               {panel === "mainline" && <MainlinePanel />}
               {panel === "market" && <MarketPanel />}
               {panel === "account" && (
-                <AccountPanel userId={userId} username={username} onLogout={onLogout} />
+                <AccountPanel userId={userId} username={username} hero={hero} onLogout={onLogout} />
               )}
             </div>
           </div>
@@ -271,10 +296,12 @@ function MarketPanel() {
 function AccountPanel({
   userId,
   username,
+  hero,
   onLogout,
 }: {
   userId: string | null
   username: string | null
+  hero?: HeroCard | null
   onLogout?: () => void
 }) {
   if (!username) {
@@ -300,6 +327,54 @@ function AccountPanel({
           <em>{userId}</em>
         </div>
       </div>
+
+      {hero ? (
+        <div className="command-hero-card">
+          <div className="command-hero-card__face">
+            <CardFace
+              card={faceFromDef(
+                {
+                  id: hero.id,
+                  osuId: null,
+                  name: hero.name,
+                  rarity: hero.rarity,
+                  job: hero.job,
+                  no: hero.no,
+                  total: hero.total,
+                  country: hero.country ?? undefined,
+                  globalRank: hero.globalRank,
+                  pp: hero.pp == null ? null : Number(hero.pp),
+                  profileUrl: hero.profileUrl ?? undefined,
+                  art: hero.art ?? undefined,
+                  banner: hero.banner ?? undefined,
+                  skills: hero.skills,
+                  version: 1,
+                },
+                { level: hero.level, constellation: hero.constellation },
+              )}
+            />
+          </div>
+          <div className="command-hero-card__text">
+            <span>YOUR HERO CARD</span>
+            <b>{hero.name}</b>
+            <em>
+              {hero.rarity} · Lv.{hero.level}
+            </em>
+            <p>本体卡已绑定，抽到自己的镜像卡会单独记进卡册。</p>
+          </div>
+        </div>
+      ) : (
+        <div className="command-hero-claim">
+          <span>本体卡</span>
+          <em>还没有认领</em>
+          <p>重新走一次 osu! 登录，会把 /me/osu 的 PC、TTH、等级写成你的本体卡。</p>
+          <a className="command-link" href="/auth/osu">
+            认领本体卡
+            <i aria-hidden>›</i>
+          </a>
+        </div>
+      )}
+
       <div className="command-status">
         <span>登录状态</span>
         <em>已连接 osu!</em>

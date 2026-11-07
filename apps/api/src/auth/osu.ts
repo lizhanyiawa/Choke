@@ -46,6 +46,22 @@ export interface OsuMe {
   username: string
   avatar_url: string
   country_code: string
+  cover?: { url?: string | null } | null
+  ranked_beatmapset_count?: number
+  user_achievements?: readonly unknown[]
+  statistics?: {
+    play_count?: number
+    total_hits?: number
+    pp?: number
+    level?: { current?: number }
+    grade_counts?: {
+      ssh?: number
+      ss?: number
+      sh?: number
+      s?: number
+      a?: number
+    }
+  }
 }
 
 export async function exchangeCode(code: string): Promise<string> {

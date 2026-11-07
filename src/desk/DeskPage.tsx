@@ -2,9 +2,10 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerE
 import { CardFace } from "@/card/CardFace"
 
 import { cardFromDesk } from "./cardFace"
-import { CommandPanel, type PanelId, type PanelRequest } from "./CommandPanel"
+import { CommandPanel, type HeroCard, type PanelId, type PanelRequest } from "./CommandPanel"
 import { POOL_META, POOL_ORDER, rollPack } from "./rarity"
 import { DEFAULT_SKIN } from "./skins"
+import { SidePanel } from "./SidePanel"
 import { cardsToItems, ITEM_SIZE, newId, useDesk } from "./store"
 import type { CardData, DeskItem, PackPool } from "./types"
 import { Pack2D } from "./opening/Pack2D"
@@ -49,7 +50,7 @@ export function DeskPage() {
   const [quickTargets, setQuickTargets] = useState<Record<string, { left: number; top: number }> | null>(null)
   const [albumPulse, setAlbumPulse] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
-  const [user, setUser] = useState<{ id: string; username: string } | null>(null)
+  const [user, setUser] = useState<{ id: string; username: string; hero: HeroCard | null } | null>(null)
   const [panelRequest, setPanelRequest] = useState<PanelRequest | null>(null)
   const dropRef = useRef<string | null>(null)
   const collectTimer = useRef<number | null>(null)
@@ -72,7 +73,7 @@ export function DeskPage() {
     fetch("/auth/me")
       .then((r) => r.json())
       .then((d) => {
-        if (d.ok) setUser({ id: d.data.id, username: d.data.username })
+        if (d.ok) setUser({ id: d.data.id, username: d.data.username, hero: d.data.hero ?? null })
       })
       .catch(() => {})
   }, [])
@@ -396,12 +397,15 @@ export function DeskPage() {
             )
           })()}
 
+        <SidePanel side="left" title="Choke!" rows={[]} />
+
         <CommandPanel
           key={panelRequest?.n ?? 0}
           initialStage={panelRequest ? "open" : "closed"}
           initialPanel={panelRequest?.id ?? "album"}
           userId={user?.id ?? null}
           username={user?.username ?? null}
+          hero={user?.hero ?? null}
           onLogout={logout}
         />
 

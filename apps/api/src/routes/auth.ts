@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm"
+import { and, eq, getTableColumns } from "drizzle-orm"
 import type { FastifyInstance } from "fastify"
 
 import {
@@ -13,7 +13,40 @@ import {
 } from "../auth/osu"
 import { WEB_BASE } from "../auth/env"
 import { db } from "../db/client"
-import { users } from "../db/schema"
+import { cards, userCards, users } from "../db/schema"
+import { heroCardDef } from "../hero"
+
+/** 登录时把 /me/osu 写成 hero-{id} 卡定义，并放进该用户的卡册 */
+async function claimHeroCard(userId: string, me: Awaited<ReturnType<typeof fetchMe>>) {
+  const [pool] = await db
+    .select({
+      no: cards.no,
+      total: cards.total,
+      globalRank: cards.globalRank,
+      pp: cards.pp,
+    })
+    .from(cards)
+    .where(eq(cards.id, `pool-${me.id}`))
+    .limit(1)
+
+  const def = heroCardDef(me, pool ?? null)
+  const { id, heroIndex: _index, heroPower: _power, ...rest } = def
+
+  await db
+    .insert(cards)
+    .values({ id, ...rest })
+    .onConflictDoUpdate({ target: cards.id, set: rest })
+
+  const [owned] = await db
+    .select({ id: userCards.id })
+    .from(userCards)
+    .where(and(eq(userCards.userId, userId), eq(userCards.cardId, id)))
+    .limit(1)
+
+  if (!owned) {
+    await db.insert(userCards).values({ userId, cardId: id })
+  }
+}
 
 export async function authRoutes(app: FastifyInstance) {
   app.get("/auth/osu", async (_request, reply) => {
@@ -39,6 +72,13 @@ export async function authRoutes(app: FastifyInstance) {
         .insert(users)
         .values({ id: userId, username: me.username, osuId: me.id })
         .onConflictDoUpdate({ target: users.id, set: { username: me.username } })
+
+      try {
+        await claimHeroCard(userId, me)
+      } catch (error) {
+        // 认领失败不能挡住登录
+        request.log.warn({ err: error }, "claim hero card failed")
+      }
 
       reply.setCookie(COOKIE_NAME, makeSession(userId), {
         path: "/",
@@ -69,7 +109,27 @@ export async function authRoutes(app: FastifyInstance) {
     if (!user) {
       return reply.code(401).send({ ok: false, error: { code: "unauthorized", message: "用户不存在" } })
     }
-    return { ok: true, data: { id: user.id, username: user.username, osuId: user.osuId } }
+
+    let hero = null
+    if (user.osuId != null) {
+      const [row] = await db
+        .select({
+          ...getTableColumns(cards),
+          userCardId: userCards.id,
+          level: userCards.level,
+          constellation: userCards.constellation,
+        })
+        .from(userCards)
+        .innerJoin(cards, eq(cards.id, userCards.cardId))
+        .where(and(eq(userCards.userId, user.id), eq(userCards.cardId, `hero-${user.osuId}`)))
+        .limit(1)
+      hero = row ?? null
+    }
+
+    return {
+      ok: true,
+      data: { id: user.id, username: user.username, osuId: user.osuId, hero },
+    }
   })
 
   app.post("/auth/logout", async (_request, reply) => {
