@@ -289,192 +289,561 @@
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
 }
 
-/* ===== 侧栏 ===== */
-.side-panel {
+/* ===== 右侧两级抽屉 ===== */
+.command-tab {
   position: absolute;
-  top: 24px;
-  bottom: 24px;
-  width: 260px;
-  box-sizing: border-box;
+  z-index: 210;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 8px 18px 10px;
+  border: 3px solid #14244a;
+  border-right: 0;
+  border-radius: 16px 0 0 16px;
   background: #243b6b;
-  border: 4px solid #14244a;
-  border-radius: 14px;
-  box-shadow: 8px 8px 0 0 #0b0d10;
-  overflow: hidden;
-  z-index: 200;
-  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  color: #f4f4f6;
+  cursor: pointer;
+  box-shadow: -4px 4px 0 0 #0b0d10;
+  transition: background 0.15s ease, padding 0.15s ease;
 }
-.side-panel--left {
-  left: 24px;
+.command-tab:hover {
+  background: #2f4f8c;
+  padding-right: 12px;
 }
-.side-panel--right {
-  right: 24px;
+.command-tab.is-hidden {
+  display: none;
 }
-.side-panel--left.is-collapsed {
-  transform: translateX(-236px);
-}
-.side-panel--right.is-collapsed {
-  transform: translateX(236px);
-}
-.side-panel__peek {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+.command-tab__word {
   writing-mode: vertical-rl;
   font-family: "Fredoka", "Outfit", sans-serif;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.18em;
+}
+.command-tab__arrow {
+  font-size: 16px;
+  line-height: 1;
   color: #3cbadb;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease 0.08s;
-  white-space: nowrap;
-}
-.side-panel--left .side-panel__peek {
-  right: 7px;
-}
-.side-panel--right .side-panel__peek {
-  left: 7px;
-}
-.side-panel.is-collapsed .side-panel__peek {
-  opacity: 1;
 }
 
-/* ===== 右侧主操作面板 ===== */
 .command-panel {
   position: absolute;
+  z-index: 200;
   top: 24px;
   right: 24px;
   bottom: 24px;
-  width: 330px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  background: #243b6b;
-  border: 4px solid #14244a;
-  border-radius: 18px;
-  box-shadow: 10px 10px 0 0 #0b0d10;
   overflow: hidden;
-  z-index: 200;
+  border: 4px solid #14244a;
+  border-radius: 20px;
+  background: #243b6b;
+  box-shadow: 10px 10px 0 0 #0b0d10;
+  transition:
+    width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.2s ease,
+    transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.command-panel__head {
-  position: relative;
-  padding: 16px 16px 14px;
+.command-panel--closed {
+  width: 0;
+  border-width: 0;
+  box-shadow: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(30px);
+}
+.command-panel--rail {
+  width: 190px;
+}
+.command-panel--open {
+  width: min(720px, calc(100vw - 48px));
+}
+
+/* ----- 一级：一列大按钮 ----- */
+.command-rail {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.command-rail__head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 16px 14px 13px 17px;
+  border-bottom: 2px solid #14244a;
   background:
     radial-gradient(ellipse 90% 110% at 85% -20%, rgba(60, 186, 219, 0.25), transparent 65%),
     #1b2d57;
-  border-bottom: 2px solid #14244a;
 }
-.command-panel__eyebrow {
+.command-rail__eyebrow {
   font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 9px;
-  letter-spacing: 0.3em;
+  font-size: 8px;
+  letter-spacing: 0.28em;
   color: #3cbadb;
-  opacity: 0.7;
+  opacity: 0.75;
 }
-.command-panel__title {
-  margin: 5px 0 0;
+.command-rail__title {
+  margin-top: 6px;
   font-family: "Fredoka", "Outfit", sans-serif;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   line-height: 1;
   color: #f4f4f6;
 }
-.command-panel__sub {
-  margin: 6px 0 0;
-  color: #b9c0cb;
-  font-size: 11px;
-}
-.command-panel__badge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  padding: 3px 8px;
-  border: 1.5px solid #3cbadb;
-  border-radius: 999px;
-  color: #3cbadb;
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 9px;
-  letter-spacing: 0.08em;
-}
-.command-panel__nav {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  padding: 12px 14px 10px;
-}
-.command-nav__btn {
-  height: 34px;
-  padding: 0 8px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  border: 1.5px solid rgba(60, 186, 219, 0.3);
-  border-radius: 8px;
-  background: #1b2d57;
-  color: #e9e9ef;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  text-align: left;
+.command-panel__close {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  padding: 0;
+  border: 2px solid rgba(60, 186, 219, 0.45);
+  border-radius: 50%;
+  background: transparent;
+  color: #9fd9ea;
+  font-family: inherit;
+  font-size: 18px;
+  line-height: 1;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
 }
-.command-nav__btn span {
-  color: #3cbadb;
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 8px;
-  opacity: 0.75;
-}
-.command-nav__btn:hover {
+.command-panel__close:hover {
   background: #3cbadb;
   border-color: #3cbadb;
   color: #0b0d10;
 }
-.command-nav__btn:hover span {
-  color: #0b0d10;
-}
-.command-panel__divider {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 14px 7px;
-  color: #3cbadb;
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-.command-panel__divider::before,
-.command-panel__divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: rgba(60, 186, 219, 0.22);
-}
-.command-panel__body {
-  flex: 1;
+
+.command-rail__list {
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 0 14px 10px;
+  gap: 10px;
+  padding: 14px 12px;
   overflow-y: auto;
 }
-.command-panel__body .side-row {
-  flex: 0 0 auto;
+.command-rail__btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 14px 12px;
+  border: 2px solid rgba(60, 186, 219, 0.22);
+  border-radius: 18px;
+  background: #1b2d57;
+  color: #e9e9ef;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
 }
-.command-panel__foot {
+.command-rail__btn:hover {
+  background: #25406f;
+  border-color: rgba(60, 186, 219, 0.55);
+  transform: translateX(-2px);
+}
+.command-rail__btn.is-selected {
+  background: #2b4a7d;
+  border-color: #3cbadb;
+  box-shadow: inset 0 0 0 1px rgba(60, 186, 219, 0.35);
+}
+.command-rail__glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: 13px;
+  background: rgba(60, 186, 219, 0.12);
+  color: #3cbadb;
+}
+.command-rail__glyph svg {
+  width: 22px;
+  height: 22px;
+}
+.command-rail__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.command-rail__text b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+}
+.command-rail__text em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: #8ea9c9;
+}
+
+.command-rail__foot {
   flex: 0 0 auto;
-  padding: 9px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 14px;
   border-top: 2px solid #14244a;
-  color: rgba(185, 192, 203, 0.55);
+}
+.command-rail__foot > span {
+  text-align: center;
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 9px;
+  letter-spacing: 0.1em;
+  color: rgba(185, 192, 203, 0.6);
+}
+.command-rail__open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 10px;
+  border: 2px solid #3cbadb;
+  border-radius: 12px;
+  background: #3cbadb;
+  color: #0b0d10;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+.command-rail__open:hover {
+  background: #5fd0ec;
+}
+.command-rail__open i {
+  font-style: normal;
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ----- 二级：完全拉开 ----- */
+.command-drawer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.command-drawer__head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 2px solid #14244a;
+  background:
+    radial-gradient(ellipse 80% 120% at 90% -30%, rgba(60, 186, 219, 0.22), transparent 65%),
+    #1b2d57;
+}
+.command-drawer__back {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  padding: 0;
+  border: 2px solid rgba(60, 186, 219, 0.45);
+  border-radius: 11px;
+  background: transparent;
+  color: #9fd9ea;
+  font-family: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.command-drawer__back:hover {
+  background: #3cbadb;
+  color: #0b0d10;
+}
+.command-drawer__titles {
+  flex: 1;
+  min-width: 0;
+}
+.command-drawer__eyebrow {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.28em;
+  color: #3cbadb;
+  opacity: 0.75;
+}
+.command-drawer__title {
+  margin: 3px 0 0;
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  color: #f4f4f6;
+}
+.command-drawer__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ----- 卡册 ----- */
+.album-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.album-panel__count {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #b9c0cb;
+  font-size: 12px;
+}
+.album-panel__count b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  color: #f4f4f6;
+}
+.album-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 18px 12px;
+}
+.album-panel__slot {
+  min-width: 0;
+}
+.album-panel__slot .cf {
+  width: 100%;
+}
+.album-panel__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 320px;
+  color: #b9c0cb;
+  font-size: 14px;
+  text-align: center;
+}
+.album-panel__empty p {
+  margin: 0;
+}
+.album-panel__empty a {
+  padding: 8px 18px;
+  border: 2px solid #3cbadb;
+  border-radius: 999px;
+  color: #3cbadb;
+  font-weight: 700;
+  text-decoration: none;
+}
+.album-panel__empty a:hover {
+  background: #3cbadb;
+  color: #0b0d10;
+}
+
+/* ----- 其他子界面 ----- */
+.command-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.command-note {
+  margin: 0;
+  color: #b9c0cb;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.command-packs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.command-pack {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 2px solid #14244a;
+  border-radius: 14px;
+  background: #1b2d57;
+}
+.command-pack__dot {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+.command-pack__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.command-pack__text b {
+  font-size: 14px;
+}
+.command-pack__text em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
   letter-spacing: 0.08em;
+  color: #8ea9c9;
+}
+.command-hero {
+  padding: 20px;
+  border: 2px solid #14244a;
+  border-radius: 16px;
+  background: #1b2d57;
+}
+.command-hero--story {
+  background:
+    linear-gradient(150deg, rgba(60, 186, 219, 0.18), transparent 60%),
+    #1b2d57;
+}
+.command-hero--market {
+  background:
+    linear-gradient(150deg, rgba(255, 194, 75, 0.16), transparent 60%),
+    #1b2d57;
+}
+.command-hero__tag {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: #3cbadb;
+}
+.command-hero b {
+  display: block;
+  margin-top: 8px;
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+}
+.command-hero p {
+  margin: 8px 0 0;
+  color: #b9c0cb;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.command-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border: 2px solid #14244a;
+  border-radius: 14px;
+  background: #1b2d57;
+  font-size: 13px;
+}
+.command-status em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #3cbadb;
+}
+.command-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 10px 18px;
+  border: 2px solid #3cbadb;
+  border-radius: 999px;
+  background: transparent;
+  color: #3cbadb;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.command-link:hover {
+  background: #3cbadb;
+  color: #0b0d10;
+}
+.command-link--button {
+  border-color: rgba(237, 95, 159, 0.6);
+  color: #ed5f9f;
+}
+.command-link--button:hover {
+  background: #ed5f9f;
+  color: #0b0d10;
+}
+.command-link i {
+  font-style: normal;
+  font-size: 16px;
+  line-height: 1;
+}
+.command-account {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 2px solid #14244a;
+  border-radius: 16px;
+  background: #1b2d57;
+}
+.command-account__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #5fd0ec, #2b6a86);
+  color: #0b0d10;
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+}
+.command-account__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.command-account__text b {
+  font-size: 16px;
+}
+.command-account__text em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #8ea9c9;
+}
+
+@media (max-width: 640px) {
+  .command-panel {
+    top: 12px;
+    right: 12px;
+    bottom: 12px;
+  }
+  .command-panel--rail {
+    width: 176px;
+  }
+  .command-panel--open {
+    width: calc(100vw - 24px);
+  }
+  .command-packs {
+    grid-template-columns: 1fr;
+  }
+  .album-panel__grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
 }
 
 /* ===== 桌面大按钮 / 卡池开关 ===== */
@@ -583,91 +952,6 @@
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 9px;
   letter-spacing: 0.1em;
-}
-
-.side-panel__head {
-  flex: 0 0 52px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
-  gap: 8px;
-}
-.side-panel--right .side-panel__head {
-  flex-direction: row-reverse;
-}
-.side-panel__title {
-  margin: 0;
-  font-family: "Fredoka", "Outfit", sans-serif;
-  font-weight: 700;
-  font-size: 22px;
-  color: #3cbadb;
-}
-.side-panel__toggle {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  border-radius: 999px;
-  border: 2px solid #3cbadb;
-  background: transparent;
-  color: #3cbadb;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-.side-panel:hover .side-panel__toggle,
-.side-panel:focus-within .side-panel__toggle,
-.side-panel.is-collapsed .side-panel__toggle {
-  opacity: 1;
-}
-@media (hover: none) {
-  .side-panel__toggle {
-    opacity: 1;
-  }
-}
-
-.side-panel__body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 0 16px 16px;
-  overflow-y: auto;
-  transition: opacity 0.2s ease;
-}
-.side-panel.is-collapsed .side-panel__body {
-  opacity: 0;
-}
-
-.side-row {
-  background: #1b2d57;
-  border-radius: 10px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.side-row__label {
-  font-weight: 600;
-  font-size: 14px;
-}
-.side-row__track {
-  height: 10px;
-  border-radius: 999px;
-  background: #0e1a36;
-  overflow: hidden;
-}
-.side-row__bar {
-  height: 100%;
-  border-radius: 999px;
-  background: #3cbadb;
-}
-.side-row__detail {
-  font-size: 12px;
-  color: #b9c0cb;
 }
 
 /* ===== 2D 开包层 ===== */
@@ -985,9 +1269,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .side-panel,
-  .side-panel__toggle,
-  .side-panel__body {
+  .command-panel,
+  .command-tab,
+  .command-rail__btn {
     transition: none;
   }
   .opener-2d__card {

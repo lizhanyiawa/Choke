@@ -2,9 +2,8 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerE
 import { CardFace } from "@/card/CardFace"
 
 import { cardFromDesk } from "./cardFace"
-import { CommandPanel } from "./CommandPanel"
+import { CommandPanel, type PanelId, type PanelRequest } from "./CommandPanel"
 import { POOL_META, POOL_ORDER, rollPack } from "./rarity"
-import { SidePanel, type PanelRow } from "./SidePanel"
 import { DEFAULT_SKIN } from "./skins"
 import { cardsToItems, ITEM_SIZE, newId, useDesk } from "./store"
 import type { CardData, DeskItem, PackPool } from "./types"
@@ -15,33 +14,6 @@ import "./desk.css"
 const QUALITY_KEY = "choke.quality"
 const POOL_KEY = "choke.pool"
 type Quality = "3d" | "light"
-
-const TASKS: PanelRow[] = [
-  { label: "osu! 每日挑战", detail: "2 / 3 · 2 普通包 + 1 黄金包", progress: 66 },
-  { label: "Choke! 每日", detail: "6 普通包 + 1 黄金包", progress: 0 },
-  { label: "周常 · 双端", detail: "osu! 8+2 · Choke! 6+3", progress: 20 },
-  { label: "每日签到 · 挂机包", detail: "60 次 · 1 分钟 / 包", progress: 100 },
-  { label: "赛季通行证", detail: "Lv.1 · 免费 10 抽", progress: 10 },
-]
-
-const ALBUM_ROWS: PanelRow[] = [
-  { label: "卡册完成度", detail: "1,284 / 100,000 张", progress: 1 },
-  { label: "签名池保底", detail: "0 / 20 抽 · 必出 SSR", progress: 0 },
-  { label: "命座 / 强化", detail: "本体 0/8 · Lv.1 1/40", progress: 3 },
-  { label: "卡包库存", detail: "普通 / 黄金 / 璀璨 / 天穹", progress: 0 },
-  { label: "市场", detail: "挂单 3 · 求购 1", progress: 35 },
-]
-
-/** Design/FE 页面清单里还没有接实现的入口，先做桌面占位按钮 */
-const FEATURE_LINKS = [
-  { fe: "FE-01", label: "介绍页" },
-  { fe: "FE-02", label: "登录" },
-  { fe: "FE-05", label: "卡牌详情" },
-  { fe: "FE-06", label: "卡组" },
-  { fe: "FE-07", label: "战斗" },
-  { fe: "FE-11", label: "任务/通行证" },
-  { fe: "FE-12", label: "指南" },
-]
 
 let webglSupport: boolean | null = null
 function hasWebGL() {
@@ -77,6 +49,8 @@ export function DeskPage() {
   const [quickTargets, setQuickTargets] = useState<Record<string, { left: number; top: number }> | null>(null)
   const [albumPulse, setAlbumPulse] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [user, setUser] = useState<{ id: string; username: string } | null>(null)
+  const [panelRequest, setPanelRequest] = useState<PanelRequest | null>(null)
   const dropRef = useRef<string | null>(null)
   const collectTimer = useRef<number | null>(null)
   const quickTimer = useRef<number | null>(null)
@@ -93,6 +67,25 @@ export function DeskPage() {
   useEffect(() => {
     localStorage.setItem(POOL_KEY, pool)
   }, [pool])
+
+  useEffect(() => {
+    fetch("/auth/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok) setUser({ id: d.data.id, username: d.data.username })
+      })
+      .catch(() => {})
+  }, [])
+
+  const logout = () => {
+    fetch("/auth/logout", { method: "POST" })
+      .catch(() => {})
+      .finally(() => setUser(null))
+  }
+
+  const requestPanel = (id: PanelId) => {
+    setPanelRequest((prev) => ({ id, n: (prev?.n ?? 0) + 1 }))
+  }
 
   useEffect(() => {
     const el = stageRef.current
@@ -259,7 +252,12 @@ export function DeskPage() {
       }
       const packPool = item.pool ?? "normal"
       setOpening({ pack: item, cards: rollPack(5, packPool), pool: packPool, rect })
+      return
     }
+
+    if (item.kind === "album") showToast("双击卡册，翻开收藏")
+    if (item.kind === "mainline") showToast("双击主线，查看章节")
+    if (item.kind === "market") showToast("双击市场，查看交易行")
   }
 
   const finishOpening = () => {
@@ -365,6 +363,11 @@ export function DeskPage() {
                 e.currentTarget.setPointerCapture(e.pointerId)
                 startDrag(e, item)
               }}
+              onDoubleClick={() => {
+                if (item.kind === "album") requestPanel("album")
+                if (item.kind === "mainline") requestPanel("mainline")
+                if (item.kind === "market") requestPanel("market")
+              }}
               role="group"
               aria-label={labelOf(item)}
             >
@@ -393,11 +396,13 @@ export function DeskPage() {
             )
           })()}
 
-        <SidePanel side="left" title="今日 / 周常" rows={TASKS} />
         <CommandPanel
-          features={FEATURE_LINKS}
-          rows={ALBUM_ROWS}
-          onFeature={(feature) => showToast(`${feature.fe} · ${feature.label}（占位）`)}
+          key={panelRequest?.n ?? 0}
+          initialStage={panelRequest ? "open" : "closed"}
+          initialPanel={panelRequest?.id ?? "album"}
+          userId={user?.id ?? null}
+          username={user?.username ?? null}
+          onLogout={logout}
         />
 
         <div
@@ -504,7 +509,7 @@ function ItemView({ item }: { item: DeskItem }) {
         <div className="desk-object desk-object--album" style={{ position: "absolute", inset: 0 }}>
           <div className="desk-object__tag">收藏</div>
           <div className="desk-object__title">卡册</div>
-          <div className="desk-object__sub">1,284 / 100,000 张</div>
+          <div className="desk-object__sub">双击翻开</div>
         </div>
       )
     case "mainline":
@@ -520,7 +525,7 @@ function ItemView({ item }: { item: DeskItem }) {
         <div className="desk-object desk-object--market" style={{ position: "absolute", inset: 0 }}>
           <div className="desk-object__tag">交易</div>
           <div className="desk-object__title">市场</div>
-          <div className="desk-object__sub">挂单 3 · 求购 1</div>
+          <div className="desk-object__sub">即将开放</div>
         </div>
       )
     case "card":

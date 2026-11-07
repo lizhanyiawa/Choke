@@ -1,4 +1,4 @@
-import { and, count, desc, eq, ilike } from "drizzle-orm"
+import { and, count, desc, eq, getTableColumns, ilike } from "drizzle-orm"
 import type { FastifyInstance } from "fastify"
 import { z } from "zod"
 
@@ -57,14 +57,11 @@ export async function cardRoutes(app: FastifyInstance) {
 
     const rows = await db
       .select({
-        id: userCards.id,
-        cardId: userCards.cardId,
+        ...getTableColumns(cards),
+        userCardId: userCards.id,
         level: userCards.level,
         constellation: userCards.constellation,
         obtainedAt: userCards.obtainedAt,
-        name: cards.name,
-        rarity: cards.rarity,
-        job: cards.job,
       })
       .from(userCards)
       .innerJoin(cards, eq(cards.id, userCards.cardId))
