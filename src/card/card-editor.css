@@ -1,0 +1,232 @@
+.editor {
+  --bg: #15141a;
+  --panel: #1d1b24;
+  --line: rgb(237 234 229 / 0.12);
+  --ink: #edeae5;
+  --dim: rgb(237 234 229 / 0.55);
+  --accent: #ed5f9f;
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+.editor__form {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 26px 22px 60px;
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.editor__head h1 {
+  margin: 6px 0 4px;
+  font-size: 24px;
+  letter-spacing: 0.02em;
+}
+
+.editor__head p {
+  margin: 0 0 22px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--dim);
+}
+
+.editor__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  color: var(--dim);
+}
+
+.editor__section {
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+
+.editor__section h2 {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--dim);
+}
+
+.editor__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.editor__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+}
+
+.editor__field input,
+.editor__field select {
+  height: 32px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.04);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.editor__field input[type="range"] {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.editor__field input:focus,
+.editor__field select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.editor__checks {
+  display: flex;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.editor__checks label,
+.editor__inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.editor__inline {
+  margin: 2px 0 10px;
+}
+
+.editor__slot {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.02);
+}
+
+.editor__slot[data-on] {
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.editor__slot-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  cursor: pointer;
+}
+
+.editor__slot-body {
+  margin-top: 10px;
+}
+
+.editor__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.editor__actions button,
+.editor__upload {
+  display: inline-grid;
+  place-items: center;
+  height: 34px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.05);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editor__actions button:hover,
+.editor__upload:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.editor__upload {
+  position: relative;
+  overflow: hidden;
+}
+
+.editor__upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.editor__out {
+  max-height: 220px;
+  margin: 14px 0 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgb(0 0 0 / 0.3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--dim);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.editor__preview {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+  padding: 40px;
+  overflow: auto;
+  background:
+    radial-gradient(70% 45% at 50% 0%, rgb(237 95 159 / 0.08), transparent 70%),
+    var(--bg);
+}
+
+@media (max-width: 900px) {
+  .editor {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+  }
+
+  .editor__form {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    overflow: visible;
+  }
+
+  .editor__preview {
+    height: auto;
+    min-height: 80vh;
+  }
+}
