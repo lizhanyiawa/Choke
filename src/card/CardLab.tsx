@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 
 import { CardFace } from "./CardFace"
 import { DEMO_CARDS, makeCard } from "./data"
@@ -40,8 +40,18 @@ const SOLO_SKILL: CardFaceData = makeCard({
 
 export function CardLab() {
   const [bg, setBg] = useState<"dark" | "light">("dark")
-
   const params = new URLSearchParams(window.location.search)
+  const embed = params.get("embed") === "1"
+
+  useEffect(() => {
+    if (!embed) return
+    const prev = document.body.style.background
+    document.body.style.background = "transparent"
+    return () => {
+      document.body.style.background = prev
+    }
+  }, [embed])
+
   const solo = params.get("solo")
   if (solo !== null) {
     const index = Number(solo)
@@ -49,6 +59,15 @@ export function CardLab() {
     const width = Math.min(Math.max(Number(params.get("w")) || 480, 240), 960)
     const battle = params.get("mode") === "battle"
     const guides = params.get("guides") === "1"
+
+    if (embed) {
+      return (
+        <div style={{ width: "100%", padding: 0 }}>
+          <CardFace card={card} mode={battle ? "battle" : "collection"} />
+        </div>
+      )
+    }
+
     return (
       <div className="lab lab--solo" data-bg="dark">
         <div style={{ width }}>

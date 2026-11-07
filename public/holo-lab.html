@@ -29,6 +29,21 @@
 <link rel="stylesheet" href="/holo-lab/css/trainer-gallery-v-regular.css" />
 <link rel="stylesheet" href="/holo-lab/css/swsh-pikachu.css" />
 <style>
+  .card__embed {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 93.2%;
+    height: 100%;
+    transform: translateX(-50%);
+    border: 0;
+    background: transparent;
+    pointer-events: none;
+  }
+  .card__front {
+    position: relative;
+    overflow: hidden;
+  }
   :root {
     color-scheme: dark;
     --bg: #111217;
@@ -280,7 +295,15 @@
         <div class="card__translater">
           <button type="button" class="card__rotator" aria-label="${e.label} holo preview">
             <div class="card__front">
-              <img src="/holo-lab/demo-card.svg" width="512" height="716" alt="" draggable="false" />
+              <iframe
+                class="card__embed"
+                src="/card-lab?solo=4&w=477&embed=1"
+                width="477"
+                height="716"
+                loading="lazy"
+                scrolling="no"
+                title=""
+              ></iframe>
               <div class="card__shine"></div>
               <div class="card__glare"></div>
             </div>

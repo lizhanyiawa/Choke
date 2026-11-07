@@ -39,11 +39,11 @@
 }
 
 .cf[data-rarity="UC"] {
-  --frame-grad: linear-gradient(135deg, #b8dce6, #5ca8bc 48%, #cce8f0);
-  --frame-rim: #4996ab;
+  --frame-grad: linear-gradient(135deg, #d8e3f2, #7e94b0 36%, #e8eff8 58%, #647b99 82%, #cad8ec);
+  --frame-rim: #748aa6;
   --frame-w: 2.3cqw;
-  --panel: #192d33;
-  --accent: #4fb3cc;
+  --panel: #1e2536;
+  --accent: #a9b7c9;
 }
 
 .cf[data-rarity="R"] {
@@ -55,11 +55,11 @@
 }
 
 .cf[data-rarity="E"] {
-  --frame-grad: linear-gradient(135deg, #d8e3f2, #7e94b0 36%, #e8eff8 58%, #647b99 82%, #cad8ec);
-  --frame-rim: #748aa6;
+  --frame-grad: linear-gradient(135deg, #b8dce6, #5ca8bc 48%, #cce8f0);
+  --frame-rim: #4996ab;
   --frame-w: 2.5cqw;
-  --panel: #1e2536;
-  --accent: #a9b7c9;
+  --panel: #192d33;
+  --accent: #4fb3cc;
 }
 
 .cf[data-rarity="L"] {
