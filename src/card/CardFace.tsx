@@ -171,6 +171,11 @@ export function CardFace({ card, mode = "collection", className }: Props) {
           </span>
           <span className="cf__no">{formatNo(card.no, card.total)}</span>
         </footer>
+
+        <div className="cf__brand" aria-hidden>
+          <span>Choke!</span>
+          <span>© 2026</span>
+        </div>
       </div>
 
       <div className="cf__sheen" aria-hidden />
