@@ -15,7 +15,19 @@ export type Element =
   | "dark"
   | "physical"
 
-export type Mod = "HD" | "SD" | "DT"
+export type Mod =
+  | "HD"
+  | "HR"
+  | "DT"
+  | "FL"
+  | "NC"
+  | "EZ"
+  | "HT"
+  | "NF"
+  | "SD"
+  | "PF"
+  | "SO"
+  | "CL"
 
 export interface CardSkill {
   name: string

@@ -7,10 +7,13 @@ import {
   ELEMENT_LABEL,
   JOB_COLOR,
   JOB_LABEL,
+  MOD_COLOR,
   RARITY_LABEL,
   battlePower,
   bpColor,
+  flagUrl,
   formatNo,
+  nameSizeOf,
   starStates,
 } from "./data"
 import type { CardFaceData, CardFaceMode, CardSkill, Element, Job, Rarity, StarState } from "./types"
@@ -82,18 +85,36 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                     title={card.name}
                     target="_blank"
                     rel="noreferrer"
+                    style={{ "--name-size": `${nameSizeOf(card.name)}cqw` } as CSSProperties}
                   >
                     {card.name}
                   </a>
                 ) : (
-                  <h3 className="cf__name" title={card.name}>
+                  <h3
+                    className="cf__name"
+                    title={card.name}
+                    style={{ "--name-size": `${nameSizeOf(card.name)}cqw` } as CSSProperties}
+                  >
                     {card.name}
                   </h3>
                 )}
 
                 <div className="cf__meta-row">
                   <span className="cf__identity">
-                    {card.country && <span className="cf__country">{card.country}</span>}
+                    {card.country && (
+                      <span className="cf__country">
+                        {flagUrl(card.country) && (
+                          <img
+                            className="cf__flag"
+                            src={flagUrl(card.country)!}
+                            alt=""
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                          />
+                        )}
+                        {card.country}
+                      </span>
+                    )}
                     {card.globalRank != null && (
                       <span className="cf__grank">#{card.globalRank}</span>
                     )}
@@ -116,11 +137,18 @@ export function CardFace({ card, mode = "collection", className }: Props) {
 
                   {card.mods.length > 0 && (
                     <span className="cf__mods">
-                      {card.mods.map((mod) => (
-                        <span key={mod} className="cf__mod">
+                      {card.mods.slice(0, 3).map((mod) => (
+                        <span
+                          key={mod}
+                          className="cf__mod"
+                          style={{ "--mod": MOD_COLOR[mod] } as CSSProperties}
+                        >
                           {mod}
                         </span>
                       ))}
+                      {card.mods.length > 3 && (
+                        <span className="cf__mod cf__mod--more">+{card.mods.length - 3}</span>
+                      )}
                     </span>
                   )}
                 </div>
@@ -268,7 +296,7 @@ export function CardFace({ card, mode = "collection", className }: Props) {
             <span className="cf__no">ID: {formatNo(card.no, card.total).replace("/", " / ")}</span>
 
             <span className="cf__brand" aria-hidden>
-              CHOKE! Esports Trading Card Series 2026
+              Choke! Trading Card Series 2026
             </span>
           </footer>
         </div>

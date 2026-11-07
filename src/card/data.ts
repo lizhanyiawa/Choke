@@ -1,4 +1,51 @@
-import type { CardFaceData, CardSkill, Job, Rarity, StarState } from "./types"
+import type { CardFaceData, CardSkill, Job, Mod, Rarity, StarState } from "./types"
+
+/** 十二种 MOD；卡面只显示前三个，多余的收进 +N */
+export const MOD_LIST: Mod[] = [
+  "HD",
+  "HR",
+  "DT",
+  "FL",
+  "NC",
+  "EZ",
+  "HT",
+  "NF",
+  "SD",
+  "PF",
+  "SO",
+  "CL",
+]
+
+export const MOD_COLOR: Record<Mod, string> = {
+  HD: "#d4a64a",
+  HR: "#d4574a",
+  DT: "#9b78de",
+  FL: "#5b6ee1",
+  NC: "#e06aa8",
+  EZ: "#4fa86a",
+  HT: "#3fa6a0",
+  NF: "#8a8f98",
+  SD: "#b33a3a",
+  PF: "#b8c4d4",
+  SO: "#a87b4a",
+  CL: "#4a8fd4",
+}
+
+/** 卡名越长字号越小；8 字符以内保持 8.2cqw */
+export function nameSizeOf(name: string): number {
+  const len = name.length
+  if (len <= 8) return 8.2
+  if (len <= 12) return 7.2
+  if (len <= 16) return 6.4
+  if (len <= 20) return 5.6
+  return 5
+}
+
+export function flagUrl(code: string | undefined): string | null {
+  if (!code || !/^[A-Za-z]{2}$/.test(code)) return null
+  return `https://flagcdn.com/${code.toLowerCase()}.svg`
+}
+
 
 /** 七档品质基础值；压缩比固定 3.5×（C 400 → Prismatic 1,400） */
 export const RARITY_BASE: Record<Rarity, number> = {

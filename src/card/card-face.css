@@ -221,7 +221,7 @@
   min-width: 0;
   margin: 0;
   font-family: var(--font-heading), var(--font-cn), var(--font-sans);
-  font-size: 8.2cqw;
+  font-size: var(--name-size, 8.2cqw);
   font-weight: 800;
   line-height: 1.02;
   letter-spacing: -0.01em;
@@ -265,8 +265,19 @@
 }
 
 .cf__country {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7cqw;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+
+.cf__flag {
+  width: 4.2cqw;
+  height: auto;
+  border-radius: 0.35cqw;
+  box-shadow: 0 0 0 0.15cqw rgb(0 0 0 / 0.12);
+  object-fit: cover;
 }
 
 .cf__sub-row {
@@ -302,15 +313,22 @@
   min-width: 6.2cqw;
   height: 4.4cqw;
   padding: 0 1cqw;
-  border: 0.25cqw solid color-mix(in srgb, var(--accent) 55%, var(--panel));
+  border: 0.25cqw solid color-mix(in srgb, var(--mod, var(--accent)) 62%, var(--panel));
   border-radius: 1.15cqw;
   font-family: var(--font-heading), var(--font-sans);
   font-size: 2.85cqw;
   font-weight: 700;
   letter-spacing: 0.05em;
+  color: color-mix(in srgb, var(--mod, var(--accent)) 72%, #ffffff);
+  background: color-mix(in srgb, var(--mod, var(--accent)) 22%, var(--panel));
+  box-shadow: 0 0.25cqw 0.5cqw rgb(0 0 0 / 0.16);
+}
+
+.cf__mod--more {
+  min-width: 4.6cqw;
+  padding: 0 0.7cqw;
   color: var(--panel-ink);
   background: var(--panel);
-  box-shadow: 0 0.25cqw 0.5cqw rgb(0 0 0 / 0.16);
 }
 
 /* ---------- 2. 插画窗：深蓝底框 + 一体化金色阶梯内描边 + 命座六星 ---------- */

@@ -1,14 +1,14 @@
 import { useMemo, useState } from "react"
 
 import { CardFace } from "./CardFace"
-import { DEMO_CARDS, ELEMENT_LABEL, JOB_LABEL, RARITY_LABEL } from "./data"
+import { DEMO_CARDS, ELEMENT_LABEL, JOB_LABEL, MOD_LIST, RARITY_LABEL } from "./data"
 import type { CardFaceData, CardSkill, Element, Job, Mod, Rarity } from "./types"
 import "./card-editor.css"
 
 const RARITIES: Rarity[] = ["C", "UC", "R", "E", "L", "Radiant", "Prismatic"]
 const JOBS: Job[] = ["tank", "warrior", "mage", "support"]
 const ELEMENTS: Element[] = ["metal", "wood", "earth", "ice", "fire", "thunder", "light", "dark", "physical"]
-const MODS: Mod[] = ["HD", "SD", "DT"]
+type Holo = "none" | "regular" | "rainbow" | "glare"
 
 interface SkillSlot {
   enabled: boolean
@@ -44,6 +44,7 @@ export function CardEditor() {
   const [slots, setSlots] = useState<SkillSlot[]>(slotsFromCard(DEMO_CARDS[4]))
   const [width, setWidth] = useState(420)
   const [guides, setGuides] = useState(false)
+  const [holo, setHolo] = useState<Holo>("none")
   const [exported, setExported] = useState<string | null>(null)
 
   const card = useMemo<CardFaceData>(() => {
@@ -175,7 +176,7 @@ export function CardEditor() {
           </Row>
           <Field label="MOD">
             <div className="editor__checks">
-              {MODS.map((mod) => (
+              {MOD_LIST.map((mod) => (
                 <label key={mod}>
                   <input
                     type="checkbox"
@@ -321,6 +322,14 @@ export function CardEditor() {
             />
             显示布局参考线
           </label>
+          <Field label="全息效果">
+            <select value={holo} onChange={(e) => setHolo(e.target.value as Holo)}>
+              <option value="none">无</option>
+              <option value="regular">常规箔面</option>
+              <option value="rainbow">彩虹箔</option>
+              <option value="glare">斜光</option>
+            </select>
+          </Field>
           <div className="editor__actions">
             <button type="button" onClick={exportJson}>
               导出 JSON
@@ -339,8 +348,22 @@ export function CardEditor() {
       </aside>
 
       <main className="editor__preview">
-        <div style={{ width }}>
+        <div
+          className="editor__stage"
+          data-holo={holo === "none" ? undefined : holo}
+          style={{ width }}
+        >
           <CardFace card={card} className={guides ? "cf--guides" : undefined} />
+        </div>
+
+        <div className="editor__zoom">
+          <button type="button" onClick={() => setWidth((w) => Math.max(240, w - 40))} aria-label="缩小">
+            −
+          </button>
+          <span>{width}</span>
+          <button type="button" onClick={() => setWidth((w) => Math.min(640, w + 40))} aria-label="放大">
+            +
+          </button>
         </div>
       </main>
     </div>
