@@ -110,11 +110,13 @@ export function CardFace({ card, mode = "collection", className }: Props) {
             !card.banner && <CardArt seed={card.id} color={JOB_COLOR[card.job]} />
           )}
           <div className="cf__art-vignette" aria-hidden />
-          <div className="cf__stars" aria-label={`命座 ${card.constellation}`}>
-            {stars.map((state, i) => (
-              <Star key={i} state={state} gid={prismId} />
-            ))}
-            <span className="cf__stars-count">{card.constellation}/6</span>
+          <div className="cf__stars-strip">
+            <div className="cf__stars" aria-label={`命座 ${card.constellation}`}>
+              {stars.map((state, i) => (
+                <Star key={i} state={state} gid={prismId} />
+              ))}
+              <span className="cf__stars-count">{card.constellation}/6</span>
+            </div>
           </div>
         </div>
 
@@ -122,15 +124,17 @@ export function CardFace({ card, mode = "collection", className }: Props) {
           {skills.map((skill, i) =>
             skill ? (
               <div className="cf__skill" key={i}>
-                <span
-                  className="cf__el"
-                  style={{ "--el": ELEMENT_COLOR[skill.element] } as CSSProperties}
-                  title={ELEMENT_LABEL[skill.element]}
-                >
-                  <ElementGlyph element={skill.element} />
-                </span>
-                <span className="cf__el-sep" aria-hidden />
-                <span className="cf__skill-name">{skill.name}</span>
+                <div className="cf__skill-body">
+                  <span
+                    className="cf__el"
+                    style={{ "--el": ELEMENT_COLOR[skill.element] } as CSSProperties}
+                    title={ELEMENT_LABEL[skill.element]}
+                  >
+                    <ElementGlyph element={skill.element} />
+                  </span>
+                  <span className="cf__el-sep" aria-hidden />
+                  <span className="cf__skill-name">{skill.name}</span>
+                </div>
                 <span className="cf__cost">
                   {skill.passive ? (
                     <span className="cf__passive">被动</span>
@@ -170,12 +174,10 @@ export function CardFace({ card, mode = "collection", className }: Props) {
             <b>{bp.toLocaleString("en-US")}</b>
           </span>
           <span className="cf__no">{formatNo(card.no, card.total)}</span>
+          <span className="cf__brand" aria-hidden>
+            Choke! Esports Trading Card Series 2026
+          </span>
         </footer>
-
-        <div className="cf__brand" aria-hidden>
-          <span>Choke!</span>
-          <span>© 2026</span>
-        </div>
       </div>
 
       <div className="cf__sheen" aria-hidden />

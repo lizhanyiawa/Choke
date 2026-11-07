@@ -103,12 +103,12 @@
   box-sizing: border-box;
   padding: 2.6cqw var(--pad-x) 2.4cqw;
   border-radius: 2.4cqw;
-  background: var(--panel);
-  color: var(--panel-ink);
+  background: var(--paper);
+  color: var(--slot-ink);
   overflow: hidden;
 }
 
-/* 深色面板：边缘压暗 + 顶部微光 */
+/* 纸面：极轻的斜光与边缘压暗 */
 .cf__body::before {
   content: "";
   position: absolute;
@@ -116,8 +116,8 @@
   border-radius: inherit;
   pointer-events: none;
   background:
-    radial-gradient(120% 80% at 20% -10%, rgb(255 255 255 / 0.07), transparent 60%),
-    radial-gradient(90% 70% at 100% 110%, rgb(0 0 0 / 0.35), transparent 64%);
+    radial-gradient(120% 88% at 16% -6%, rgb(255 255 255 / 0.5), transparent 58%),
+    radial-gradient(96% 74% at 104% 106%, rgb(122 112 96 / 0.1), transparent 62%);
 }
 
 /* ---------- 顶栏：圆圈向引出两条横线，右侧内容 ---------- */
@@ -132,7 +132,10 @@
   gap: 2.4cqw;
   padding: 2cqw 2.2cqw;
   border-radius: 1.8cqw;
-  background: var(--paper);
+  background: #f8f3ea;
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.06),
+    0 0.3cqw 1cqw -0.6cqw rgb(0 0 0 / 0.14);
   color: var(--slot-ink);
 }
 
@@ -372,37 +375,63 @@
     radial-gradient(110% 80% at 50% 44%, transparent 52%, rgb(0 0 0 / 0.34));
 }
 
-/* 命座：插画底部横向胶囊，六颗 + 数字 */
+/* 命座：立绘框底部深色条 + 白色圆弧凹槽 */
+.cf__stars-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8cqw;
+  border-radius: 0 0 1.6cqw 1.6cqw;
+  background: var(--panel);
+}
+
 .cf__stars {
   position: absolute;
   left: 50%;
-  bottom: 2.2cqw;
+  bottom: 0;
   transform: translateX(-50%);
+  height: 5.8cqw;
+  padding: 0 3cqw;
   display: flex;
   align-items: center;
-  gap: 1.1cqw;
-  padding: 0.9cqw 2.2cqw;
-  border: 1px solid rgb(255 255 255 / 0.18);
-  border-radius: 999px;
-  background: rgb(0 0 0 / 0.46);
-  backdrop-filter: blur(8px);
+  gap: 0.9cqw;
+  border-radius: 2.9cqw 2.9cqw 0 0;
+  background: var(--paper);
 }
 
 .cf__star {
-  width: 5.2cqw;
-  height: 5.2cqw;
+  width: 4.2cqw;
+  height: 4.2cqw;
   display: block;
-  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.75));
+}
+
+.cf__star--empty path {
+  fill: none;
+  stroke: rgb(0 0 0 / 0.32);
+  stroke-width: 1.2;
+}
+
+.cf__star--copper path {
+  fill: #c08452;
+  stroke: #ecbf92;
+  stroke-width: 0.8;
+}
+
+.cf__star--prism path {
+  stroke: #f2e7ff;
+  stroke-width: 0.8;
+  fill-opacity: 0.72;
 }
 
 .cf__stars-count {
   margin-left: 0.6cqw;
   font-family: var(--font-heading), var(--font-sans);
   font-variant-numeric: tabular-nums;
-  font-size: 2.6cqw;
+  font-size: 2.4cqw;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: rgb(255 255 255 / 0.82);
+  color: rgb(0 0 0 / 0.55);
 }
 
 .cf__star--empty path {
@@ -440,10 +469,21 @@
   min-height: 0;
   display: flex;
   align-items: center;
+  gap: 0;
+  padding: 0.5cqw;
+  border-radius: 999px;
+  background: var(--panel);
+}
+
+.cf__skill-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
   gap: 2cqw;
   padding: 0 2.4cqw;
-  border: 1px solid rgb(0 0 0 / 0.14);
-  border-radius: 1.2cqw;
+  border-radius: 999px;
   background: var(--paper);
   color: var(--slot-ink);
 }
@@ -538,19 +578,19 @@
 }
 
 .cf__ap {
-  color: #865c16;
+  color: var(--accent);
 }
 
 .cf__ap em {
-  background: #c99533;
+  background: var(--accent);
 }
 
 .cf__mp {
-  color: #2b5f9e;
+  color: #7db6ea;
 }
 
 .cf__mp em {
-  background: #5c8fc0;
+  background: #7db6ea;
 }
 
 .cf__passive {
@@ -558,7 +598,7 @@
   font-family: var(--font-cn), var(--font-heading), var(--font-sans);
   font-size: 4cqw;
   letter-spacing: 0.14em;
-  color: rgb(0 0 0 / 0.45);
+  color: color-mix(in srgb, var(--panel-ink) 70%, transparent);
 }
 
 /* ---------- 底栏：职业圆 + BP 主数字 + 编号 ---------- */
@@ -566,14 +606,16 @@
 .cf__foot {
   position: relative;
   z-index: 2;
-  flex: 0 0 13cqw;
+  flex: 0 0 16cqw;
   width: 100%;
   min-height: 0;
   display: flex;
-  align-items: flex-end;
-  gap: 3cqw;
+  align-items: center;
+  gap: 2.4cqw;
   margin: 0;
-  padding-bottom: 0.2cqw;
+  padding: 2cqw 2.4cqw 3.8cqw;
+  border-radius: 2cqw;
+  background: var(--panel);
 }
 
 .cf__bp {
@@ -642,15 +684,21 @@
 /* ---------- 品牌条 ---------- */
 
 .cf__brand {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 0 0 auto;
-  gap: 1.4cqw;
+  position: absolute;
+  left: 50%;
+  bottom: -0.2cqw;
+  transform: translateX(-50%);
+  max-width: 88%;
+  padding: 0.3cqw 2.4cqw;
+  border-radius: 2.4cqw 2.4cqw 0 0;
+  background: var(--paper);
+  color: var(--slot-ink);
   font-family: var(--font-heading), var(--font-sans);
-  font-size: 2.2cqw;
-  letter-spacing: 0.18em;
-  color: rgb(255 255 255 / 0.4);
+  font-size: 1.7cqw;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   pointer-events: none;
 }
 
