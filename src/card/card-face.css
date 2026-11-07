@@ -166,15 +166,15 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1.2cqw;
+  gap: 0;
 }
 
 .cf__name-card {
   display: flex;
   flex-direction: column;
-  gap: 0.7cqw;
-  padding: 1.2cqw 1.6cqw;
-  border-radius: 0 1.4cqw 1.4cqw 1.4cqw;
+  gap: 1cqw;
+  padding: 1.4cqw 1.8cqw;
+  border-radius: 1.6cqw;
   background: var(--paper);
   color: var(--slot-ink);
 }
@@ -200,7 +200,7 @@
   font-size: 3.1cqw;
   font-weight: 600;
   letter-spacing: 0.18em;
-  color: var(--accent);
+  color: color-mix(in srgb, var(--accent) 62%, #241f18);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -212,7 +212,7 @@
   height: 1px;
   min-width: 2cqw;
   margin: 0 0.4cqw;
-  background: rgb(255 255 255 / 0.22);
+  background: rgb(0 0 0 / 0.16);
 }
 
 .cf__lv {
@@ -224,7 +224,7 @@
   font-size: 3cqw;
   font-weight: 450;
   letter-spacing: 0.1em;
-  color: rgb(255 255 255 / 0.55);
+  color: rgb(0 0 0 / 0.45);
 }
 
 .cf__lv b {
@@ -233,7 +233,7 @@
   font-weight: 500;
   line-height: 0.9;
   letter-spacing: 0;
-  color: var(--panel-ink);
+  color: var(--slot-ink);
 }
 
 /* 卡名：无框大字，直接压在纸面上 */
@@ -357,6 +357,23 @@
     inset 0 0 0 1.75cqw var(--panel),
     inset 0 0 0 2.15cqw var(--accent),
     inset 0 0 0 2.5cqw var(--panel);
+}
+
+/* 从金线内侧延出的一层渐变，让边框不是死的 */
+.cf__art::before {
+  content: "";
+  position: absolute;
+  inset: 2.5cqw;
+  z-index: 4;
+  border-radius: 1.2cqw;
+  pointer-events: none;
+  padding: 0.22cqw;
+  background: linear-gradient(180deg, var(--accent), transparent 45%, transparent 60%, var(--accent));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
 
 .cf__art-svg,

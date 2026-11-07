@@ -41,15 +41,15 @@ export function CardFace({ card, mode = "collection", className }: Props) {
             <RarityGlyph rarity={card.rarity} />
           </span>
           <div className="cf__head-info">
-            <div className="cf__rank-row">
-              <span className="cf__rank-name">{RARITY_LABEL[card.rarity]}</span>
-              <span className="cf__rule" aria-hidden />
-              <span className="cf__lv">
-                Lv <b>{card.level}</b>
-              </span>
-            </div>
-
             <div className="cf__name-card">
+              <div className="cf__rank-row">
+                <span className="cf__rank-name">{RARITY_LABEL[card.rarity]}</span>
+                <span className="cf__rule" aria-hidden />
+                <span className="cf__lv">
+                  Lv <b>{card.level}</b>
+                </span>
+              </div>
+
               {card.profileUrl ? (
                 <a
                   className="cf__name"
