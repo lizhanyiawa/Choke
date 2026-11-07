@@ -20,6 +20,7 @@ export interface ApiUserCard {
   userCardId: number
   level: number
   constellation: number
+  exp: number
   obtainedAt?: string
 }
 
@@ -108,4 +109,50 @@ export function saveDeck(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ slots }),
   })
+}
+
+export function fetchFuel(
+  userId: string,
+  userCardId: number,
+  signal?: AbortSignal,
+): Promise<{ rows: ApiUserCard[] }> {
+  return request<{ rows: ApiUserCard[] }>(
+    `/api/users/${userId}/cards/${userCardId}/fuel`,
+    { signal },
+  )
+}
+
+export function levelUpCard(
+  userId: string,
+  userCardId: number,
+): Promise<{ card: ApiUserCard; spent: number }> {
+  return request<{ card: ApiUserCard; spent: number }>(
+    `/api/users/${userId}/cards/${userCardId}/level`,
+    { method: "POST" },
+  )
+}
+
+export function ascendCard(
+  userId: string,
+  userCardId: number,
+): Promise<{ card: ApiUserCard; consumedUserCardId: number }> {
+  return request<{ card: ApiUserCard; consumedUserCardId: number }>(
+    `/api/users/${userId}/cards/${userCardId}/constellation`,
+    { method: "POST" },
+  )
+}
+
+export function meltCard(
+  userId: string,
+  userCardId: number,
+  sourceUserCardId: number,
+): Promise<{ card: ApiUserCard; gained: number; consumedUserCardId: number }> {
+  return request<{ card: ApiUserCard; gained: number; consumedUserCardId: number }>(
+    `/api/users/${userId}/cards/${userCardId}/melt`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sourceUserCardId }),
+    },
+  )
 }

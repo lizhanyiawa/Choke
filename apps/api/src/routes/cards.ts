@@ -99,6 +99,7 @@ export async function cardRoutes(app: FastifyInstance) {
         userCardId: userCards.id,
         level: userCards.level,
         constellation: userCards.constellation,
+        exp: userCards.exp,
         obtainedAt: userCards.obtainedAt,
       })
       .from(userCards)

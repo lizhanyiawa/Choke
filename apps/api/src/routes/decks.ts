@@ -19,6 +19,7 @@ async function loadDeck(userId: string) {
       userCardId: userCards.id,
       level: userCards.level,
       constellation: userCards.constellation,
+      exp: userCards.exp,
       obtainedAt: userCards.obtainedAt,
     })
     .from(deckSlots)

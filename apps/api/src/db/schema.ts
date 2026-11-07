@@ -52,6 +52,8 @@ export const userCards = pgTable(
     cardId: text("card_id").notNull(),
     level: integer("level").notNull().default(1),
     constellation: integer("constellation").notNull().default(0),
+    /** 当前等级内累计的经验；升级时扣除 */
+    exp: integer("exp").notNull().default(0),
     mods: jsonb("mods").notNull().default(sql`'[]'::jsonb`),
     obtainedAt: timestamp("obtained_at", { withTimezone: true }).defaultNow().notNull(),
   },

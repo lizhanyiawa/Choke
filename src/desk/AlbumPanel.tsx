@@ -26,6 +26,7 @@ export function AlbumPanel({ userId }: { userId: string | null }) {
   const [page, setPage] = useState(0)
   const [result, setResult] = useState<Result | null>(null)
   const [detail, setDetail] = useState<ApiUserCard | null>(null)
+  const [refresh, setRefresh] = useState(0)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -35,7 +36,7 @@ export function AlbumPanel({ userId }: { userId: string | null }) {
     return () => window.clearTimeout(timer)
   }, [query])
 
-  const key = userId ? `${userId}|${rarity}|${deferredQuery}|${sort}|${page}` : ""
+  const key = userId ? `${userId}|${rarity}|${deferredQuery}|${sort}|${page}|${refresh}` : ""
 
   useEffect(() => {
     if (!userId) return
@@ -183,7 +184,15 @@ export function AlbumPanel({ userId }: { userId: string | null }) {
         </div>
       )}
 
-      {detail && <CardDetail card={detail} onClose={() => setDetail(null)} />}
+      {detail && (
+        <CardDetail
+          key={detail.userCardId}
+          card={detail}
+          userId={userId}
+          onClose={() => setDetail(null)}
+          onChanged={() => setRefresh((value) => value + 1)}
+        />
+      )}
     </div>
   )
 }

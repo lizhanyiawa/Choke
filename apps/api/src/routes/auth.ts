@@ -118,6 +118,7 @@ export async function authRoutes(app: FastifyInstance) {
           userCardId: userCards.id,
           level: userCards.level,
           constellation: userCards.constellation,
+          exp: userCards.exp,
         })
         .from(userCards)
         .innerJoin(cards, eq(cards.id, userCards.cardId))

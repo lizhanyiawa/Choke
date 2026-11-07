@@ -986,6 +986,119 @@
   font-size: 15px;
   line-height: 1;
 }
+.card-detail__level {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 2px solid #14244a;
+  border-radius: 12px;
+  background: #16264a;
+}
+.card-detail__level-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #8ea9c9;
+}
+.card-detail__level-head em {
+  font-style: normal;
+  color: #3cbadb;
+}
+.card-detail__exp {
+  height: 8px;
+  border-radius: 999px;
+  background: #0e1a36;
+  overflow: hidden;
+}
+.card-detail__exp > div {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3cbadb, #21e985);
+  transition: width 0.25s ease;
+}
+.card-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.card-detail__action {
+  height: 34px;
+  padding: 0 12px;
+  border: 2px solid rgba(60, 186, 219, 0.45);
+  border-radius: 10px;
+  background: transparent;
+  color: #9fd9ea;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.card-detail__action:hover:not(:disabled) {
+  background: #3cbadb;
+  border-color: #3cbadb;
+  color: #0b0d10;
+}
+.card-detail__action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.card-detail__action--primary {
+  background: #3cbadb;
+  border-color: #3cbadb;
+  color: #0b0d10;
+}
+.card-detail__action--primary:hover:not(:disabled) {
+  background: #5fd0ec;
+}
+.card-detail__message {
+  margin: 0;
+  font-size: 11px;
+  color: #21e985;
+}
+.card-detail__fuel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.card-detail__fuel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+  max-height: 260px;
+  padding-right: 4px;
+  overflow-y: auto;
+}
+.card-detail__fuel-card {
+  position: relative;
+  min-width: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.card-detail__fuel-card .cf {
+  width: 100%;
+  pointer-events: none;
+}
+.card-detail__fuel-card span {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(11, 13, 16, 0.82);
+  color: #21e985;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.card-detail__fuel-card.is-busy {
+  opacity: 0.4;
+  pointer-events: none;
+}
 
 /* ----- 卡组 ----- */
 .deck-panel {

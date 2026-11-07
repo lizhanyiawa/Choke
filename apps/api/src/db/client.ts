@@ -46,9 +46,11 @@ CREATE TABLE IF NOT EXISTS user_cards (
   card_id text NOT NULL,
   level integer NOT NULL DEFAULT 1,
   constellation integer NOT NULL DEFAULT 0,
+  exp integer NOT NULL DEFAULT 0,
   mods jsonb NOT NULL DEFAULT '[]'::jsonb,
   obtained_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE user_cards ADD COLUMN IF NOT EXISTS exp integer NOT NULL DEFAULT 0;
 CREATE INDEX IF NOT EXISTS user_cards_user_idx ON user_cards (user_id);
 CREATE INDEX IF NOT EXISTS user_cards_card_idx ON user_cards (card_id);
 

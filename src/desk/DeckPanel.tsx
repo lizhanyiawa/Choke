@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
+import { battlePower } from "@/card/data"
 
 import {
   fetchDeck,
@@ -50,6 +51,10 @@ export function DeckPanel({ userId }: { userId: string | null }) {
   if (!deck) return <div className="album-panel__empty">加载中…</div>
 
   const filled = deck.slots.filter((slot) => slot.card).length
+  const totalBp = deck.slots.reduce(
+    (sum, slot) => (slot.card ? sum + battlePower(toFace(slot.card)) : sum),
+    0,
+  )
 
   const persist = async (slots: ApiDeck["slots"]) => {
     if (saving) return
@@ -119,7 +124,9 @@ export function DeckPanel({ userId }: { userId: string | null }) {
         <em>{saving ? "保存中…" : savedAt ? `已保存 ${savedAt}` : "改动自动保存"}</em>
       </div>
 
-      <p className="command-note">主队 7 张；侧面支援之后另开一栏，不占这 7 个槽。</p>
+      <p className="command-note">
+        主队 7 张 · 总战力 {totalBp.toLocaleString("en-US")}；侧面支援之后另开一栏，不占这 7 个槽。
+      </p>
 
       <div className="deck-grid">
         {deck.slots.map((slot, index) => (
