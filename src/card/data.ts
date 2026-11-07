@@ -1,3 +1,4 @@
+import { cardSkillsFor } from "./jobs"
 import type { CardFaceData, CardSkill, Job, Mod, Rarity, StarState } from "./types"
 
 /** 十二种 MOD；卡面只显示前三个，多余的收进 +N */
@@ -194,8 +195,10 @@ const SKILL_SETS: Record<Job, CardSkill[]> = {
   ],
 }
 
-/** 按职业取技能：C–E 两个、L 两到三个、Radiant 以上三个 */
-export function skillsFor(job: Job, rarity: Rarity, wantThree = false): CardSkill[] {
+/** 按职业/子职业 + 稀有度取技能；seed 相同则结果恒定 */
+export function skillsFor(job: Job, rarity: Rarity, wantThree = false, seed?: string): CardSkill[] {
+  if (seed) return cardSkillsFor(seed, job, rarity, wantThree)
+
   const pool = SKILL_SETS[job]
   const count = rarity === "Radiant" || rarity === "Prismatic" || wantThree ? 3 : 2
   return pool.slice(0, count)

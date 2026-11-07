@@ -26,6 +26,6 @@ export function faceFromPool(card: PoolCard, personal = false): CardFaceData {
     country: card.country,
     globalRank: card.globalRank,
     pp: card.pp,
-    skills: skillsFor(job, rarity),
+    skills: skillsFor(job, rarity, false, String(card.osuId)),
   })
 }

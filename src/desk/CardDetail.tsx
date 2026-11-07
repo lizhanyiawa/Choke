@@ -4,11 +4,11 @@ import { CardFace } from "@/card/CardFace"
 import {
   ELEMENT_COLOR,
   ELEMENT_LABEL,
-  JOB_LABEL,
   RARITY_LABEL,
   battlePower,
   formatNo,
 } from "@/card/data"
+import { skillSeed, subjobFor } from "@/card/jobs"
 import {
   constellationCap,
   expToNext,
@@ -121,7 +121,7 @@ export function CardDetail({ card, userId, onClose, onChanged }: Props) {
 
         <div className="card-detail__info">
           <div className="card-detail__eyebrow">
-            {RARITY_LABEL[current.rarity]} · {JOB_LABEL[current.job] ?? current.job}
+            {RARITY_LABEL[current.rarity]} · {subjobFor(skillSeed(current.id), current.job).label}
           </div>
           <h2 className="card-detail__name">{current.name}</h2>
 

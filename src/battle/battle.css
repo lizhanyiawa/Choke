@@ -1,0 +1,693 @@
+.battle-page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(60, 186, 219, 0.12), transparent 65%),
+    radial-gradient(ellipse 60% 50% at 85% 100%, rgba(237, 95, 159, 0.1), transparent 70%),
+    #0b0f17;
+  color: #f4f4f6;
+  font-family: "Outfit Variable", "Outfit", sans-serif;
+  overflow: hidden;
+}
+.battle-page--center {
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.battle-gate {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 30px;
+  border: 3px solid #14244a;
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse 90% 120% at 15% 0%, rgba(60, 186, 219, 0.16), transparent 65%),
+    #111d35;
+  box-shadow: 12px 12px 0 #05070b;
+}
+.battle-gate > span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: #3cbadb;
+}
+.battle-gate h1 {
+  margin: 0;
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 38px;
+  line-height: 1.05;
+}
+.battle-gate p {
+  margin: 0;
+  color: #aeb8c8;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.battle-gate__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.battle-gate__stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border: 2px solid #14244a;
+  border-radius: 12px;
+  background: #0d172b;
+}
+.battle-gate__stats span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #7f8da3;
+}
+.battle-gate__stats b {
+  font-size: 20px;
+}
+.battle-gate > button,
+.battle-gate > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 20px;
+  border: 2px solid #3cbadb;
+  border-radius: 12px;
+  background: #3cbadb;
+  color: #0b0d10;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.battle-gate > a {
+  background: transparent;
+  color: #3cbadb;
+}
+
+/* top bar */
+.battle-top {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 22px;
+  border-bottom: 3px solid #14244a;
+  background: rgba(10, 16, 28, 0.9);
+  backdrop-filter: blur(8px);
+  z-index: 2;
+}
+.battle-top__back {
+  padding: 8px 14px;
+  border: 2px solid rgba(60, 186, 219, 0.35);
+  border-radius: 10px;
+  color: #9fd9ea;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.battle-top__back:hover {
+  background: #3cbadb;
+  color: #0b0d10;
+}
+.battle-top__title {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.battle-top__title span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  color: #ed5f9f;
+}
+.battle-top__title b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 22px;
+  line-height: 1;
+}
+.battle-top__stats {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+}
+.battle-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 42px;
+}
+.battle-stat span,
+.battle-ap span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: #7f8da3;
+}
+.battle-stat b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 22px;
+  line-height: 1;
+  color: #f4f4f6;
+}
+.battle-ap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border: 2px solid #14244a;
+  border-radius: 10px;
+  background: #0d172b;
+}
+.battle-ap span {
+  margin-right: 3px;
+}
+.battle-ap i {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(60, 186, 219, 0.35);
+  border-radius: 50%;
+}
+.battle-ap i.is-on {
+  background: #3cbadb;
+  border-color: #3cbadb;
+  box-shadow: 0 0 7px rgba(60, 186, 219, 0.65);
+}
+
+/* layout */
+.battle-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr) 300px;
+  gap: 14px;
+  padding: 14px 18px 18px;
+  overflow: hidden;
+}
+.battle-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+}
+.battle-center {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+/* enemy */
+.battle-enemy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border: 2px solid #14244a;
+  border-radius: 16px;
+  background:
+    radial-gradient(ellipse 90% 110% at 20% 0%, rgba(237, 95, 159, 0.2), transparent 60%),
+    #111d35;
+  box-shadow: 6px 6px 0 #05070b;
+}
+.battle-enemy__tag {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: #ed5f9f;
+}
+.battle-enemy > b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 28px;
+  line-height: 1.05;
+}
+.battle-enemy > em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #aeb8c8;
+}
+.battle-hp {
+  height: 9px;
+  border-radius: 999px;
+  background: #070d18;
+  overflow: hidden;
+}
+.battle-hp__fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+.battle-hp__fill--enemy {
+  background: linear-gradient(90deg, #ed5f9f, #ff9ac6);
+}
+.battle-hp__fill--team {
+  background: linear-gradient(90deg, #21e985, #7cf7bb);
+}
+.battle-hp__fill--card {
+  background: linear-gradient(90deg, #3cbadb, #7ce3ff);
+}
+
+.battle-panel {
+  padding: 13px;
+  border: 2px solid #14244a;
+  border-radius: 14px;
+  background: #0d172b;
+}
+.battle-panel__title {
+  margin-bottom: 8px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: #3cbadb;
+}
+.battle-intents {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.battle-intent {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 9px;
+  border: 1px solid rgba(60, 186, 219, 0.18);
+  border-radius: 9px;
+  background: rgba(60, 186, 219, 0.05);
+}
+.battle-intent__dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+}
+.battle-intent b {
+  display: block;
+  font-size: 12px;
+}
+.battle-intent em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  color: #7f8da3;
+}
+.battle-supports {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.battle-support {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+}
+.battle-support > span {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+}
+.battle-support b {
+  font-size: 12px;
+}
+.battle-support em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  color: #7f8da3;
+  margin-left: auto;
+}
+
+/* team + cards */
+.battle-team {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border: 2px solid #14244a;
+  border-radius: 14px;
+  background: #0d172b;
+}
+.battle-team__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.battle-team__head span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: #21e985;
+}
+.battle-team__head em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #aeb8c8;
+}
+.battle-hp--team {
+  height: 12px;
+}
+.battle-cards {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(128px, 1fr));
+  gap: 8px;
+  align-items: start;
+}
+.battle-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px;
+  border: 2px solid #14244a;
+  border-radius: 12px;
+  background: #111d35;
+  transition: border-color 0.15s ease, opacity 0.15s ease;
+}
+.battle-card.is-acted {
+  opacity: 0.62;
+}
+.battle-card.is-down {
+  opacity: 0.4;
+  filter: grayscale(0.8);
+}
+.battle-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  color: #3cbadb;
+}
+.battle-card__top em {
+  font-style: normal;
+  color: #7f8da3;
+}
+.battle-card__art {
+  position: relative;
+  height: 78px;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(60, 186, 219, 0.32), transparent 65%),
+    linear-gradient(150deg, #243b6b, #111d35);
+  background-size: cover;
+  background-position: center 30%;
+  overflow: hidden;
+}
+.battle-card__lv {
+  position: absolute;
+  left: 5px;
+  bottom: 5px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(7, 13, 24, 0.75);
+  color: #9fd9ea;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+}
+.battle-card__name {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.battle-card__hp {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.battle-card__hp .battle-hp {
+  height: 6px;
+}
+.battle-card__hp em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  color: #7f8da3;
+  text-align: right;
+}
+.battle-card__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 6px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  color: #7f8da3;
+}
+.battle-card__skills {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.battle-skill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  min-height: 27px;
+  padding: 4px 6px;
+  border: 1px solid rgba(60, 186, 219, 0.22);
+  border-radius: 7px;
+  background: rgba(60, 186, 219, 0.06);
+  color: #e9e9ef;
+  font: inherit;
+  font-size: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.battle-skill:hover:not(:disabled) {
+  background: rgba(60, 186, 219, 0.18);
+  border-color: #3cbadb;
+}
+.battle-skill:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.battle-skill__el {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+}
+.battle-skill b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.battle-skill em {
+  margin-left: auto;
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  color: #3cbadb;
+  white-space: nowrap;
+}
+.battle-passive {
+  padding: 2px 5px;
+  border: 1px dashed rgba(60, 186, 219, 0.25);
+  border-radius: 6px;
+  color: #7f8da3;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+}
+.battle-card__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(7, 13, 24, 0.62);
+  color: #f4f4f6;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* actions */
+.battle-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 2px solid #14244a;
+  border-radius: 12px;
+  background: #0d172b;
+}
+.battle-defense {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.battle-defense > span {
+  margin-right: 2px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  color: #7f8da3;
+}
+.battle-defense button {
+  width: 34px;
+  height: 30px;
+  border: 2px solid rgba(60, 186, 219, 0.35);
+  border-radius: 8px;
+  background: transparent;
+  color: #9fd9ea;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.battle-defense button:hover:not(:disabled) {
+  background: #3cbadb;
+  color: #0b0d10;
+}
+.battle-defense button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.battle-end {
+  height: 38px;
+  margin-left: auto;
+  padding: 0 20px;
+  border: 2px solid #3cbadb;
+  border-radius: 10px;
+  background: #3cbadb;
+  color: #0b0d10;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.battle-end:hover {
+  background: #5fd0ec;
+}
+.battle-action-error {
+  padding: 7px 10px;
+  border: 1px solid rgba(237, 95, 159, 0.4);
+  border-radius: 8px;
+  background: rgba(237, 95, 159, 0.1);
+  color: #ff9ac6;
+  font-size: 11px;
+}
+.battle-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 2px solid #14244a;
+  border-radius: 14px;
+  background: #111d35;
+}
+.battle-result b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 26px;
+  color: #21e985;
+}
+.battle-result > div {
+  display: flex;
+  gap: 8px;
+}
+.battle-result button,
+.battle-result a {
+  padding: 8px 16px;
+  border: 2px solid #3cbadb;
+  border-radius: 999px;
+  background: transparent;
+  color: #3cbadb;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.battle-result button:hover,
+.battle-result a:hover {
+  background: #3cbadb;
+  color: #0b0d10;
+}
+
+/* log */
+.battle-panel--log {
+  flex: 1 1 auto;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+}
+.battle-log {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #7f8da3;
+}
+.battle-log div:first-child {
+  color: #e9e9ef;
+}
+.battle-note {
+  margin: 0;
+  color: #7f8da3;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1280px) {
+  .battle-main {
+    grid-template-columns: 230px minmax(0, 1fr);
+  }
+  .battle-side--log {
+    display: none;
+  }
+  .battle-cards {
+    grid-template-columns: repeat(7, minmax(120px, 1fr));
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+}
+@media (max-width: 900px) {
+  .battle-main {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .battle-side--enemy {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .battle-side--enemy > * {
+    min-width: 220px;
+  }
+  .battle-cards {
+    grid-template-columns: repeat(4, minmax(128px, 1fr));
+    overflow: visible;
+  }
+  .battle-top__stats {
+    gap: 10px;
+  }
+}

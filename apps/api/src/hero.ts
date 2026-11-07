@@ -34,7 +34,7 @@ export function heroCardDef(me: OsuMe, pool?: PoolCardSeed | null) {
     profileUrl: `https://osu.ppy.sh/users/${me.id}`,
     art: me.avatar_url,
     banner: me.cover?.url ?? null,
-    skills: skillsFor(job, hero.band),
+    skills: skillsFor(job, hero.band, false, String(me.id)),
     version: 1,
     heroIndex: hero.index,
     heroPower: hero.power,
