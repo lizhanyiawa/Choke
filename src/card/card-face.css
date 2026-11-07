@@ -359,36 +359,34 @@
     radial-gradient(110% 80% at 50% 44%, transparent 52%, rgb(0 0 0 / 0.34));
 }
 
-/* 命座：插画右侧独立竖条，六颗等距 + 数字 */
+/* 命座：插画底部横向胶囊，六颗 + 数字 */
 .cf__stars {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 13cqw;
+  left: 50%;
+  bottom: 2.2cqw;
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.8cqw;
-  padding: 0;
-  border-left: 1px solid rgb(255 255 255 / 0.18);
-  border-radius: 0 1.6cqw 1.6cqw 0;
-  background: rgb(0 0 0 / 0.36);
+  gap: 1.1cqw;
+  padding: 0.9cqw 2.2cqw;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.46);
+  backdrop-filter: blur(8px);
 }
 
 .cf__star {
-  width: 7cqw;
-  height: 7cqw;
+  width: 5.2cqw;
+  height: 5.2cqw;
   display: block;
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.75));
 }
 
 .cf__stars-count {
-  margin-top: 0.6cqw;
+  margin-left: 0.6cqw;
   font-family: var(--font-heading), var(--font-sans);
   font-variant-numeric: tabular-nums;
-  font-size: 2.8cqw;
+  font-size: 2.6cqw;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: rgb(255 255 255 / 0.82);
