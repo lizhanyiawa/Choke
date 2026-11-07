@@ -1,0 +1,129 @@
+[
+  {
+    "id": "sample-common",
+    "osuId": 1001,
+    "name": "Cookiezi",
+    "rarity": "C",
+    "job": "tank",
+    "no": 12,
+    "total": 100000,
+    "country": "KR",
+    "globalRank": 104,
+    "pp": 18670,
+    "profileUrl": "https://osu.ppy.sh/users/124493",
+    "art": "https://a.ppy.sh/124493",
+    "skills": [
+      { "name": "铁壁", "element": "earth", "ap": 1 },
+      { "name": "反震", "element": "metal", "ap": 0, "passive": true }
+    ]
+  },
+  {
+    "id": "sample-uncommon",
+    "osuId": 1002,
+    "name": "Vaxei",
+    "rarity": "UC",
+    "job": "support",
+    "no": 208,
+    "total": 100000,
+    "country": "US",
+    "globalRank": 115,
+    "pp": 18594,
+    "art": "https://a.ppy.sh/4787150",
+    "skills": [
+      { "name": "回响", "element": "light", "ap": 1 },
+      { "name": "庇护", "element": "wood", "ap": 1, "mp": 2 }
+    ]
+  },
+  {
+    "id": "sample-rare",
+    "osuId": 1003,
+    "name": "Rafis",
+    "rarity": "R",
+    "job": "warrior",
+    "no": 1471,
+    "total": 100000,
+    "country": "PL",
+    "globalRank": 240,
+    "pp": 16388,
+    "art": "https://a.ppy.sh/39828",
+    "skills": [
+      { "name": "裂空斩", "element": "physical", "ap": 2 },
+      { "name": "追风", "element": "thunder", "ap": 1 },
+      { "name": "血怒", "element": "dark", "ap": 0, "passive": true }
+    ]
+  },
+  {
+    "id": "sample-epic",
+    "osuId": 1004,
+    "name": "WhiteCat",
+    "rarity": "E",
+    "job": "mage",
+    "no": 8320,
+    "total": 100000,
+    "country": "DE",
+    "globalRank": 53,
+    "pp": 20212,
+    "art": "https://a.ppy.sh/4504101",
+    "skills": [
+      { "name": "霜缚", "element": "ice", "ap": 1, "mp": 3 },
+      { "name": "星火", "element": "fire", "ap": 2, "mp": 5 },
+      { "name": "静默", "element": "light", "ap": 2, "mp": 4 }
+    ]
+  },
+  {
+    "id": "sample-legendary",
+    "osuId": 1005,
+    "name": "Mrekk",
+    "rarity": "L",
+    "job": "warrior",
+    "no": 20155,
+    "total": 100000,
+    "country": "AU",
+    "globalRank": 1,
+    "pp": 32269,
+    "profileUrl": "https://osu.ppy.sh/users/7562902",
+    "art": "https://a.ppy.sh/7562902",
+    "banner": "https://assets.ppy.sh/user-cover-presets/3/32ddb3eb261e38a82067f9ef4ea96c12f6abf8bd228e6413330f9d351420301b.jpeg",
+    "skills": [
+      { "name": "裂空斩", "element": "physical", "ap": 2 },
+      { "name": "追风", "element": "thunder", "ap": 1 },
+      { "name": "血怒", "element": "dark", "ap": 0, "passive": true }
+    ]
+  },
+  {
+    "id": "sample-radiant",
+    "osuId": 1006,
+    "name": "Sotarks",
+    "rarity": "Radiant",
+    "job": "support",
+    "no": 48207,
+    "total": 100000,
+    "country": "FR",
+    "globalRank": 50458,
+    "pp": 6512,
+    "art": "https://a.ppy.sh/4452992",
+    "skills": [
+      { "name": "回响", "element": "light", "ap": 1 },
+      { "name": "庇护", "element": "wood", "ap": 1, "mp": 2 },
+      { "name": "共鸣", "element": "physical", "ap": 0, "passive": true }
+    ]
+  },
+  {
+    "id": "sample-prismatic",
+    "osuId": 1007,
+    "name": "Toke",
+    "rarity": "Prismatic",
+    "job": "mage",
+    "no": 99999,
+    "total": 100000,
+    "country": "JP",
+    "globalRank": 12000,
+    "pp": 9800,
+    "art": "https://a.ppy.sh/124493",
+    "skills": [
+      { "name": "霜缚", "element": "ice", "ap": 1, "mp": 3 },
+      { "name": "星火", "element": "fire", "ap": 2, "mp": 5 },
+      { "name": "静默", "element": "light", "ap": 2, "mp": 4 }
+    ]
+  }
+]

@@ -35,6 +35,33 @@
   color: rgb(237 234 229 / 0.55);
 }
 
+.gacha__account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: rgb(237 234 229 / 0.7);
+}
+
+.gacha__account a,
+.gacha__account button {
+  padding: 7px 14px;
+  border: 1px solid rgb(237 234 229 / 0.18);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.04);
+  color: #edeae5;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.gacha__account a:hover,
+.gacha__account button:hover {
+  border-color: #ed5f9f;
+}
+
 .gacha__pity {
   display: flex;
   flex-direction: column;

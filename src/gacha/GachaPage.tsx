@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
 import { faceFromDef } from "@/card/def"
@@ -59,6 +59,16 @@ export function GachaPage() {
   const [pity, setPity] = useState<{ before: number; after: number } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<{ id: string; username: string } | null>(null)
+
+  useEffect(() => {
+    fetch("/auth/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok) setUser(d.data)
+      })
+      .catch(() => {})
+  }, [])
 
   async function openPack() {
     setLoading(true)
@@ -67,7 +77,7 @@ export function GachaPage() {
       const res = await fetch(`${API}/packs/${pool}/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "demo", count: 5 }),
+        body: JSON.stringify({ userId: user?.id ?? "demo", count: 5 }),
       })
       const data = await res.json()
       if (!data.ok) throw new Error(data.error?.message ?? "抽卡失败")
@@ -96,6 +106,18 @@ export function GachaPage() {
           <div className="gacha__eyebrow">CHOKE! · GACHA</div>
           <h1>开包</h1>
           <p>服务端 RNG · 60 抽保底 L · 一次 5 张</p>
+        </div>
+        <div className="gacha__account">
+          {user ? (
+            <>
+              <span>{user.username}</span>
+              <button type="button" onClick={() => fetch("/auth/logout", { method: "POST" }).then(() => setUser(null))}>
+                退出
+              </button>
+            </>
+          ) : (
+            <a href="/auth/osu">用 osu! 登录</a>
+          )}
         </div>
         <div className="gacha__pity">
           <span>保底进度</span>

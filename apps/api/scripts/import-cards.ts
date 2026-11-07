@@ -42,6 +42,11 @@ console.log(`读取 ${rows.length} 条卡定义`)
 const BATCH = 500
 let done = 0
 
+if (process.argv.includes("--replace")) {
+  console.log("清空 cards 表")
+  await db.delete(cards)
+}
+
 for (let i = 0; i < rows.length; i += BATCH) {
   const batch = rows.slice(i, i + BATCH).map((row) => ({
     id: row.id,
@@ -61,30 +66,7 @@ for (let i = 0; i < rows.length; i += BATCH) {
     version: 1,
   }))
 
-  for (const row of batch) {
-    await db
-      .insert(cards)
-      .values(row)
-      .onConflictDoUpdate({
-        target: cards.id,
-        set: {
-          osuId: row.osuId,
-          name: row.name,
-          rarity: row.rarity,
-          job: row.job,
-          no: row.no,
-          total: row.total,
-          country: row.country,
-          globalRank: row.globalRank,
-          pp: row.pp,
-          profileUrl: row.profileUrl,
-          art: row.art,
-          banner: row.banner,
-          skills: row.skills,
-          version: row.version,
-        },
-      })
-  }
+  await db.insert(cards).values(batch).onConflictDoNothing()
 
   done += batch.length
   console.log(`已导入 ${done}/${rows.length}`)

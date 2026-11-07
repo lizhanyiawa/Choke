@@ -1,3 +1,4 @@
+export { defFromPool } from "./def"
 export { avatarUrl, profileUrl } from "./art"
 export { POOL_SEED, MAX_TOP_SHARE, buildPool, claim, normalizeMutualify, pullable, revoke } from "./build"
 export type { BuildOptions, BuildResult } from "./build"
