@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
+import { expToNext, isHeroCardId, levelCap } from "@/card/progression"
 import type { Rarity } from "@/card/types"
 
 import { fetchUserCards, toFace, type ApiUserCard, type CardSort } from "./api"
@@ -161,6 +162,9 @@ export function AlbumPanel({ userId }: { userId: string | null }) {
               }}
             >
               <CardFace card={toFace(row)} />
+              {row.level < levelCap(isHeroCardId(row.id)) && (
+                <ReadyBadge row={row} />
+              )}
             </div>
           ))}
         </div>
@@ -195,4 +199,10 @@ export function AlbumPanel({ userId }: { userId: string | null }) {
       )}
     </div>
   )
+}
+
+function ReadyBadge({ row }: { row: ApiUserCard }) {
+  const need = expToNext(row.level, row.rarity, isHeroCardId(row.id))
+  if (need <= 0 || row.exp < need) return null
+  return <span className="album-panel__ready">可升级</span>
 }
