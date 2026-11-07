@@ -61,35 +61,30 @@ for (let i = 0; i < rows.length; i += BATCH) {
     version: 1,
   }))
 
-  await db
-    .insert(cards)
-    .values(batch)
-    .onConflictDoUpdate({
-      target: cards.id,
-      set: {
-        name: batch[0]!.name,
-        rarity: batch[0]!.rarity,
-        job: batch[0]!.job,
-        version: 1,
-      },
-    })
-    .catch(async () => {
-      // 批量 upsert 冲突目标不能逐行覆盖，退化成逐条
-      for (const row of batch) {
-        await db
-          .insert(cards)
-          .values(row)
-          .onConflictDoUpdate({
-            target: cards.id,
-            set: {
-              name: row.name,
-              rarity: row.rarity,
-              job: row.job,
-              version: row.version,
-            },
-          })
-      }
-    })
+  for (const row of batch) {
+    await db
+      .insert(cards)
+      .values(row)
+      .onConflictDoUpdate({
+        target: cards.id,
+        set: {
+          osuId: row.osuId,
+          name: row.name,
+          rarity: row.rarity,
+          job: row.job,
+          no: row.no,
+          total: row.total,
+          country: row.country,
+          globalRank: row.globalRank,
+          pp: row.pp,
+          profileUrl: row.profileUrl,
+          art: row.art,
+          banner: row.banner,
+          skills: row.skills,
+          version: row.version,
+        },
+      })
+  }
 
   done += batch.length
   console.log(`已导入 ${done}/${rows.length}`)

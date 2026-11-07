@@ -362,6 +362,17 @@
   opacity: 0.78;
 }
 
+/* 没有 banner 时，用同一张头像放大模糊做底，避免插画窗空成黑块 */
+.cf__art-blur {
+  position: absolute;
+  inset: -12%;
+  width: 124%;
+  height: 124%;
+  object-fit: cover;
+  filter: blur(18px) brightness(0.42) saturate(0.85);
+  transform: scale(1.05);
+}
+
 /* 玩家头像始终居于立绘窗正中央 */
 .cf__art-avatar {
   position: absolute;

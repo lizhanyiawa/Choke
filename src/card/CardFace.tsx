@@ -164,7 +164,7 @@ export function CardFace({ card, mode = "collection", className }: Props) {
               3. 若无数据进行预览，底色保持纯净暗色，不渲染任何音符/判定圈占位符
             */}
             <div className="cf__art-screen">
-              {card.banner && (
+              {card.banner ? (
                 <img
                   className="cf__art-banner"
                   src={card.banner}
@@ -172,6 +172,16 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                   draggable={false}
                   referrerPolicy="no-referrer"
                 />
+              ) : (
+                card.art && (
+                  <img
+                    className="cf__art-blur"
+                    src={card.art}
+                    alt=""
+                    draggable={false}
+                    referrerPolicy="no-referrer"
+                  />
+                )
               )}
               {card.art && (
                 <img
