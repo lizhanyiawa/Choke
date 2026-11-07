@@ -3,6 +3,9 @@ import { useMemo, useState } from "react"
 import { CardFace } from "@/card/CardFace"
 import type { Rarity } from "@/card/types"
 
+import { defRow } from "@/card/def"
+
+import { defFromPool } from "./def"
 import { buildPool, claim, faceFromPool, revoke, type PoolCard } from "./index"
 import type { OsuSelf } from "./hero"
 import "./pool-lab.css"
@@ -180,10 +183,11 @@ export function PoolLab() {
 
   function exportCards() {
     if (!cards) return
-    const blob = new Blob([JSON.stringify(cards)], { type: "application/json" })
+    const rows = cards.map((card) => defRow(defFromPool(card)))
+    const blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" })
     const link = document.createElement("a")
     link.href = URL.createObjectURL(blob)
-    link.download = "choke-pool.json"
+    link.download = "choke-cards.json"
     link.click()
   }
 
@@ -305,7 +309,7 @@ export function PoolLab() {
                 下一页
               </button>
               <button type="button" className="lab__toggle" onClick={exportCards}>
-                导出卡池
+                导出卡定义
               </button>
             </div>
           </section>

@@ -273,9 +273,9 @@
 }
 
 .cf__flag {
-  width: 4.2cqw;
-  height: auto;
-  border-radius: 0.35cqw;
+  width: 5.6cqw;
+  height: 3.8cqw;
+  border-radius: 0.4cqw;
   box-shadow: 0 0 0 0.15cqw rgb(0 0 0 / 0.12);
   object-fit: cover;
 }
