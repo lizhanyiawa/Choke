@@ -20,6 +20,7 @@
   --ink-soft: #6d665a;
   --line: rgb(58 52 43 / 0.4);
   --frame-w: 1.6cqw;
+  --pad-x: 3.4cqw;
   --rank-ink: #8e97a6;
   color: var(--ink);
   font-family: var(--font-heading), var(--font-cn), var(--font-sans);
@@ -33,42 +34,49 @@
   --frame-grad: linear-gradient(135deg, #e9e4da, #d6d0c2 55%, #eae5db);
   --frame-w: 1.3cqw;
   --rank-ink: #8e97a6;
+  --paper: #ece6d9;
 }
 
 .cf[data-rarity="UC"] {
   --frame-grad: linear-gradient(135deg, #ded9cc, #bfb9a9 48%, #e4dfd2);
   --frame-w: 1.6cqw;
   --rank-ink: #3f9dbb;
+  --paper: #e7e9e1;
 }
 
 .cf[data-rarity="R"] {
   --frame-grad: linear-gradient(135deg, #f7e8bc, #c9a24e 38%, #f6edc9 55%, #b58b36 78%, #f0dfa9);
   --frame-w: 1.9cqw;
   --rank-ink: #b8862f;
+  --paper: #f2e8d2;
 }
 
 .cf[data-rarity="E"] {
   --frame-grad: linear-gradient(135deg, #f1f4f8, #a9b4c0 36%, #edf1f6 58%, #8c98a6 82%, #e4e9f0);
   --frame-w: 2cqw;
   --rank-ink: #78848f;
+  --paper: #e8edf2;
 }
 
 .cf[data-rarity="L"] {
   --frame-grad: conic-gradient(from 215deg, #efe6fa, #c9b6e9, #f7f2fc, #b7a0df, #efe6fa);
   --frame-w: 2.1cqw;
   --rank-ink: #8a6ac8;
+  --paper: #f0e9f7;
 }
 
 .cf[data-rarity="Radiant"] {
   --frame-grad: linear-gradient(120deg, #d6f2e6, #8fd9bc 30%, #f0fcf7 52%, #71c4a4 74%, #cdeedf);
   --frame-w: 2.2cqw;
   --rank-ink: #2e9e74;
+  --paper: #e3f3ea;
 }
 
 .cf[data-rarity="Prismatic"] {
   --frame-grad: conic-gradient(from 80deg, #f5c2d0, #c9d8f5, #bfeedd, #f5edbf, #f5d2bf, #e3c2f0, #f5c2d0);
   --frame-w: 2.3cqw;
   --rank-ink: #6e6a86;
+  --paper: #f3e9f0;
 }
 
 /* ---------- 卡身 ---------- */
@@ -80,7 +88,7 @@
   flex-direction: column;
   gap: 3cqw;
   box-sizing: border-box;
-  padding: 3.2cqw 3cqw 2.6cqw;
+  padding: 3.2cqw var(--pad-x) 2.6cqw;
   border-radius: 2.4cqw;
   background: var(--paper);
   overflow: hidden;
@@ -478,12 +486,12 @@
 }
 
 .cf__cost {
-  flex: 0 0 24cqw;
+  flex: 0 0 22cqw;
   margin-left: auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 1.6cqw;
+  gap: 1.2cqw;
   font-family: var(--font-heading), var(--font-sans);
 }
 
@@ -492,8 +500,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 1.1cqw;
-  min-width: 8.4cqw;
+  gap: 0.6cqw;
+  min-width: 8cqw;
   white-space: nowrap;
 }
 
@@ -556,7 +564,7 @@
   min-height: 0;
   display: flex;
   align-items: center;
-  gap: 2.6cqw;
+  gap: 3cqw;
   margin: 0;
 }
 
@@ -666,6 +674,50 @@
 
 .cf[data-rarity="Prismatic"] .cf__sheen {
   opacity: 0.82;
+}
+
+/* ---------- 调试参考线（?guides=1） ---------- */
+
+.cf--guides::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent calc(50% - 0.5px),
+    rgb(255 59 107 / 0.4) calc(50% - 0.5px),
+    rgb(255 59 107 / 0.4) calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
+  );
+}
+
+.cf--guides::after {
+  content: "";
+  position: absolute;
+  inset: calc(var(--frame-w) + var(--pad-x));
+  z-index: 100;
+  pointer-events: none;
+  border: 1px dashed #ff3b6b;
+}
+
+.cf--guides .cf__head,
+.cf--guides .cf__art,
+.cf--guides .cf__skills,
+.cf--guides .cf__foot {
+  outline: 1px dashed rgb(59 130 246 / 0.6);
+  outline-offset: -1px;
+}
+
+.cf--guides .cf__badge,
+.cf--guides .cf__job,
+.cf--guides .cf__lv,
+.cf--guides .cf__mods,
+.cf--guides .cf__no,
+.cf--guides .cf__bp {
+  outline: 1px dotted rgb(255 196 0 / 0.8);
+  outline-offset: 2px;
 }
 
 .cf__defs {

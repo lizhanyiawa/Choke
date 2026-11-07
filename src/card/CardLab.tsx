@@ -48,10 +48,15 @@ export function CardLab() {
     const card = DEMO_CARDS[index] ?? DEMO_CARDS[4]
     const width = Math.min(Math.max(Number(params.get("w")) || 480, 240), 960)
     const battle = params.get("mode") === "battle"
+    const guides = params.get("guides") === "1"
     return (
       <div className="lab lab--solo" data-bg="dark">
         <div style={{ width }}>
-          <CardFace card={card} mode={battle ? "battle" : "collection"} />
+          <CardFace
+            card={card}
+            mode={battle ? "battle" : "collection"}
+            className={guides ? "cf--guides" : undefined}
+          />
         </div>
       </div>
     )
