@@ -61,6 +61,23 @@ export const userCards = pgTable(
   ],
 )
 
+export const decks = pgTable("decks", {
+  userId: text("user_id").primaryKey(),
+  name: text("name").notNull().default("主卡组"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+})
+
+export const deckSlots = pgTable(
+  "deck_slots",
+  {
+    userId: text("user_id").notNull(),
+    /** 主队槽位 1–7 */
+    slot: integer("slot").notNull(),
+    userCardId: integer("user_card_id").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.slot] })],
+)
+
 export const packOpenings = pgTable(
   "pack_openings",
   {

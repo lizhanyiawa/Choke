@@ -109,6 +109,7 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                             src={flagUrl(card.country)!}
                             alt=""
                             loading="lazy"
+                            decoding="async"
                             referrerPolicy="no-referrer"
                           />
                         )}
@@ -170,6 +171,9 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                   src={card.banner}
                   alt=""
                   draggable={false}
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
                   referrerPolicy="no-referrer"
                 />
               ) : (
@@ -179,6 +183,9 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                     src={card.art}
                     alt=""
                     draggable={false}
+                    loading="lazy"
+                    decoding="async"
+                    fetchPriority="low"
                     referrerPolicy="no-referrer"
                   />
                 )
@@ -189,6 +196,8 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                   src={card.art}
                   alt=""
                   draggable={false}
+                  loading="lazy"
+                  decoding="async"
                   referrerPolicy="no-referrer"
                 />
               )}

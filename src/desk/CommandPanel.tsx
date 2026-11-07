@@ -2,31 +2,14 @@ import { useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
 import { faceFromDef } from "@/card/def"
-import type { CardSkill, Job, Rarity } from "@/card/types"
 
 import { AlbumPanel } from "./AlbumPanel"
+import type { ApiUserCard } from "./api"
+import { BattlePanel } from "./BattlePanel"
+import { DeckPanel } from "./DeckPanel"
 import { POOL_META, POOL_ORDER } from "./rarity"
 
-export type PanelId = "album" | "packs" | "mainline" | "market" | "account"
-
-export interface HeroCard {
-  id: string
-  name: string
-  rarity: Rarity
-  job: Job
-  no: number
-  total: number
-  country: string | null
-  globalRank: number | null
-  pp: string | null
-  profileUrl: string | null
-  art: string | null
-  banner: string | null
-  skills: CardSkill[]
-  level: number
-  constellation: number
-  userCardId: number
-}
+export type PanelId = "album" | "deck" | "battle" | "packs" | "mainline" | "market" | "account"
 
 interface Entry {
   id: PanelId
@@ -36,6 +19,8 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   { id: "album", label: "卡册", sub: "COLLECTION" },
+  { id: "deck", label: "卡组", sub: "DECK" },
+  { id: "battle", label: "战斗", sub: "BATTLE" },
   { id: "packs", label: "卡包", sub: "PACKS" },
   { id: "mainline", label: "主线", sub: "STORY" },
   { id: "market", label: "市场", sub: "MARKET" },
@@ -52,7 +37,7 @@ export interface PanelRequest {
 interface Props {
   userId: string | null
   username: string | null
-  hero?: HeroCard | null
+  hero?: ApiUserCard | null
   /** 桌面物件双击时直接进入的子界面（配合 key 重新挂载） */
   initialStage?: Stage
   initialPanel?: PanelId
@@ -171,6 +156,8 @@ export function CommandPanel({
 
             <div className="command-drawer__body">
               {panel === "album" && <AlbumPanel userId={userId} />}
+              {panel === "deck" && <DeckPanel userId={userId} />}
+              {panel === "battle" && <BattlePanel userId={userId} onOpenDeck={() => openPanel("deck")} />}
               {panel === "packs" && <PacksPanel />}
               {panel === "mainline" && <MainlinePanel />}
               {panel === "market" && <MarketPanel />}
@@ -200,6 +187,20 @@ function PanelGlyph({ id }: { id: PanelId }) {
         <svg viewBox="0 0 24 24">
           <path d="M5 4.5h11.5A2.5 2.5 0 0 1 19 7v12.5H7.5A2.5 2.5 0 0 1 5 17z" {...line} />
           <path d="M5 17V6.5A2 2 0 0 1 7 4.5M9 8h6M9 11.5h6" {...line} />
+        </svg>
+      )
+    case "deck":
+      return (
+        <svg viewBox="0 0 24 24">
+          <rect x="4.5" y="6.5" width="9" height="13" rx="1.5" {...line} />
+          <path d="M8 4.5h9.5A1.5 1.5 0 0 1 19 6v12M7 10h4M7 13.5h4" {...line} />
+        </svg>
+      )
+    case "battle":
+      return (
+        <svg viewBox="0 0 24 24">
+          <path d="M14.8 4.2l5 5-9.3 9.3-5-5z" {...line} />
+          <path d="M18.3 6l1.9-1.9M5.5 18.8l2.4-2.4M9.8 8.2l6 6" {...line} />
         </svg>
       )
     case "packs":
@@ -301,7 +302,7 @@ function AccountPanel({
 }: {
   userId: string | null
   username: string | null
-  hero?: HeroCard | null
+  hero?: ApiUserCard | null
   onLogout?: () => void
 }) {
   if (!username) {

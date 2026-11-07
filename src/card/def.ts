@@ -38,6 +38,7 @@ export function faceFromDef(
     level: state.level ?? 1,
     mods: state.mods ?? [],
     constellation: state.constellation ?? 0,
+    isHero: def.id.startsWith("hero-"),
     no: def.no,
     total: def.total,
     country: def.country,

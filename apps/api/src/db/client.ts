@@ -52,6 +52,19 @@ CREATE TABLE IF NOT EXISTS user_cards (
 CREATE INDEX IF NOT EXISTS user_cards_user_idx ON user_cards (user_id);
 CREATE INDEX IF NOT EXISTS user_cards_card_idx ON user_cards (card_id);
 
+CREATE TABLE IF NOT EXISTS decks (
+  user_id text PRIMARY KEY,
+  name text NOT NULL DEFAULT '主卡组',
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS deck_slots (
+  user_id text NOT NULL,
+  slot integer NOT NULL,
+  user_card_id integer NOT NULL,
+  PRIMARY KEY (user_id, slot)
+);
+
 CREATE TABLE IF NOT EXISTS pack_openings (
   id serial PRIMARY KEY,
   user_id text NOT NULL,

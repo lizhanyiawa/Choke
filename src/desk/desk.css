@@ -345,9 +345,8 @@
   background: #243b6b;
   box-shadow: 10px 10px 0 0 #0b0d10;
   transition:
-    width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 0.2s ease,
-    transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    opacity 0.18s ease,
+    transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .command-panel--closed {
   width: 0;
@@ -370,6 +369,17 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  animation: command-rail-in 0.18s ease both;
+}
+@keyframes command-rail-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 .command-rail__head {
   flex: 0 0 auto;
@@ -535,6 +545,17 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  animation: command-drawer-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes command-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 .command-drawer__head {
   flex: 0 0 auto;
@@ -620,9 +641,20 @@
 }
 .album-panel__slot {
   min-width: 0;
+  cursor: pointer;
+  border-radius: 12px;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 245px;
+}
+.album-panel__slot:focus-visible {
+  outline: 3px solid #3cbadb;
+  outline-offset: 3px;
 }
 .album-panel__slot .cf {
   width: 100%;
+}
+.album-panel__slot .cf a {
+  pointer-events: none;
 }
 .album-panel__empty {
   display: flex;
@@ -649,6 +681,848 @@
 .album-panel__empty a:hover {
   background: #3cbadb;
   color: #0b0d10;
+}
+
+.album-toolbar {
+  display: flex;
+  gap: 8px;
+}
+.album-toolbar__search {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  border: 2px solid #14244a;
+  border-radius: 10px;
+  background: #1b2d57;
+  color: #f4f4f6;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.album-toolbar__search::placeholder {
+  color: rgba(185, 192, 203, 0.55);
+}
+.album-toolbar__search:focus {
+  border-color: #3cbadb;
+}
+.album-toolbar__sort {
+  height: 36px;
+  padding: 0 8px;
+  border: 2px solid #14244a;
+  border-radius: 10px;
+  background: #1b2d57;
+  color: #e9e9ef;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+}
+.album-toolbar__sort:focus {
+  border-color: #3cbadb;
+}
+.album-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.album-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 9px;
+  border: 1.5px solid rgba(60, 186, 219, 0.22);
+  border-radius: 999px;
+  background: transparent;
+  color: #b9c0cb;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+.album-filter i {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+}
+.album-filter:hover {
+  border-color: rgba(60, 186, 219, 0.55);
+}
+.album-filter.is-active {
+  background: #3cbadb;
+  border-color: #3cbadb;
+  color: #0b0d10;
+}
+.album-panel__skeleton {
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+  background: linear-gradient(100deg, #1b2d57 30%, #25406f 50%, #1b2d57 70%) 0 0 / 200% 100%;
+  animation: album-shimmer 1.1s linear infinite;
+}
+@keyframes album-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.album-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 2px 0 6px;
+}
+.album-pager button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 2px solid rgba(60, 186, 219, 0.4);
+  border-radius: 10px;
+  background: transparent;
+  color: #9fd9ea;
+  font-family: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.album-pager button:hover:not(:disabled) {
+  background: #3cbadb;
+  border-color: #3cbadb;
+  color: #0b0d10;
+}
+.album-pager button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.album-pager span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #b9c0cb;
+}
+
+/* ----- 卡牌详情 ----- */
+.card-detail {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 6, 10, 0.78);
+  backdrop-filter: blur(4px);
+  animation: card-detail-in 0.16s ease both;
+}
+.card-detail__panel {
+  position: relative;
+  display: flex;
+  gap: 22px;
+  width: min(820px, 100%);
+  max-height: calc(100vh - 48px);
+  padding: 24px;
+  box-sizing: border-box;
+  border: 4px solid #14244a;
+  border-radius: 20px;
+  background: #1b2d57;
+  box-shadow: 12px 12px 0 #0b0d10;
+  overflow: auto;
+}
+.card-detail__face {
+  width: 330px;
+  flex: 0 0 330px;
+}
+.card-detail__face .cf {
+  width: 100%;
+}
+.card-detail__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.card-detail__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid rgba(60, 186, 219, 0.45);
+  border-radius: 50%;
+  background: #1b2d57;
+  color: #9fd9ea;
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+}
+.card-detail__close:hover {
+  background: #3cbadb;
+  border-color: #3cbadb;
+  color: #0b0d10;
+}
+.card-detail__eyebrow {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: #3cbadb;
+}
+.card-detail__name {
+  margin: 0;
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: #f4f4f6;
+}
+.card-detail__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.card-detail__stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border: 2px solid #14244a;
+  border-radius: 12px;
+  background: #16264a;
+}
+.card-detail__stats span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #8ea9c9;
+}
+.card-detail__stats b {
+  font-size: 18px;
+  line-height: 1;
+}
+.card-detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #8ea9c9;
+}
+.card-detail__meta span {
+  padding: 3px 8px;
+  border: 1px solid rgba(60, 186, 219, 0.25);
+  border-radius: 999px;
+}
+.card-detail__section-title {
+  margin-bottom: 6px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: #3cbadb;
+}
+.card-detail__skills {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.card-detail__skill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 2px solid #14244a;
+  border-radius: 10px;
+  background: #16264a;
+}
+.card-detail__element {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 50%;
+  background: var(--el);
+}
+.card-detail__skill b {
+  font-size: 13px;
+}
+.card-detail__skill em {
+  font-style: normal;
+  font-size: 10px;
+  color: #8ea9c9;
+}
+.card-detail__cost {
+  margin-left: auto;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #3cbadb;
+  white-space: nowrap;
+}
+.card-detail__note {
+  margin: 0;
+  font-size: 11px;
+  color: #8ea9c9;
+}
+.card-detail__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 8px 16px;
+  border: 2px solid #3cbadb;
+  border-radius: 999px;
+  color: #3cbadb;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.card-detail__link:hover {
+  background: #3cbadb;
+  color: #0b0d10;
+}
+.card-detail__link i {
+  font-style: normal;
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* ----- 卡组 ----- */
+.deck-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.deck-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.deck-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.deck-head span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  color: #3cbadb;
+}
+.deck-head b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  color: #f4f4f6;
+}
+.deck-head em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #8ea9c9;
+  white-space: nowrap;
+}
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px 12px;
+}
+.deck-slot {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  min-width: 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.deck-slot .cf {
+  width: 100%;
+  pointer-events: none;
+}
+.deck-slot:focus-visible {
+  outline: 3px solid #3cbadb;
+  outline-offset: 3px;
+}
+.deck-slot.is-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 2px dashed rgba(60, 186, 219, 0.3);
+  background: rgba(27, 45, 87, 0.5);
+  color: #8ea9c9;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+.deck-slot.is-empty:hover {
+  border-color: #3cbadb;
+  color: #3cbadb;
+  background: rgba(60, 186, 219, 0.08);
+}
+.deck-slot__plus {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 40px;
+  line-height: 1;
+}
+.deck-slot__hint {
+  font-size: 11px;
+}
+.deck-slot__no {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 3;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(11, 13, 16, 0.72);
+  color: #9fd9ea;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+}
+.deck-slot__remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 2px solid rgba(237, 95, 159, 0.65);
+  border-radius: 50%;
+  background: rgba(11, 13, 16, 0.72);
+  color: #ed5f9f;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.deck-slot__remove:hover {
+  background: #ed5f9f;
+  border-color: #ed5f9f;
+  color: #0b0d10;
+}
+.deck-picker {
+  position: fixed;
+  inset: 0;
+  z-index: 550;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 6, 10, 0.78);
+  backdrop-filter: blur(4px);
+  animation: card-detail-in 0.16s ease both;
+}
+.deck-picker__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(720px, 100%);
+  max-height: calc(100vh - 48px);
+  padding: 20px;
+  box-sizing: border-box;
+  border: 4px solid #14244a;
+  border-radius: 20px;
+  background: #1b2d57;
+  box-shadow: 12px 12px 0 #0b0d10;
+  overflow: auto;
+}
+.deck-picker__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.deck-picker__head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.deck-picker__head span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  color: #3cbadb;
+}
+.deck-picker__head b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 24px;
+  line-height: 1;
+}
+.deck-picker__head .card-detail__close {
+  position: static;
+}
+.deck-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 12px 10px;
+}
+.deck-pick {
+  position: relative;
+  min-width: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.deck-pick .cf {
+  width: 100%;
+  pointer-events: none;
+}
+.deck-pick.is-used {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.deck-pick__used {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(11, 13, 16, 0.82);
+  color: #9fd9ea;
+  font-size: 9px;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .deck-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .deck-picker__grid {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  }
+}
+
+/* ----- 战斗原型 ----- */
+.battle-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.battle-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border: 2px solid #14244a;
+  border-radius: 16px;
+  background:
+    radial-gradient(ellipse 90% 120% at 12% 0%, rgba(237, 95, 159, 0.16), transparent 60%),
+    #1b2d57;
+}
+.battle-intro__tag {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  color: #ed5f9f;
+}
+.battle-intro > b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.battle-intro p {
+  margin: 0;
+  color: #b9c0cb;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.battle-intro__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.battle-intro__stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border: 2px solid #14244a;
+  border-radius: 12px;
+  background: #16264a;
+}
+.battle-intro__stats span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: #8ea9c9;
+}
+.battle-intro__stats b {
+  font-size: 17px;
+  line-height: 1;
+}
+.battle-start {
+  height: 44px;
+  border: 2px solid #ed5f9f;
+  border-radius: 12px;
+  background: #ed5f9f;
+  color: #0b0d10;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.battle-start:hover {
+  background: #ff7ab2;
+}
+.battle-enemy {
+  padding: 14px 16px;
+  border: 2px solid #14244a;
+  border-radius: 14px;
+  background:
+    linear-gradient(150deg, rgba(237, 95, 159, 0.16), transparent 60%),
+    #1b2d57;
+}
+.battle-enemy__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.battle-enemy__head span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: #ed5f9f;
+}
+.battle-enemy__head b {
+  display: block;
+  margin-top: 3px;
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 22px;
+  line-height: 1;
+}
+.battle-enemy__head em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #b9c0cb;
+  white-space: nowrap;
+}
+.battle-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: #0e1a36;
+  overflow: hidden;
+}
+.battle-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+.battle-bar__fill--enemy {
+  background: linear-gradient(90deg, #ed5f9f, #ff9ac6);
+}
+.battle-bar__fill--player {
+  background: linear-gradient(90deg, #21e985, #7cf7bb);
+}
+.battle-status {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+.battle-player {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 2px solid #14244a;
+  border-radius: 12px;
+  background: #1b2d57;
+}
+.battle-player__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.battle-player__head span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: #21e985;
+}
+.battle-player__head em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #b9c0cb;
+}
+.battle-ap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+  border: 2px solid #14244a;
+  border-radius: 12px;
+  background: #1b2d57;
+}
+.battle-ap span {
+  margin-right: 2px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  color: #8ea9c9;
+}
+.battle-ap i {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(60, 186, 219, 0.35);
+  border-radius: 50%;
+  background: transparent;
+}
+.battle-ap i.is-on {
+  background: #3cbadb;
+  border-color: #3cbadb;
+  box-shadow: 0 0 8px rgba(60, 186, 219, 0.6);
+}
+.battle-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px 10px;
+}
+.battle-card {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.battle-card .cf {
+  width: 100%;
+  pointer-events: none;
+}
+.battle-card:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+.battle-card.is-acted {
+  opacity: 0.45;
+}
+.battle-card.is-locked {
+  cursor: not-allowed;
+}
+.battle-card__cost {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(11, 13, 16, 0.78);
+  color: #3cbadb;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+}
+.battle-card__acted {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(11, 13, 16, 0.55);
+  color: #f4f4f6;
+  font-size: 12px;
+  font-weight: 700;
+}
+.battle-end {
+  height: 40px;
+  border: 2px solid #3cbadb;
+  border-radius: 12px;
+  background: transparent;
+  color: #3cbadb;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.battle-end:hover {
+  background: #3cbadb;
+  color: #0b0d10;
+}
+.battle-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 2px solid #14244a;
+  border-radius: 14px;
+  background: #1b2d57;
+}
+.battle-result b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 26px;
+}
+.battle-result--won b {
+  color: #21e985;
+}
+.battle-result--lost b {
+  color: #ed5f9f;
+}
+.battle-result button {
+  padding: 8px 16px;
+  border: 2px solid #3cbadb;
+  border-radius: 999px;
+  background: transparent;
+  color: #3cbadb;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.battle-result button:hover {
+  background: #3cbadb;
+  color: #0b0d10;
+}
+.battle-log {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 110px;
+  padding: 10px 12px;
+  border: 2px solid #14244a;
+  border-radius: 12px;
+  background: rgba(11, 13, 16, 0.35);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #8ea9c9;
+  overflow-y: auto;
+}
+.battle-log div:first-child {
+  color: #e9e9ef;
+}
+@media (max-width: 640px) {
+  .battle-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@keyframes card-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 760px) {
+  .card-detail__panel {
+    flex-direction: column;
+    padding: 16px;
+  }
+  .card-detail__face {
+    width: min(280px, 100%);
+    flex: none;
+    align-self: center;
+  }
 }
 
 /* ----- 其他子界面 ----- */
@@ -1354,6 +2228,13 @@
   .command-tab,
   .command-rail__btn {
     transition: none;
+  }
+  .command-rail,
+  .command-drawer,
+  .album-panel__skeleton,
+  .card-detail,
+  .deck-picker {
+    animation: none;
   }
   .opener-2d__card {
     animation: none;

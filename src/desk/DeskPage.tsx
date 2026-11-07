@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerE
 import { CardFace } from "@/card/CardFace"
 
 import { cardFromDesk } from "./cardFace"
-import { CommandPanel, type HeroCard, type PanelId, type PanelRequest } from "./CommandPanel"
+import { CommandPanel, type PanelId, type PanelRequest } from "./CommandPanel"
+import { toFace, type ApiUserCard } from "./api"
 import { POOL_META, POOL_ORDER, rollPack } from "./rarity"
 import { DEFAULT_SKIN } from "./skins"
 import { SidePanel } from "./SidePanel"
@@ -50,7 +51,7 @@ export function DeskPage() {
   const [quickTargets, setQuickTargets] = useState<Record<string, { left: number; top: number }> | null>(null)
   const [albumPulse, setAlbumPulse] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
-  const [user, setUser] = useState<{ id: string; username: string; hero: HeroCard | null } | null>(null)
+  const [user, setUser] = useState<{ id: string; username: string; hero: ApiUserCard | null } | null>(null)
   const [panelRequest, setPanelRequest] = useState<PanelRequest | null>(null)
   const dropRef = useRef<string | null>(null)
   const collectTimer = useRef<number | null>(null)
@@ -337,9 +338,8 @@ export function DeskPage() {
               : `rotate(${tiltOf(item.id)}deg)`,
             opacity: isCollecting || isQuick ? 0 : 1,
             transition: isCollecting || isQuick
-              ? "left .42s cubic-bezier(.2,.8,.2,1), top .42s cubic-bezier(.2,.8,.2,1), transform .42s cubic-bezier(.2,.8,.2,1), opacity .42s ease"
+              ? `left .42s cubic-bezier(.2,.8,.2,1), top .42s cubic-bezier(.2,.8,.2,1), transform .42s cubic-bezier(.2,.8,.2,1), opacity .42s ease${isQuick ? ` ${quickIndex * 24}ms` : ""}`
               : undefined,
-            transitionDelay: isQuick ? `${quickIndex * 24}ms` : undefined,
             pointerEvents: isCollecting || isQuick ? "none" : undefined,
             "--deal-x": `${dealX}px`,
             animationDelay: `${index * 70}ms`,
@@ -372,7 +372,7 @@ export function DeskPage() {
               role="group"
               aria-label={labelOf(item)}
             >
-              <ItemView item={item} />
+              <ItemView item={item} hero={user?.hero ?? null} />
             </div>
           )
         })}
@@ -493,7 +493,7 @@ function labelOf(item: DeskItem) {
   }
 }
 
-function ItemView({ item }: { item: DeskItem }) {
+function ItemView({ item, hero }: { item: DeskItem; hero: ApiUserCard | null }) {
   switch (item.kind) {
     case "pack": {
       const meta = POOL_META[item.pool ?? "normal"]
@@ -533,6 +533,7 @@ function ItemView({ item }: { item: DeskItem }) {
         </div>
       )
     case "card":
+      if (item.card?.isHero && hero) return <CardFace card={toFace(hero)} />
       return item.card ? <CardFace card={cardFromDesk(item.card)} /> : null
   }
 }

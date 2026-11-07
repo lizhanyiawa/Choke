@@ -4,6 +4,7 @@ import Fastify from "fastify"
 
 import { authRoutes } from "./routes/auth"
 import { cardRoutes } from "./routes/cards"
+import { deckRoutes } from "./routes/decks"
 import { packRoutes } from "./routes/packs"
 
 const app = Fastify({ logger: true })
@@ -13,6 +14,7 @@ await app.register(cookie)
 await app.register(authRoutes)
 await app.register(packRoutes)
 await app.register(cardRoutes)
+await app.register(deckRoutes)
 
 app.get("/health", async () => ({ ok: true, data: { status: "up" } }))
 
