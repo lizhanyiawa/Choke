@@ -46,6 +46,10 @@ export interface CardFaceData {
   banner?: string
   /** 卡面名字链到本人 osu! 主页 */
   profileUrl?: string
+  /** 玩家卡身份信息 */
+  country?: string
+  globalRank?: number | null
+  pp?: number | null
   isHero?: boolean
 }
 

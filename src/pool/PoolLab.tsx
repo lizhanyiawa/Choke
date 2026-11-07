@@ -344,13 +344,18 @@ export function PoolLab() {
             <dl className="pool-lab__kv">
               <dt>signal</dt>
               <dd>{selectedCard.signal.toFixed(1)}</dd>
+              <dt>分项</dt>
+              <dd>
+                pp {fmt(selectedCard.scoreParts.pp)} · 排名 {fmt(selectedCard.scoreParts.rank)} · 粉丝{" "}
+                {fmt(selectedCard.scoreParts.fans)} · 创作 {fmt(selectedCard.scoreParts.creation)}
+              </dd>
               <dt>卡池档</dt>
               <dd>{selectedCard.rarity}</dd>
               <dt>国榜下限</dt>
               <dd>{selectedCard.floor ?? "未触发"}</dd>
               <dt>粉丝 / 谱面关注</dt>
               <dd>
-                {selectedCard.followerCount}
+                {selectedCard.followerCount ?? "—"}
                 {selectedCard.mappingFollowers != null ? ` / ${selectedCard.mappingFollowers}` : ""}
               </dd>
               <dt>ranked 谱面</dt>
@@ -404,8 +409,11 @@ export function PoolLab() {
   )
 }
 
-function countRarity(cards: readonly PoolCard[]): Record<Rarity, number> {
-  const counts: Record<Rarity, number> = {
+function fmt(value: number | null): string {
+  return value == null ? "—" : value.toFixed(0)
+}
+
+function countRarity(cards: readonly PoolCard[]): Record<Rarity, number> {  const counts: Record<Rarity, number> = {
     C: 0,
     UC: 0,
     R: 0,

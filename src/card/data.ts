@@ -164,6 +164,9 @@ export const DEMO_CARDS: CardFaceData[] = [
   makeCard({
     id: "demo-common",
     name: "Cookiezi",
+    country: "KR",
+    globalRank: 104,
+    pp: 18670,
     rarity: "C",
     job: "tank",
     level: 12,
@@ -175,6 +178,9 @@ export const DEMO_CARDS: CardFaceData[] = [
   makeCard({
     id: "demo-uncommon",
     name: "Vaxei",
+    country: "US",
+    globalRank: 115,
+    pp: 18594,
     rarity: "UC",
     job: "support",
     level: 24,
@@ -186,6 +192,9 @@ export const DEMO_CARDS: CardFaceData[] = [
   makeCard({
     id: "demo-rare",
     name: "Rafis",
+    country: "PL",
+    globalRank: 240,
+    pp: 16388,
     rarity: "R",
     job: "warrior",
     level: 40,
@@ -197,6 +206,9 @@ export const DEMO_CARDS: CardFaceData[] = [
   makeCard({
     id: "demo-epic",
     name: "WhiteCat",
+    country: "DE",
+    globalRank: 53,
+    pp: 20212,
     rarity: "E",
     job: "mage",
     level: 56,
@@ -208,6 +220,9 @@ export const DEMO_CARDS: CardFaceData[] = [
   makeCard({
     id: "demo-legendary",
     name: "Mrekk",
+    country: "AU",
+    globalRank: 1,
+    pp: 32269,
     rarity: "L",
     job: "warrior",
     level: 68,
@@ -219,6 +234,9 @@ export const DEMO_CARDS: CardFaceData[] = [
   makeCard({
     id: "demo-radiant",
     name: "Sotarks",
+    country: "FR",
+    globalRank: 50458,
+    pp: 6512,
     rarity: "Radiant",
     job: "support",
     level: 74,
@@ -230,6 +248,9 @@ export const DEMO_CARDS: CardFaceData[] = [
   makeCard({
     id: "demo-prismatic",
     name: "Toke",
+    country: "JP",
+    globalRank: 12000,
+    pp: 9800,
     rarity: "Prismatic",
     job: "mage",
     level: 80,

@@ -64,7 +64,7 @@ export function CardLab() {
           <div className="lab__eyebrow">CHOKE! · CARD FACE</div>
           <h1 className="lab__title">卡面实验室 v0.1</h1>
           <p className="lab__sub">
-            2:3 竖版 · 一套模板两层可见性 · 卡面只出现 Lv / AP / MP 三个数字
+            2:3 竖版 · 卡名 + 身份行 + 三技能 · BP 是唯一战力数字
           </p>
         </div>
         <button

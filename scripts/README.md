@@ -110,3 +110,30 @@ npm run sync:osu -- --rankings 50 --rankings-page 400 --out data/rank-20000.json
 ```
 
 `normalizeMutualify` 认识这些字段，导入后稀有度信号和 banner 都会生效。
+
+---
+
+# 各国排行榜直出
+
+`sync-osu.mjs` 是逐人请求，10 万人要 30 小时。如果暂时不需要粉丝数和作图数，可以直接吃排行榜：每页 50 人，而且自带 `avatar_url`、`cover.url`、`pp`、`global_rank`、`grade_counts`。
+
+```bash
+# 全部国家，pp >= 2000，只保留活跃账号
+npm run sync:rankings -- --min-pp 2000 --active
+
+# 指定国家，顺便合并 Mutualify 导出的粉丝数
+npm run sync:rankings -- --countries CN,US,JP --min-pp 2000 --followers mutualify-pool.json
+```
+
+| 参数 | 默认 | 说明 |
+|---|---|---|
+| `--min-pp <n>` | 2000 | 低于这个 pp 就停止翻页 |
+| `--countries <list>` | all | 逗号分隔的国家代码 |
+| `--active` | 关 | 跳过 `is_active === false` 的账号 |
+| `--max-pages <n>` | 200 | 每国最多翻多少页 |
+| `--followers <file>` | — | 合并 Mutualify 的 `followerCount` |
+| `--out <file>` | `data/rankings.json` | 输出位置 |
+
+产出字段：`osuId`、`username`、`country`、`pp`、`globalRank`、`grades`、`avatarUrl`、`coverUrl`、`playCount`、`totalHits`、`level`、`isActive`、`lastVisit`、`snapshotAt`，以及合并进来的 `followerCount`。
+
+每个国家最多 1 万（200 页），pp 阈值通常会先触发。

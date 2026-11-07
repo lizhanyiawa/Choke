@@ -23,6 +23,9 @@ export function faceFromPool(card: PoolCard, personal = false): CardFaceData {
     art: card.avatarUrl,
     banner: card.coverUrl ?? undefined,
     profileUrl: card.profileUrl,
+    country: card.country,
+    globalRank: card.globalRank,
+    pp: card.pp,
     skills: skillsFor(job, rarity),
   })
 }

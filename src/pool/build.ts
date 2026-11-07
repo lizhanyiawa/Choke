@@ -9,11 +9,17 @@ import {
   quotas,
   RARITY_ORDER,
   sharesFromSeed,
-  signalOf,
 } from "./rarity"
+import { capRarity, jitterOf, lowerRarity, ppCap, scoreOf, type ScoreParts } from "./score"
 import type { GradeCounts, MutualifyRow, PoolCard, PoolShares } from "./types"
 
 export const POOL_SEED = 20261106
+
+/**
+ * L 及以上最多占总池的 8%。超出的部分从分数最低、且不是国榜下限抬上来的卡开始，
+ * 直接降到 E。国榜下限优先，不会被这条压掉。
+ */
+export const MAX_TOP_SHARE = 0.08
 
 export interface BuildOptions {
   /** 决定占比的那一个数字。不传就用 POOL_SEED。 */
@@ -34,6 +40,7 @@ export interface BuildResult {
 
 interface Working extends MutualifyRow {
   signal: number
+  parts: ScoreParts
   countryRank: number | null
   countrySize: number
 }
@@ -74,7 +81,7 @@ export function normalizeMutualify(raw: unknown): MutualifyRow[] {
       username,
       country: typeof country === "string" && country.length > 0 ? country : "XX",
       title: typeof row.title === "string" ? row.title : null,
-      followerCount: asNumber(row.followerCount) ?? 0,
+      followerCount: asNumber(row.followerCount),
       globalRank: asNumber(row.globalRank) ?? asNumber(row.rank),
       rankedSetCount: asNumber(row.rankedSetCount),
       grades: asGrades(row.grades),
@@ -95,7 +102,8 @@ function withCountryRank(rows: MutualifyRow[]): Working[] {
   const byCountry = new Map<string, Working[]>()
   const working: Working[] = rows.map((row) => ({
     ...row,
-    signal: signalOf(row),
+    signal: 0,
+    parts: { pp: null, rank: null, fans: null, creation: null },
     countryRank: null,
     countrySize: 0,
   }))
@@ -106,11 +114,24 @@ function withCountryRank(rows: MutualifyRow[]): Working[] {
   }
   for (const list of byCountry.values()) {
     const ranked = list.filter((row) => row.globalRank != null)
-    ranked.sort((a, b) => a.globalRank! - b.globalRank! || b.followerCount - a.followerCount || a.osuId - b.osuId)
+    ranked.sort((a, b) => a.globalRank! - b.globalRank! || (b.followerCount ?? 0) - (a.followerCount ?? 0) || a.osuId - b.osuId)
     ranked.forEach((row, index) => {
       row.countryRank = index + 1
       row.countrySize = ranked.length
     })
+  }
+  for (const row of working) {
+    const scored = scoreOf({
+      pp: row.pp,
+      globalRank: row.globalRank,
+      countryRank: row.countryRank,
+      countrySize: row.countrySize,
+      followerCount: row.followerCount,
+      rankedMaps: row.rankedMaps,
+      guestMaps: row.guestMaps,
+    })
+    row.parts = scored.parts
+    row.signal = scored.total + jitterOf(row.osuId)
   }
   return working
 }
@@ -137,8 +158,11 @@ export function buildPool(raw: unknown, options: BuildOptions = {}): BuildResult
   const cards = working.map((row) => {
     const kept = previous.get(row.osuId)
     const rolled = rarityOf.get(row.osuId) ?? "C"
+    const capped = capRarity(rolled, row.signal)
     const floor = countryFloor(row.countryRank, row.countrySize, floors)
-    const rarity = floor ? higherRarity(rolled, floor) : rolled
+    const lifted = floor ? higherRarity(capped, floor) : capped
+    const hardCap = ppCap(row.pp, row.countryRank)
+    const rarity = hardCap ? lowerRarity(lifted, hardCap) : lifted
     assigned[rarity] += 1
     return {
       osuId: row.osuId,
@@ -158,9 +182,9 @@ export function buildPool(raw: unknown, options: BuildOptions = {}): BuildResult
       popularity: row.popularity ?? kept?.popularity ?? null,
       pp: row.pp ?? kept?.pp ?? null,
       signal: row.signal,
+      scoreParts: row.parts,
       rarity,
-      floor: floor && floor !== rolled && higherRarity(floor, rolled) === floor ? floor : null,
-      avatarUrl: row.avatarUrl ?? avatarUrl(row.osuId),
+      floor: floor && floor !== capped && higherRarity(floor, capped) === floor ? floor : null,      avatarUrl: row.avatarUrl ?? avatarUrl(row.osuId),
       profileUrl: profileUrl(row.osuId),
       coverUrl: row.coverUrl ?? kept?.coverUrl ?? null,
       hidden: kept?.hidden ?? false,
@@ -170,12 +194,33 @@ export function buildPool(raw: unknown, options: BuildOptions = {}): BuildResult
   })
 
   return {
-    cards,
+    cards: enforceTopShare(cards, MAX_TOP_SHARE),
     seed,
     shares,
     assigned,
     visible: cards.filter((card) => !card.hidden).length,
   }
+}
+
+const TOP_RARITIES = new Set<Rarity>(["L", "Radiant", "Prismatic"])
+
+function enforceTopShare(cards: PoolCard[], maxShare: number): PoolCard[] {
+  const limit = Math.floor(cards.length * maxShare)
+  let excess = cards.filter((card) => TOP_RARITIES.has(card.rarity)).length - limit
+  if (excess <= 0) return cards
+
+  const candidates = cards
+    .map((card, index) => ({ card, index }))
+    .filter(({ card }) => TOP_RARITIES.has(card.rarity) && card.floor == null)
+    .sort((a, b) => a.card.signal - b.card.signal)
+
+  const next = [...cards]
+  for (const { index, card } of candidates) {
+    if (excess <= 0) break
+    next[index] = { ...card, rarity: "E" }
+    excess -= 1
+  }
+  return next
 }
 
 export function pullable(cards: readonly PoolCard[]): PoolCard[] {

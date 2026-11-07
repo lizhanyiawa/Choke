@@ -10,9 +10,9 @@ export const RARITY_ORDER = ["C", "UC", "R", "E", "L", "Radiant", "Prismatic"] a
  */
 export const BASE_SHARE: PoolShares = {
   C: 0.46,
-  UC: 0.24,
+  UC: 0.26,
   R: 0.14,
-  E: 0.09,
+  E: 0.07,
   L: 0.045,
   Radiant: 0.02,
   Prismatic: 0.005,
@@ -25,8 +25,8 @@ export const BASE_SHARE: PoolShares = {
 export const COUNTRY_FLOORS: { maxRank: number; floor: Rarity }[] = [
   { maxRank: 10, floor: "Radiant" },
   { maxRank: 50, floor: "L" },
-  { maxRank: 200, floor: "E" },
-  { maxRank: 1000, floor: "R" },
+  { maxRank: 125, floor: "E" },
+  { maxRank: 300, floor: "R" },
 ]
 
 const RANK: Record<Rarity, number> = {
@@ -125,7 +125,7 @@ export function signalOf(
     | "pp"
   >,
 ): number {
-  let signal = 100 * log10p(row.followerCount)
+  let signal = 100 * log10p(row.followerCount ?? 0)
   signal += 60 * log10p(row.mappingFollowers ?? 0)
   signal +=
     40 * log10p((row.rankedMaps ?? 0) + (row.guestMaps ?? 0) + (row.lovedMaps ?? 0))

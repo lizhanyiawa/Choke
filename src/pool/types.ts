@@ -1,5 +1,7 @@
 import type { Rarity } from "@/card/types"
 
+import type { ScoreParts } from "./score"
+
 /** osu! 成绩等级。Mutualify 没有这份数据，认领后从 /me 填入。 */
 export interface GradeCounts {
   ssh: number
@@ -15,7 +17,7 @@ export interface MutualifyRow {
   username: string
   country: string
   title: string | null
-  followerCount: number
+  followerCount: number | null
   /** 全球排名；没有排名则为 null，不参与国榜下限 */
   globalRank: number | null
   /** ranked 谱面数量。未知时不要填 0，留空表示「还没确认」。 */
@@ -49,7 +51,7 @@ export interface PoolCard {
   username: string
   country: string
   title: string | null
-  followerCount: number
+  followerCount: number | null
   globalRank: number | null
   /** 在本次导入的同国有排名玩家中的名次，1 为最高。无全球排名则为 null。 */
   countryRank: number | null
@@ -63,6 +65,8 @@ export interface PoolCard {
   popularity: number | null
   pp: number | null
   signal: number
+  /** 四项分项分，缺项为 null */
+  scoreParts: ScoreParts
   rarity: Rarity
   /** 国榜下限实际抬上去的档；没触发则为 null */
   floor: Rarity | null

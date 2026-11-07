@@ -48,36 +48,47 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                 Lv <b>{card.level}</b>
               </span>
             </div>
-            <div className="cf__hd cf__hd--bottom">
-              {card.profileUrl ? (
-                <a
-                  className="cf__name"
-                  href={card.profileUrl}
-                  title={card.name}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {card.name}
-                </a>
-              ) : (
-                <h3 className="cf__name" title={card.name}>
-                  {card.name}
-                </h3>
-              )}
-              {card.mods.length > 0 && (
-                <div className="cf__mods">
-                  {card.mods.map((mod) => (
-                    <span key={mod} className="cf__mod">
-                      {mod}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+
+            {card.profileUrl ? (
+              <a
+                className="cf__name"
+                href={card.profileUrl}
+                title={card.name}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {card.name}
+              </a>
+            ) : (
+              <h3 className="cf__name" title={card.name}>
+                {card.name}
+              </h3>
+            )}
+
+            {(card.country || card.globalRank != null || card.pp != null) && (
+              <div className="cf__identity">
+                {card.country && <span className="cf__country">{card.country}</span>}
+                {card.globalRank != null && <span className="cf__grank">#{card.globalRank}</span>}
+                {card.pp != null && (
+                  <span className="cf__ppnum">
+                    {Math.round(card.pp).toLocaleString("en-US")}pp
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </header>
 
         <div className="cf__art">
+          {card.mods.length > 0 && (
+            <div className="cf__art-mods">
+              {card.mods.map((mod) => (
+                <span key={mod} className="cf__mod">
+                  {mod}
+                </span>
+              ))}
+            </div>
+          )}
           {card.banner && (
             <img
               className="cf__art-banner"
@@ -159,11 +170,6 @@ export function CardFace({ card, mode = "collection", className }: Props) {
           </span>
           <span className="cf__no">{formatNo(card.no, card.total)}</span>
         </footer>
-
-        <div className="cf__brand">
-          <span>Choke!</span>
-          <span>© 2026</span>
-        </div>
       </div>
 
       <div className="cf__sheen" aria-hidden />
@@ -276,10 +282,11 @@ function JobGlyph({ job }: { job: Job }) {
 }
 
 function ElementGlyph({ element }: { element: Element }) {
+  // 所有技能图标共用同一描边权重，避免「闪电偏细、月亮偏粗」的观感差
   const line = {
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: 2,
+    strokeWidth: 1.8,
     strokeLinecap: "round",
     strokeLinejoin: "round",
   } as const
