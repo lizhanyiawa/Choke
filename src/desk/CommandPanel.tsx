@@ -46,6 +46,7 @@ interface Props {
   publicId?: number | null
   avatarUrl?: string | null
   essence?: number
+  coins?: number
   hero?: ApiUserCard | null
   /** 桌面物件双击时直接进入的子界面（配合 key 重新挂载） */
   initialStage?: Stage
@@ -61,6 +62,7 @@ export function CommandPanel({
   publicId = null,
   avatarUrl = null,
   essence = 0,
+  coins = 0,
   hero,
   initialStage = "closed",
   initialPanel = "album",
@@ -256,6 +258,7 @@ export function CommandPanel({
                     publicId={publicId}
                     avatarUrl={avatarUrl}
                     essence={essence}
+                    coins={coins}
                     hero={hero}
                     onLogout={onLogout}
                     onOpenBackpack={() => openPanel("backpack")}
@@ -368,6 +371,7 @@ function AccountPanel({
   publicId,
   avatarUrl,
   essence = 0,
+  coins = 0,
   hero,
   onLogout,
   onOpenBackpack,
@@ -377,6 +381,7 @@ function AccountPanel({
   publicId?: number | null
   avatarUrl?: string | null
   essence?: number
+  coins?: number
   hero?: ApiUserCard | null
   onLogout?: () => void
   onOpenBackpack?: () => void
@@ -420,7 +425,8 @@ function AccountPanel({
       </div>
 
       <div className="command-account__meta">
-        <span className="command-account__essence">精华 {essence.toLocaleString("en-US")}</span>
+        <span className="command-account__essence">闪卡精华 {essence.toLocaleString("en-US")}</span>
+        <span className="command-account__coins">金币 {coins.toLocaleString("en-US")}</span>
         {userId?.startsWith("osu-") ? (
           <a
             className="command-account__link"

@@ -1,7 +1,28 @@
 .backpack-panel {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+.backpack-panel.is-drop-target {
+  outline: 3px dashed #21e985;
+  outline-offset: 6px;
+  border-radius: 12px;
+}
+.backpack-panel__drop {
+  position: absolute;
+  inset: -4px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px dashed #21e985;
+  border-radius: 14px;
+  background: rgba(11, 15, 23, 0.82);
+  color: #7cf7bb;
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 20px;
+  pointer-events: none;
 }
 .backpack-head {
   display: flex;

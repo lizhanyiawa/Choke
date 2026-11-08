@@ -15,11 +15,8 @@ export function essenceOf(rarity: Rarity, foil = false): number {
   return ESSENCE_OF[rarity] * (foil ? 3 : 1)
 }
 
-/** 精华镀闪：给已有卡加闪卡外观 */
+/** 精华镀闪：给已有卡加闪卡外观。精华只能用于闪卡。 */
 export const FOIL_COST = 50
-/** 精华打磨：给卡加少量经验 */
-export const POLISH_COST = 25
-export const POLISH_EXP = 200
 
-/** 市场单卡价格上限 */
+/** 市场单卡价格上限（金币） */
 export const MARKET_MAX_PRICE = 100000

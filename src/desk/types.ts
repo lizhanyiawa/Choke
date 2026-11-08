@@ -29,6 +29,8 @@ export interface DeskItem {
   z: number
   /** 单个卡包所属卡池；卡包不再叠加数量 */
   pool?: PackPool
+  /** 从背包拿到桌面时的一次性 token；旧存档可能没有 */
+  token?: string
   card?: CardData
 }
 

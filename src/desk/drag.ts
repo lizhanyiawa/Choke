@@ -15,6 +15,10 @@ export const PACKS_CHANGED_EVENT = "choke:packs-changed"
 export const DESK_ADD_CARDS_EVENT = "choke:desk-add-cards"
 /** 桌面上的 user_card id 列表变化 */
 export const DESK_ITEMS_EVENT = "choke:desk-items"
+/** 桌面卡拖到卡册面板 */
+export const ALBUM_HOVER_EVENT = "choke:album-hover"
+/** 桌面卡包拖到背包面板 */
+export const BACKPACK_HOVER_EVENT = "choke:backpack-hover"
 
 export function toDeskCard(card: CardFaceData, userCardId?: number): CardData {
   return {

@@ -52,6 +52,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS users_public_id_idx ON users (public_id);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarded boolean NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS hero_bonus integer NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS essence integer NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS coins integer NOT NULL DEFAULT 100;
 
 CREATE TABLE IF NOT EXISTS user_cards (
   id serial PRIMARY KEY,
@@ -87,6 +88,14 @@ CREATE TABLE IF NOT EXISTS user_packs (
   count integer NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id, pool)
 );
+
+CREATE TABLE IF NOT EXISTS pack_tokens (
+  id text PRIMARY KEY,
+  user_id text NOT NULL,
+  pool text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS pack_tokens_user_idx ON pack_tokens (user_id);
 
 CREATE TABLE IF NOT EXISTS pack_openings (
   id serial PRIMARY KEY,

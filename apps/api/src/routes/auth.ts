@@ -166,6 +166,7 @@ export async function authRoutes(app: FastifyInstance) {
         onboarded: user.onboarded,
         heroBonus: user.heroBonus,
         essence: user.essence,
+        coins: user.coins,
         hero,
       },
     }

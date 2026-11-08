@@ -11,8 +11,6 @@ import {
 } from "../../../../src/card/progression"
 import {
   FOIL_COST,
-  POLISH_COST,
-  POLISH_EXP,
   essenceOf,
 } from "../../../../src/card/economy"
 import type { Rarity } from "../../../../src/card/types"
@@ -291,7 +289,7 @@ export async function progressionRoutes(app: FastifyInstance) {
     if (!userId) return
     const { userCardId } = params
     const body = z
-      .object({ action: z.enum(["foil", "polish"]) })
+      .object({ action: z.enum(["foil"]) })
       .parse(request.body)
 
     const target = await loadCard(userId, userCardId)
@@ -302,14 +300,14 @@ export async function progressionRoutes(app: FastifyInstance) {
       })
     }
 
-    if (body.action === "foil" && target.foil) {
+    if (target.foil) {
       return reply.code(400).send({
         ok: false,
         error: { code: "already_foil", message: "这张卡已经是闪卡" },
       })
     }
 
-    const cost = body.action === "foil" ? FOIL_COST : POLISH_COST
+    const cost = FOIL_COST
     const [user] = await db
       .select({ essence: users.essence })
       .from(users)
@@ -331,11 +329,7 @@ export async function progressionRoutes(app: FastifyInstance) {
     const [wallet] = await db.transaction(async (tx) => {
       await tx
         .update(userCards)
-        .set(
-          body.action === "foil"
-            ? { foil: true }
-            : { exp: target.exp + POLISH_EXP },
-        )
+        .set({ foil: true })
         .where(eq(userCards.id, userCardId))
       return tx
         .update(users)
@@ -351,7 +345,6 @@ export async function progressionRoutes(app: FastifyInstance) {
         cost,
         essence: wallet?.essence ?? 0,
         action: body.action,
-        gainedExp: body.action === "polish" ? POLISH_EXP : 0,
       },
     }
   })

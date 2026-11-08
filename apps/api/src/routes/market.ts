@@ -265,18 +265,18 @@ export async function marketRoutes(app: FastifyInstance) {
     }
 
     const [buyer] = await db
-      .select({ essence: users.essence })
+      .select({ coins: users.coins })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1)
-    if (!buyer || buyer.essence < listing.price) {
+    if (!buyer || buyer.coins < listing.price) {
       return reply.code(400).send({
         ok: false,
         error: {
-          code: "not_enough_essence",
-          message: `精华不足：${buyer?.essence ?? 0} / ${listing.price}`,
+          code: "not_enough_coins",
+          message: `金币不足：${buyer?.coins ?? 0} / ${listing.price}`,
           need: listing.price,
-          essence: buyer?.essence ?? 0,
+          coins: buyer?.coins ?? 0,
         },
       })
     }
@@ -296,12 +296,12 @@ export async function marketRoutes(app: FastifyInstance) {
     const [wallet] = await db.transaction(async (tx) => {
       const buyerWallet = await tx
         .update(users)
-        .set({ essence: sql`${users.essence} - ${listing.price}` })
+        .set({ coins: sql`${users.coins} - ${listing.price}` })
         .where(eq(users.id, userId))
-        .returning({ essence: users.essence })
+        .returning({ coins: users.coins })
       await tx
         .update(users)
-        .set({ essence: sql`${users.essence} + ${listing.price}` })
+        .set({ coins: sql`${users.coins} + ${listing.price}` })
         .where(eq(users.id, listing.sellerId))
       await tx.delete(deckSlots).where(eq(deckSlots.userCardId, listing.userCardId))
       await tx
@@ -320,7 +320,7 @@ export async function marketRoutes(app: FastifyInstance) {
       data: {
         card: await loadCard(userId, listing.userCardId),
         price: listing.price,
-        essence: wallet?.essence ?? 0,
+        coins: wallet?.coins ?? 0,
       },
     }
   })

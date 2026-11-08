@@ -202,6 +202,7 @@ export interface AccountMe {
   onboarded: boolean
   heroBonus: number
   essence: number
+  coins: number
   hero: ApiUserCard | null
 }
 
@@ -212,13 +213,12 @@ export function fetchMe(signal?: AbortSignal): Promise<AccountMe> {
 export function enhanceCard(
   userId: string,
   userCardId: number,
-  action: "foil" | "polish",
+  action: "foil",
 ): Promise<{
   card: ApiUserCard
   cost: number
   essence: number
-  action: "foil" | "polish"
-  gainedExp: number
+  action: "foil"
 }> {
   return request(`/api/users/${userId}/cards/${userCardId}/enhance`, {
     method: "POST",
@@ -277,7 +277,7 @@ export function unlistMarketCard(
 export function buyMarketListing(
   userId: string,
   listingId: number,
-): Promise<{ card: ApiUserCard; price: number; essence: number }> {
+): Promise<{ card: ApiUserCard; price: number; coins: number }> {
   return request(`/api/users/${userId}/market/buy/${listingId}`, {
     method: "POST",
   })

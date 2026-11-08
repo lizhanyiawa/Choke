@@ -52,8 +52,10 @@ export const users = pgTable("users", {
   onboarded: boolean("onboarded").notNull().default(false),
   /** 由 /me/osu 算出的个人加成（basis point），0–2000 */
   heroBonus: integer("hero_bonus").notNull().default(0),
-  /** 分解/市场用精华 */
+  /** 分解/闪卡用精华 */
   essence: integer("essence").notNull().default(0),
+  /** 市场用金币 */
+  coins: integer("coins").notNull().default(100),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
@@ -103,6 +105,17 @@ export const userPacks = pgTable(
     count: integer("count").notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.userId, table.pool] })],
+)
+
+export const packTokens = pgTable(
+  "pack_tokens",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    pool: text("pool").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("pack_tokens_user_idx").on(table.userId)],
 )
 
 export const packOpenings = pgTable(

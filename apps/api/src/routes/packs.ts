@@ -7,7 +7,15 @@ import { db } from "../db/client"
 import { cards, userCards, users } from "../db/schema"
 import { openPack } from "../gacha/open"
 import { POOL_NAMES, POOL_WEIGHTS, type PoolId } from "../gacha/pools"
-import { addPacks, consumePack, getPackCounts, type PackPoolId } from "../packs/inventory"
+import {
+  addPacks,
+  consumePack,
+  consumePackToken,
+  createPackToken,
+  getPackCounts,
+  returnPackToken,
+  type PackPoolId,
+} from "../packs/inventory"
 
 const poolIds = Object.keys(POOL_WEIGHTS) as [PoolId, ...PoolId[]]
 
@@ -58,6 +66,63 @@ export async function packRoutes(app: FastifyInstance) {
     }
 
     return { ok: true, data: { packs, heroClaimed } }
+  })
+
+  app.post("/users/:userId/packs/:pool/take", async (request, reply) => {
+    const params = z
+      .object({
+        userId: z.string(),
+        pool: z.enum(["normal", "idle", "golden", "radiant", "sky", "prism"]),
+      })
+      .safeParse(request.params)
+    if (!params.success) {
+      return reply.code(400).send({
+        ok: false,
+        error: { code: "bad_request", message: "卡包类型不合法" },
+      })
+    }
+    const userId = requireSelf(request, reply, params.data.userId)
+    if (!userId) return
+
+    const token = await createPackToken(userId, params.data.pool as PackPoolId)
+    if (!token) {
+      return reply.code(400).send({
+        ok: false,
+        error: { code: "no_packs", message: "背包里没有这个卡包" },
+      })
+    }
+    return {
+      ok: true,
+      data: { token, packs: await getPackCounts(userId) },
+    }
+  })
+
+  app.post("/users/:userId/packs/return", async (request, reply) => {
+    const params = z.object({ userId: z.string() }).safeParse(request.params)
+    if (!params.success) {
+      return reply.code(400).send({
+        ok: false,
+        error: { code: "bad_request", message: "用户 id 不合法" },
+      })
+    }
+    const userId = requireSelf(request, reply, params.data.userId)
+    if (!userId) return
+    const body = z.object({ token: z.string().min(1) }).safeParse(request.body)
+    if (!body.success) {
+      return reply.code(400).send({
+        ok: false,
+        error: { code: "bad_request", message: "缺少卡包 token" },
+      })
+    }
+
+    const pool = await returnPackToken(userId, body.data.token)
+    if (!pool) {
+      return reply.code(400).send({
+        ok: false,
+        error: { code: "invalid_token", message: "这个卡包已经失效" },
+      })
+    }
+    return { ok: true, data: { pool, packs: await getPackCounts(userId) } }
   })
 
   app.post("/users/:userId/packs/mystery/open", async (request, reply) => {
@@ -147,6 +212,7 @@ export async function packRoutes(app: FastifyInstance) {
       .object({
         userId: z.string().min(1).max(64).optional(),
         count: z.number().int().min(1).max(10).optional(),
+        token: z.string().min(1).optional(),
       })
       .safeParse(request.body ?? {})
 
@@ -166,12 +232,22 @@ export async function packRoutes(app: FastifyInstance) {
     }
 
     const pool = params.data.pool as PackPoolId
-    const consumed = await consumePack(userId, pool)
-    if (!consumed) {
-      return reply.code(400).send({
-        ok: false,
-        error: { code: "no_packs", message: "背包里没有这个卡包" },
-      })
+    if (body.data.token) {
+      const valid = await consumePackToken(userId, body.data.token, pool)
+      if (!valid) {
+        return reply.code(400).send({
+          ok: false,
+          error: { code: "invalid_token", message: "这个桌面卡包已经失效" },
+        })
+      }
+    } else {
+      const consumed = await consumePack(userId, pool)
+      if (!consumed) {
+        return reply.code(400).send({
+          ok: false,
+          error: { code: "no_packs", message: "背包里没有这个卡包" },
+        })
+      }
     }
 
     try {
@@ -181,7 +257,7 @@ export async function packRoutes(app: FastifyInstance) {
         data: { ...result, packs: await getPackCounts(userId) },
       }
     } catch (error) {
-      // 开包失败时把预扣的卡包还回去
+      // 开包失败时把卡包退回背包
       await addPacks(userId, { [pool]: 1 })
       request.log.error(error)
       return reply.code(500).send({

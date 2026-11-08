@@ -7,7 +7,7 @@ import type { Rarity } from "@/card/types"
 
 import { fetchUserCards, toFace, type ApiUserCard, type CardSort } from "./api"
 import { CardDetail } from "./CardDetail"
-import { setCardDrag, toDeskCard } from "./drag"
+import { ALBUM_HOVER_EVENT, setCardDrag, toDeskCard } from "./drag"
 import { useDeskCardIds } from "./presence"
 import { RARITY_COLOR } from "./rarity"
 
@@ -31,7 +31,16 @@ export function AlbumPanel({ userId }: { userId: string | null }) {
   const [result, setResult] = useState<Result | null>(null)
   const [detail, setDetail] = useState<ApiUserCard | null>(null)
   const [refresh, setRefresh] = useState(0)
+  const [dropHover, setDropHover] = useState(false)
   const deskIds = useDeskCardIds()
+
+  useEffect(() => {
+    const onHover = (event: Event) => {
+      setDropHover(!!(event as CustomEvent<boolean>).detail)
+    }
+    window.addEventListener(ALBUM_HOVER_EVENT, onHover)
+    return () => window.removeEventListener(ALBUM_HOVER_EVENT, onHover)
+  }, [])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -78,7 +87,8 @@ export function AlbumPanel({ userId }: { userId: string | null }) {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   return (
-    <div className="album-panel">
+    <div className={`album-panel ${dropHover ? "is-drop-target" : ""}`}>
+      {dropHover && <div className="album-panel__drop">松开 · 放入卡册</div>}
       <div className="album-toolbar">
         <input
           className="album-toolbar__search"

@@ -107,7 +107,15 @@
 }
 .desk-item.is-dragging {
   cursor: grabbing;
-  filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.45));
+  opacity: 0.14;
+}
+.desk-drag-ghost {
+  position: fixed;
+  z-index: 2000;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(2deg) scale(1.04);
+  filter: drop-shadow(0 20px 24px rgba(0, 0, 0, 0.55));
+  will-change: left, top;
 }
 .desk-item.is-collecting {
   pointer-events: none;
@@ -751,9 +759,30 @@
 
 /* ----- 卡册 ----- */
 .album-panel {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+.album-panel.is-drop-target {
+  outline: 3px dashed #3cbadb;
+  outline-offset: 6px;
+  border-radius: 12px;
+}
+.album-panel__drop {
+  position: absolute;
+  inset: -4px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px dashed #3cbadb;
+  border-radius: 14px;
+  background: rgba(11, 15, 23, 0.82);
+  color: #9fd9ea;
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 20px;
+  pointer-events: none;
 }
 .album-panel__count {
   display: flex;
@@ -1997,6 +2026,11 @@
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 10px;
   color: #ffc24b;
+}
+.command-account__coins {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #21e985;
 }
 
 /* ----- 本体卡 ----- */

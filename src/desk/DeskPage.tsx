@@ -5,6 +5,8 @@ import { cardFromDesk } from "./cardFace"
 import { CommandPanel, type PanelId, type PanelRequest } from "./CommandPanel"
 import { toFace, type ApiUserCard } from "./api"
 import {
+  ALBUM_HOVER_EVENT,
+  BACKPACK_HOVER_EVENT,
   CARD_MIME,
   DESK_ADD_CARDS_EVENT,
   DESK_ITEMS_EVENT,
@@ -86,6 +88,11 @@ export function DeskPage() {
   const stageRef = useRef<HTMLDivElement>(null)
   const [stageSize, setStageSize] = useState({ w: 1200, h: 700 })
   const [dragId, setDragId] = useState<string | null>(null)
+  const [dragGhost, setDragGhost] = useState<{
+    item: DeskItem
+    x: number
+    y: number
+  } | null>(null)
   const [opening, setOpening] = useState<{ pack: DeskItem; cards: CardData[]; pool: PackPool; rect?: OriginRect } | null>(null)
   const [pool, setPool] = useState<PackPool>(() => {
     const saved = localStorage.getItem(POOL_KEY) as PackPool | null
@@ -102,6 +109,7 @@ export function DeskPage() {
     publicId: number | null
     avatarUrl: string | null
     essence: number
+    coins: number
     hero: ApiUserCard | null
   } | null>(null)
   const [packState, setPackState] = useState<{
@@ -141,6 +149,7 @@ export function DeskPage() {
             publicId: d.data.publicId ?? null,
             avatarUrl: d.data.avatarUrl ?? null,
             essence: Number(d.data.essence ?? 0),
+            coins: Number(d.data.coins ?? 0),
             hero: d.data.hero ?? null,
           })
         else setUser(null)
@@ -331,34 +340,75 @@ export function DeskPage() {
     }, 520)
   }
 
-  const spawnPack = () => {
+  const spawnPack = async () => {
     const meta = POOL_META[pool]
     if (!user) {
       showToast("请先用 osu! 登录")
       return
     }
-    const serverPool = SERVER_POOL[pool]
-    const owned = packState && packState.userId === user.id ? (packState.data[serverPool] ?? 0) : 0
-    const onDesk = items.filter(
-      (item) => item.kind === "pack" && (item.pool ?? "normal") === pool,
-    ).length
-    if (owned - onDesk <= 0) {
-      showToast(`背包里没有${meta.label}`)
+    try {
+      const res = await fetch(
+        `/api/users/${user.id}/packs/${SERVER_POOL[pool]}/take`,
+        { method: "POST", credentials: "include" },
+      )
+      const payload = (await res.json().catch(() => null)) as
+        | { ok: boolean; data?: { token: string; packs: Record<string, number> }; error?: { message?: string } }
+        | null
+      if (!res.ok || !payload?.ok || !payload.data) {
+        showToast(payload?.error?.message ?? `背包里没有${meta.label}`)
+        refreshPacks()
+        return
+      }
+      setPackState({ userId: user.id, data: payload.data.packs })
+      window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
+      const topZ = Math.max(0, ...items.map((it) => it.z)) + 1
+      const packCount = items.filter((it) => it.kind === "pack").length
+      const offset = ((packCount % 3) - 1) * 0.045
+      const pack: DeskItem = {
+        id: newId("pack"),
+        kind: "pack",
+        x: Math.min(0.28, Math.max(0.12, 0.2 + offset)),
+        y: 0.18,
+        z: topZ,
+        pool,
+        token: payload.data.token,
+      }
+      spawn([pack])
+      showToast(`${meta.label} · 卡包已发到桌面`)
+    } catch {
+      showToast("发牌失败")
+    }
+  }
+
+  const returnPack = async (item: DeskItem) => {
+    consumePack(item.id)
+    if (!item.token || !user) {
+      refreshPacks()
+      showToast("卡包已从桌面收回")
       return
     }
-    const topZ = Math.max(0, ...items.map((it) => it.z)) + 1
-    const packCount = items.filter((it) => it.kind === "pack").length
-    const offset = ((packCount % 3) - 1) * 0.045
-    const pack: DeskItem = {
-      id: newId("pack"),
-      kind: "pack",
-      x: Math.min(0.72, Math.max(0.28, 0.5 + offset)),
-      y: 0.18,
-      z: topZ,
-      pool,
+    try {
+      const res = await fetch(`/api/users/${user.id}/packs/return`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: item.token }),
+      })
+      const payload = (await res.json().catch(() => null)) as
+        | { ok: boolean; data?: { packs: Record<string, number> } }
+        | null
+      if (payload?.ok && payload.data) {
+        setPackState({ userId: user.id, data: payload.data.packs })
+      window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
+        showToast("卡包已放回背包")
+      } else {
+        refreshPacks()
+        showToast("卡包已从桌面收回")
+      }
+    } catch {
+      refreshPacks()
+      showToast("卡包已从桌面收回")
     }
-    spawn([pack])
-    showToast(`${meta.label} · 卡包已发到桌面`)
   }
 
   const startDrag = (e: ReactPointerEvent<HTMLDivElement>, item: DeskItem) => {
@@ -381,6 +431,8 @@ export function DeskPage() {
       : null
     let moved = false
     let deckSlot: number | null = null
+    let albumPanelHover = false
+    let backpackPanelHover = false
     const canAssign = item.kind === "card" && item.card?.userCardId != null
     front(item.id)
     setDragId(item.id)
@@ -389,14 +441,21 @@ export function DeskPage() {
       const dx = ev.clientX - startX
       const dy = ev.clientY - startY
       if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return
-      moved = true
+      if (!moved) {
+        moved = true
+        setDragGhost({ item, x: ev.clientX, y: ev.clientY })
+      }
+      setDragGhost((current) =>
+        current ? { ...current, x: ev.clientX, y: ev.clientY } : current,
+      )
       const nx = Math.min(Math.max(originX + dx, 0), rect.width - size.w)
       const ny = Math.min(Math.max(originY + dy, 0), rect.height - size.h)
       move(item.id, nx / rect.width, ny / rect.height)
 
+      const elements = document.elementsFromPoint(ev.clientX, ev.clientY)
+
       if (canAssign) {
-        const slotEl = document
-          .elementsFromPoint(ev.clientX, ev.clientY)
+        const slotEl = elements
           .map((el) => el.closest<HTMLElement>("[data-slot]"))
           .find((el): el is HTMLElement => !!el)
         const parsed = slotEl ? Number(slotEl.dataset.slot) : Number.NaN
@@ -405,6 +464,20 @@ export function DeskPage() {
           deckSlot = next
           window.dispatchEvent(new CustomEvent(DECK_HOVER_EVENT, { detail: next }))
         }
+      }
+
+      const overAlbum = elements.some((el) => !!el.closest(".album-panel"))
+      if (overAlbum !== albumPanelHover) {
+        albumPanelHover = overAlbum
+        window.dispatchEvent(new CustomEvent(ALBUM_HOVER_EVENT, { detail: overAlbum }))
+      }
+
+      const overBackpack = elements.some((el) => !!el.closest(".backpack-panel"))
+      if (overBackpack !== backpackPanelHover) {
+        backpackPanelHover = overBackpack
+        window.dispatchEvent(
+          new CustomEvent(BACKPACK_HOVER_EVENT, { detail: overBackpack }),
+        )
       }
 
       if (item.kind === "card" && !item.card?.isHero && albumHit) {
@@ -424,10 +497,22 @@ export function DeskPage() {
       window.removeEventListener("pointermove", onMove)
       window.removeEventListener("pointerup", onUp)
       setDragId(null)
+      setDragGhost(null)
       window.dispatchEvent(new CustomEvent(DECK_HOVER_EVENT, { detail: null }))
+      window.dispatchEvent(new CustomEvent(ALBUM_HOVER_EVENT, { detail: false }))
+      window.dispatchEvent(new CustomEvent(BACKPACK_HOVER_EVENT, { detail: false }))
       const dropId = dropRef.current
       dropRef.current = null
       setDropTarget(null)
+      if (albumPanelHover && item.kind === "card" && !item.card?.isHero) {
+        collect(item.id)
+        showToast("已放入卡册")
+        return
+      }
+      if (backpackPanelHover && item.kind === "pack") {
+        void returnPack(item)
+        return
+      }
       if (deckSlot != null && item.card?.userCardId != null) {
         window.dispatchEvent(
           new CustomEvent(DECK_ASSIGN_EVENT, {
@@ -477,14 +562,17 @@ export function DeskPage() {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ count: 5 }),
+          body: JSON.stringify({ count: 5, token: item.token }),
         })
         const payload = (await res.json()) as OpenResponse
         if (!res.ok || !payload.ok || !payload.data) {
-          if (payload.error?.code === "no_packs") {
+          if (
+            payload.error?.code === "no_packs" ||
+            payload.error?.code === "invalid_token"
+          ) {
             consumePack(item.id)
             refreshPacks()
-            showToast("背包里没有这个卡包，已从桌面移除")
+            showToast("这个桌面卡包已经失效，已移除")
           } else {
             showToast(payload.error?.message ?? "开包失败")
           }
@@ -492,6 +580,7 @@ export function DeskPage() {
         }
         if (payload.data.packs && user) {
           setPackState({ userId: user.id, data: payload.data.packs })
+      window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
         }
 
         const cards: CardData[] = await Promise.all(
@@ -568,10 +657,7 @@ export function DeskPage() {
     packState && packState.userId === user?.id
       ? (packState.data[SERVER_POOL[pool]] ?? 0)
       : 0
-  const spawnedPacks = items.filter(
-    (item) => item.kind === "pack" && (item.pool ?? "normal") === pool,
-  ).length
-  const drawAvailable = !!user && poolPacks - spawnedPacks > 0
+  const drawAvailable = !!user && poolPacks > 0
   const queryPanel = new URLSearchParams(window.location.search).get("panel") as PanelId | null
   const requestedPanel =
     queryPanel && (["codex", "album", "deck", "backpack", "battle", "packs", "mainline", "market", "account"] as PanelId[]).includes(queryPanel)
@@ -736,6 +822,7 @@ export function DeskPage() {
           publicId={user?.publicId ?? null}
           avatarUrl={user?.avatarUrl ?? null}
           essence={user?.essence ?? 0}
+          coins={user?.coins ?? 0}
           hero={user?.hero ?? null}
           onLogout={logout}
           onHeroClaimed={refreshUser}
@@ -803,6 +890,20 @@ export function DeskPage() {
             />
           </div>
         ))}
+
+      {dragGhost && (
+        <div
+          className="desk-drag-ghost"
+          style={{
+            left: dragGhost.x,
+            top: dragGhost.y,
+            width: ITEM_SIZE[dragGhost.item.kind].w,
+            height: ITEM_SIZE[dragGhost.item.kind].h,
+          }}
+        >
+          <ItemView item={dragGhost.item} hero={user?.hero ?? null} />
+        </div>
+      )}
 
       {toast && (
         <div className="desk-toast" role="status">

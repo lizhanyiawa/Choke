@@ -11,8 +11,6 @@ import {
 import { skillSeed, subjobFor } from "@/card/jobs"
 import {
   FOIL_COST,
-  POLISH_COST,
-  POLISH_EXP,
 } from "@/card/economy"
 import {
   constellationCap,
@@ -49,6 +47,7 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
   const [busy, setBusy] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [essence, setEssence] = useState<number | null>(null)
+  const [coins, setCoins] = useState<number | null>(null)
   const [price, setPrice] = useState("30")
 
   const face = useMemo(() => toFace(current), [current])
@@ -58,7 +57,10 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
     let cancelled = false
     fetchMe()
       .then((data) => {
-        if (!cancelled) setEssence(data.essence)
+        if (!cancelled) {
+          setEssence(data.essence)
+          setCoins(data.coins)
+        }
       })
       .catch(() => {})
     return () => {
@@ -142,15 +144,12 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
     )
   }
 
-  const enhance = (action: "foil" | "polish") => {
+  const enhance = () => {
     if (!userId) return
     return run(
-      action,
-      () => enhanceCard(userId, current.userCardId, action),
-      (result) =>
-        action === "foil"
-          ? "已镀闪，卡面获得闪卡外观"
-          : `打磨完成 · +${result.gainedExp} EXP`,
+      "foil",
+      () => enhanceCard(userId, current.userCardId, "foil"),
+      () => "已镀闪，卡面获得闪卡外观",
     )
   }
 
@@ -165,7 +164,7 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
     setMessage(null)
     try {
       await listMarketCard(userId, current.userCardId, value)
-      setMessage(`已上架市场 · ${value} 精华`)
+      setMessage(`已上架市场 · ${value} 金币`)
       onChanged?.()
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "上架失败")
@@ -267,26 +266,18 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
                 </button>
               </div>
               <div className="card-detail__wallet">
-                <span>精华</span>
+                <span>闪卡精华</span>
                 <b>{essence ?? "—"}</b>
-                <em>分解重复卡获得</em>
+                <em>只能用于给卡镀闪</em>
               </div>
               <div className="card-detail__actions card-detail__actions--essence">
                 <button
                   type="button"
                   className="card-detail__action"
-                  onClick={() => void enhance("foil")}
+                  onClick={() => void enhance()}
                   disabled={current.foil || busy !== null || (essence ?? 0) < FOIL_COST}
                 >
                   {current.foil ? "已是闪卡" : `精华镀闪 · ${FOIL_COST}`}
-                </button>
-                <button
-                  type="button"
-                  className="card-detail__action"
-                  onClick={() => void enhance("polish")}
-                  disabled={busy !== null || (essence ?? 0) < POLISH_COST}
-                >
-                  精华打磨 · +{POLISH_EXP} EXP
                 </button>
               </div>
               {message && <p className="card-detail__message">{message}</p>}
@@ -329,7 +320,7 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
 
           {!readOnly && !hero && (
             <div className="card-detail__market">
-              <div className="card-detail__section-title">市场</div>
+              <div className="card-detail__section-title">市场 · 金币 {coins ?? "—"}</div>
               <div className="card-detail__market-row">
                 <input
                   type="number"
@@ -338,7 +329,7 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
                   onChange={(event) => setPrice(event.target.value)}
                   aria-label="上架价格"
                 />
-                <span>精华</span>
+                <span>金币</span>
                 <button
                   type="button"
                   onClick={() => void list()}

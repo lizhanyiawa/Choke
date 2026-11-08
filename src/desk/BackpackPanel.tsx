@@ -10,7 +10,7 @@ import {
   type ApiUserCard,
   type PackInventory,
 } from "./api"
-import { PACKS_CHANGED_EVENT } from "./drag"
+import { PACKS_CHANGED_EVENT, BACKPACK_HOVER_EVENT } from "./drag"
 import "./backpack-panel.css"
 
 interface PackMeta {
@@ -70,6 +70,21 @@ export function BackpackPanel({
   const [answers, setAnswers] = useState<string[]>([])
   const [opening, setOpening] = useState(false)
   const [result, setResult] = useState<ApiUserCard | null>(null)
+  const [dropHover, setDropHover] = useState(false)
+  const [revision, setRevision] = useState(0)
+
+  useEffect(() => {
+    const onHover = (event: Event) => {
+      setDropHover(!!(event as CustomEvent<boolean>).detail)
+    }
+    const onPacksChanged = () => setRevision((value) => value + 1)
+    window.addEventListener(BACKPACK_HOVER_EVENT, onHover)
+    window.addEventListener(PACKS_CHANGED_EVENT, onPacksChanged)
+    return () => {
+      window.removeEventListener(BACKPACK_HOVER_EVENT, onHover)
+      window.removeEventListener(PACKS_CHANGED_EVENT, onPacksChanged)
+    }
+  }, [])
 
   useEffect(() => {
     if (!userId) return
@@ -92,7 +107,7 @@ export function BackpackPanel({
     return () => {
       cancelled = true
     }
-  }, [userId])
+  }, [userId, revision])
 
   const counts = inventory?.packs ?? {}
   const heroClaimed = inventory?.heroClaimed ?? !!hero
@@ -133,7 +148,8 @@ export function BackpackPanel({
   }
 
   return (
-    <div className="backpack-panel">
+    <div className={`backpack-panel ${dropHover ? "is-drop-target" : ""}`}>
+      {dropHover && <div className="backpack-panel__drop">松开 · 放回背包</div>}
       <div className="backpack-head">
         <div>
           <span>BACKPACK · PACKS</span>

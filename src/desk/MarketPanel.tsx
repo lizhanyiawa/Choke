@@ -24,7 +24,7 @@ export function MarketPanel({
 }) {
   const [listings, setListings] = useState<MarketListing[]>([])
   const [own, setOwn] = useState<OwnMarketListing[]>([])
-  const [essence, setEssence] = useState<number | null>(null)
+  const [coins, setCoins] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<number | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -36,7 +36,7 @@ export function MarketPanel({
       fetchMarketListings(controller.signal).then((data) => setListings(data)),
     ]
     if (userId) {
-      tasks.push(fetchMe(controller.signal).then((data) => setEssence(data.essence)))
+      tasks.push(fetchMe(controller.signal).then((data) => setCoins(data.coins)))
       tasks.push(
         fetchOwnListings(userId, controller.signal).then((data) => setOwn(data)),
       )
@@ -56,8 +56,8 @@ export function MarketPanel({
     setMessage(null)
     try {
       const result = await buyMarketListing(userId, listing.id)
-      setEssence(result.essence)
-      setMessage(`买到了 ${result.card.name} · 花费 ${result.price} 精华`)
+      setCoins(result.coins)
+      setMessage(`买到了 ${result.card.name} · 花费 ${result.price} 金币`)
       setRefresh((value) => value + 1)
     } catch (reason) {
       setMessage(reason instanceof Error ? reason.message : "购买失败")
@@ -87,17 +87,17 @@ export function MarketPanel({
     <div className="market-panel">
       <div className="market-head">
         <div>
-          <span>MARKET · ESSENCE</span>
+          <span>MARKET · COINS</span>
           <b>交易行</b>
         </div>
         <div className="market-wallet">
-          <span>精华</span>
-          <b>{essence ?? "—"}</b>
+          <span>金币</span>
+          <b>{coins ?? "—"}</b>
         </div>
       </div>
 
       <div className="market-note">
-        用精华买卖卡。闪卡分解会得到 3 倍精华；上架入口在卡册的卡牌详情里。
+        用金币买卖卡。精华只用于给卡镀闪，分解闪卡会得到 3 倍精华；上架入口在卡册的卡牌详情里。
         <button type="button" onClick={onOpenAlbum}>
           去卡册
         </button>
@@ -119,7 +119,7 @@ export function MarketPanel({
                 </div>
                 <div className="market-own__meta">
                   <b>{listing.card.name}</b>
-                  <em>{listing.price.toLocaleString("en-US")} 精华</em>
+                  <em>{listing.price.toLocaleString("en-US")} 金币</em>
                   <button
                     type="button"
                     onClick={() => void unlist(listing)}
@@ -171,7 +171,7 @@ export function MarketPanel({
                     </span>
                     <div className="market-card__buy">
                       <strong>{listing.price.toLocaleString("en-US")}</strong>
-                      <span>精华</span>
+                      <span>金币</span>
                       {mine ? (
                         <button type="button" disabled>
                           自己的
