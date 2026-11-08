@@ -852,6 +852,7 @@
   }
 
   function revealCards() {
+    window.parent.postMessage({ type: "choke-pack-reveal", cards: EXT_RAW || [] }, "*");
     const n = cardObjs.length;
     cardObjs.forEach((o, i) => {
       const to = layoutCard(i, n);

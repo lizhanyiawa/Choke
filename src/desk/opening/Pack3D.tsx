@@ -34,7 +34,9 @@ function encodeCards(cards: CardData[]) {
  */
 export function Pack3D({ cards, onDone, onQuick, onCancel, originRect }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const revealTimer = useRef<number | null>(null)
   const [done, setDone] = useState(false)
+  const [revealing, setRevealing] = useState(false)
   const [entered, setEntered] = useState(false)
   const [closing, setClosing] = useState(false)
 
@@ -62,10 +64,16 @@ export function Pack3D({ cards, onDone, onQuick, onCancel, originRect }: Props) 
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
       if (e.source !== iframeRef.current?.contentWindow) return
+      if (e.data?.type === "choke-pack-reveal" && revealTimer.current == null) {
+        revealTimer.current = window.setTimeout(() => setRevealing(true), 80)
+      }
       if (e.data?.type === "choke-pack-done") setDone(true)
     }
     window.addEventListener("message", onMessage)
-    return () => window.removeEventListener("message", onMessage)
+    return () => {
+      window.removeEventListener("message", onMessage)
+      if (revealTimer.current != null) window.clearTimeout(revealTimer.current)
+    }
   }, [])
 
   useEffect(() => {
@@ -92,11 +100,11 @@ export function Pack3D({ cards, onDone, onQuick, onCancel, originRect }: Props) 
     transform: entered && !closing
       ? "translate(0px, 0px) scale(1)"
       : `translate(${zoom.dx}px, ${zoom.dy}px) scale(${closing ? zoom.scale * 0.55 : zoom.scale})`,
-    opacity: closing || done ? 0 : entered ? 1 : 0.35,
+    opacity: closing || done || revealing ? 0 : entered ? 1 : 0.35,
   }
 
   return (
-    <div className={`opener3d ${closing ? "is-closing" : ""} ${done ? "is-done" : ""}`}>
+    <div className={`opener3d ${closing ? "is-closing" : ""} ${revealing ? "is-revealing" : ""} ${done ? "is-done" : ""}`}>
       <div className="opener3d__backdrop" />
       <div className="opener3d__frame" style={style}>
         <iframe
@@ -108,7 +116,7 @@ export function Pack3D({ cards, onDone, onQuick, onCancel, originRect }: Props) 
         />
       </div>
 
-      {done && (
+      {revealing && (
         <div className="opener3d__result">
           <div className="opener3d__result-head">
             <span>YOU PULLED</span>
@@ -128,7 +136,7 @@ export function Pack3D({ cards, onDone, onQuick, onCancel, originRect }: Props) 
         </div>
       )}
 
-      {!done && (
+      {!done && !revealing && (
         <div className="opener3d__hint">点击卡包 · 拖动拉片向左撕开</div>
       )}
 
