@@ -5,12 +5,13 @@ import { faceFromDef } from "@/card/def"
 
 import { AlbumPanel } from "./AlbumPanel"
 import type { ApiUserCard } from "./api"
+import { BackpackPanel } from "./BackpackPanel"
 import { BattlePanel } from "./BattlePanel"
 import { CodexPanel } from "./CodexPanel"
 import { DeckPanel } from "./DeckPanel"
 import { GachaPanel } from "./GachaPanel"
 
-export type PanelId = "codex" | "album" | "deck" | "battle" | "packs" | "mainline" | "market" | "account"
+export type PanelId = "codex" | "album" | "deck" | "backpack" | "battle" | "packs" | "mainline" | "market" | "account"
 
 interface Entry {
   id: PanelId
@@ -22,6 +23,7 @@ const ENTRIES: Entry[] = [
   { id: "codex", label: "图鉴", sub: "CODEX" },
   { id: "album", label: "卡册", sub: "COLLECTION" },
   { id: "deck", label: "卡组", sub: "DECK" },
+  { id: "backpack", label: "背包", sub: "BACKPACK" },
   { id: "battle", label: "战斗", sub: "BATTLE" },
   { id: "packs", label: "抽卡", sub: "GACHA" },
   { id: "mainline", label: "主线", sub: "STORY" },
@@ -44,6 +46,7 @@ interface Props {
   initialStage?: Stage
   initialPanel?: PanelId
   onLogout?: () => void
+  onHeroClaimed?: () => void
 }
 
 /** 右侧两级抽屉：收起 → 一列大按钮 → 双击进入子界面 */
@@ -54,6 +57,7 @@ export function CommandPanel({
   initialStage = "closed",
   initialPanel = "album",
   onLogout,
+  onHeroClaimed,
 }: Props) {
   const [stage, setStage] = useState<Stage>(initialStage)
   const [selected, setSelected] = useState<PanelId>(initialPanel)
@@ -194,12 +198,25 @@ export function CommandPanel({
               {panel === "codex" && <CodexPanel />}
               {panel === "album" && <AlbumPanel userId={userId} />}
               {panel === "deck" && <DeckPanel userId={userId} />}
+              {panel === "backpack" && (
+                <BackpackPanel
+                  userId={userId}
+                  onOpenGacha={() => openPanel("packs")}
+                  onHeroClaimed={onHeroClaimed}
+                />
+              )}
               {panel === "battle" && <BattlePanel userId={userId} onOpenDeck={() => openPanel("deck")} />}
               {panel === "packs" && <GachaPanel userId={userId} />}
               {panel === "mainline" && <MainlinePanel />}
               {panel === "market" && <MarketPanel />}
               {panel === "account" && (
-                <AccountPanel userId={userId} username={username} hero={hero} onLogout={onLogout} />
+                <AccountPanel
+                  userId={userId}
+                  username={username}
+                  hero={hero}
+                  onLogout={onLogout}
+                  onOpenBackpack={() => openPanel("backpack")}
+                />
               )}
             </div>
           </div>
@@ -238,6 +255,13 @@ function PanelGlyph({ id }: { id: PanelId }) {
         <svg viewBox="0 0 24 24">
           <rect x="4.5" y="6.5" width="9" height="13" rx="1.5" {...line} />
           <path d="M8 4.5h9.5A1.5 1.5 0 0 1 19 6v12M7 10h4M7 13.5h4" {...line} />
+        </svg>
+      )
+    case "backpack":
+      return (
+        <svg viewBox="0 0 24 24">
+          <path d="M6 8.5h12l1 11.5H5z" {...line} />
+          <path d="M9 8.5V6a3 3 0 0 1 6 0v2.5M9 13h6" {...line} />
         </svg>
       )
     case "battle":
@@ -315,11 +339,13 @@ function AccountPanel({
   username,
   hero,
   onLogout,
+  onOpenBackpack,
 }: {
   userId: string | null
   username: string | null
   hero?: ApiUserCard | null
   onLogout?: () => void
+  onOpenBackpack?: () => void
 }) {
   if (!username) {
     return (
@@ -383,12 +409,12 @@ function AccountPanel({
       ) : (
         <div className="command-hero-claim">
           <span>本体卡</span>
-          <em>还没有认领</em>
-          <p>重新走一次 osu! 登录，会把 /me/osu 的 PC、TTH、等级写成你的本体卡。</p>
-          <a className="command-link" href="/auth/osu">
-            认领本体卡
+          <em>还没有获得</em>
+          <p>本体卡在背包的「神秘卡包」里。开启后才会进入卡册和桌面。</p>
+          <button type="button" className="command-link" onClick={onOpenBackpack}>
+            去背包开神秘卡包
             <i aria-hidden>›</i>
-          </a>
+          </button>
         </div>
       )}
 

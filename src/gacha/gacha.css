@@ -117,6 +117,20 @@
   color: rgb(237 234 229 / 0.45);
 }
 
+.gacha__pool-count {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #3cbadb;
+}
+
+.gacha__pack-count {
+  align-self: center;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 11px;
+  color: #aeb8c8;
+}
+
 .gacha__actions {
   display: flex;
   align-items: center;

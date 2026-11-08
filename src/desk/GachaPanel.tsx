@@ -1,9 +1,10 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
 import { faceFromDef } from "@/card/def"
 import type { CardFaceData, CardSkill, Job, Rarity } from "@/card/types"
 
+import { fetchPackInventory } from "./api"
 import "./gacha-panel.css"
 
 const API = "/api"
@@ -53,6 +54,7 @@ interface OpenResponse {
   data?: {
     results: { cardId: string; rarity: Rarity; fromPity: boolean }[]
     pity: Pity
+    packs?: Record<string, number>
   }
   error?: { message?: string }
 }
@@ -89,9 +91,25 @@ export function GachaPanel({ userId }: { userId: string | null }) {
   const [pity, setPity] = useState<Pity | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [packs, setPacks] = useState<{ userId: string; data: Record<string, number> } | null>(null)
+
+  useEffect(() => {
+    if (!userId) return
+    let cancelled = false
+    fetchPackInventory(userId)
+      .then((data) => {
+        if (!cancelled) setPacks({ userId, data: data.packs })
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
 
   const current = POOLS.find((item) => item.id === pool) ?? POOLS[0]
   const pityPercent = pity ? Math.min(100, (pity.after / 60) * 100) : 0
+  const currentPacks = packs && packs.userId === userId ? packs.data : null
+  const packCount = currentPacks?.[pool] ?? 0
 
   function selectPool(id: PoolId) {
     if (id === pool) return
@@ -125,6 +143,7 @@ export function GachaPanel({ userId }: { userId: string | null }) {
 
       const result = payload.data
       setPity(result.pity)
+      if (result.packs) setPacks({ userId: userId!, data: result.packs })
 
       const faces = await Promise.all(
         result.results.map(async (item) => {
@@ -189,6 +208,7 @@ export function GachaPanel({ userId }: { userId: string | null }) {
               <b className="gacha-panel__pool-name">{item.name}</b>
               <small className="gacha-panel__pool-note">{item.note}</small>
             </span>
+            <em className="gacha-panel__pool-count">×{currentPacks?.[item.id] ?? 0}</em>
           </button>
         ))}
       </div>
@@ -238,10 +258,10 @@ export function GachaPanel({ userId }: { userId: string | null }) {
         <button
           type="button"
           className="gacha-panel__open"
-          disabled={loading || !userId}
+          disabled={loading || !userId || packCount <= 0}
           onClick={openPack}
         >
-          {loading ? "开启中…" : "开 5 张"}
+          {loading ? "开启中…" : packCount > 0 ? "开 5 张" : "没有卡包"}
         </button>
 
         {error && (

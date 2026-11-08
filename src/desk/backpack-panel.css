@@ -1,0 +1,287 @@
+.backpack-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.backpack-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 4px 2px 0;
+}
+.backpack-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.backpack-head span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  color: #3cbadb;
+}
+.backpack-head b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 30px;
+  line-height: 1;
+}
+.backpack-head p {
+  margin: 0;
+  max-width: 380px;
+  color: #8ea9c9;
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: right;
+}
+.backpack-error {
+  padding: 8px 10px;
+  border: 1px solid rgba(237, 95, 159, 0.4);
+  border-radius: 8px;
+  background: rgba(237, 95, 159, 0.1);
+  color: #ff9ac6;
+  font-size: 11px;
+}
+.backpack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+.backpack-pack {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-height: 148px;
+  padding: 14px;
+  border: 2px solid #14244a;
+  border-radius: 14px;
+  background: rgba(17, 29, 53, 0.8);
+}
+.backpack-pack.is-mystery {
+  background:
+    radial-gradient(ellipse 90% 120% at 15% 0%, rgba(237, 95, 159, 0.18), transparent 65%),
+    rgba(17, 29, 53, 0.85);
+  border-color: rgba(237, 95, 159, 0.45);
+}
+.backpack-pack.is-empty {
+  opacity: 0.55;
+}
+.backpack-pack__top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.backpack-pack__dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+}
+.backpack-pack__top b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 17px;
+  line-height: 1;
+}
+.backpack-pack__top em {
+  margin-left: auto;
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 13px;
+  color: #f4f4f6;
+}
+.backpack-pack p {
+  margin: 0;
+  color: #7f8da3;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.backpack-pack__foot {
+  margin-top: auto;
+}
+.backpack-pack__open,
+.backpack-pack__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 13px;
+  border: 2px solid #3cbadb;
+  border-radius: 9px;
+  background: #3cbadb;
+  color: #0b0d10;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.backpack-pack__open:hover:not(:disabled),
+.backpack-pack__link:hover {
+  background: #5fd0ec;
+}
+.backpack-pack__open:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.backpack-pack__done {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(33, 233, 133, 0.4);
+  border-radius: 8px;
+  color: #21e985;
+  font-size: 10px;
+}
+.backpack-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px;
+  border: 2px solid #14244a;
+  border-radius: 16px;
+  background: rgba(17, 29, 53, 0.8);
+}
+.backpack-hero__face {
+  width: 180px;
+  flex: 0 0 180px;
+}
+.backpack-hero__face .cf {
+  width: 100%;
+}
+.backpack-hero__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.backpack-hero__text span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  color: #3cbadb;
+}
+.backpack-hero__text b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 26px;
+  line-height: 1.05;
+}
+.backpack-hero__text em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #8ea9c9;
+}
+.backpack-hero__text p {
+  margin: 4px 0 0;
+  max-width: 460px;
+  color: #7f8da3;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* mystery modal */
+.backpack-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 570;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 6, 10, 0.78);
+  backdrop-filter: blur(4px);
+}
+.backpack-modal__panel {
+  width: min(520px, 100%);
+  padding: 20px;
+  border: 3px solid #14244a;
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse 80% 120% at 15% 0%, rgba(237, 95, 159, 0.16), transparent 65%),
+    #111d35;
+  box-shadow: 10px 10px 0 #05070b;
+}
+.backpack-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: #ed5f9f;
+}
+.backpack-modal__head button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid rgba(237, 95, 159, 0.45);
+  border-radius: 50%;
+  background: transparent;
+  color: #ff9ac6;
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+.backpack-modal h3 {
+  margin: 14px 0 16px;
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 24px;
+  line-height: 1.2;
+}
+.backpack-modal__options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.backpack-modal__options button {
+  padding: 11px 13px;
+  border: 1.5px solid rgba(60, 186, 219, 0.24);
+  border-radius: 10px;
+  background: rgba(27, 45, 87, 0.65);
+  color: #dbe3ee;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.backpack-modal__options button:hover {
+  border-color: rgba(60, 186, 219, 0.6);
+}
+.backpack-modal__options button.is-selected {
+  border-color: #3cbadb;
+  background: rgba(60, 186, 219, 0.14);
+  color: #f4f4f6;
+}
+.backpack-modal__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+.backpack-modal__ghost,
+.backpack-modal__next {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.backpack-modal__ghost {
+  border: 2px solid rgba(60, 186, 219, 0.35);
+  background: transparent;
+  color: #9fd9ea;
+}
+.backpack-modal__next {
+  margin-left: auto;
+  border: 2px solid #3cbadb;
+  background: #3cbadb;
+  color: #0b0d10;
+}
+.backpack-modal__ghost:disabled,
+.backpack-modal__next:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

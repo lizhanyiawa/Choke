@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react"
 import { CardFace } from "@/card/CardFace"
 
 import { cardFromDesk } from "./cardFace"
@@ -101,14 +101,19 @@ export function DeskPage() {
     localStorage.setItem(POOL_KEY, pool)
   }, [pool])
 
-  useEffect(() => {
+  const refreshUser = useCallback(() => {
     fetch("/auth/me", { credentials: "include" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) setUser({ id: d.data.id, username: d.data.username, hero: d.data.hero ?? null })
+        else setUser(null)
       })
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    refreshUser()
+  }, [refreshUser])
 
   const logout = () => {
     fetch("/auth/logout", { method: "POST", credentials: "include" })
@@ -358,6 +363,12 @@ export function DeskPage() {
   }
 
   const cardPx = useMemo(() => stageSize, [stageSize])
+  const visibleItems = items.filter((item) => !(item.card?.isHero && !user?.hero))
+  const queryPanel = new URLSearchParams(window.location.search).get("panel") as PanelId | null
+  const requestedPanel =
+    queryPanel && (["codex", "album", "deck", "backpack", "battle", "packs", "mainline", "market", "account"] as PanelId[]).includes(queryPanel)
+      ? queryPanel
+      : null
 
   return (
     <div className="desk-root">
@@ -399,7 +410,7 @@ export function DeskPage() {
         className="desk-stage"
         style={{ "--desk-bg": DEFAULT_SKIN.background, "--desk-edge": DEFAULT_SKIN.edge } as CSSProperties}
       >
-        {items.map((item, index) => {
+        {visibleItems.map((item, index) => {
           const size = ITEM_SIZE[item.kind]
           const isCollecting = collecting?.id === item.id
           const quickTarget = quickTargets?.[item.id]
@@ -480,12 +491,13 @@ export function DeskPage() {
 
         <CommandPanel
           key={panelRequest?.n ?? 0}
-          initialStage={panelRequest ? "open" : "closed"}
-          initialPanel={panelRequest?.id ?? "album"}
+          initialStage={panelRequest || requestedPanel ? "open" : "closed"}
+          initialPanel={panelRequest?.id ?? requestedPanel ?? "album"}
           userId={user?.id ?? null}
           username={user?.username ?? null}
           hero={user?.hero ?? null}
           onLogout={logout}
+          onHeroClaimed={refreshUser}
         />
 
         <div

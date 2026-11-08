@@ -158,3 +158,26 @@ export function meltCard(
     },
   )
 }
+
+export interface PackInventory {
+  packs: Record<string, number>
+  heroClaimed: boolean
+}
+
+export function fetchPackInventory(userId: string, signal?: AbortSignal): Promise<PackInventory> {
+  return request<PackInventory>(`/api/users/${userId}/packs`, { signal })
+}
+
+export function openMysteryPack(
+  userId: string,
+  answers: string[],
+): Promise<{ hero: ApiUserCard | null; packs: Record<string, number> }> {
+  return request<{ hero: ApiUserCard | null; packs: Record<string, number> }>(
+    `/api/users/${userId}/packs/mystery/open`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answers }),
+    },
+  )
+}

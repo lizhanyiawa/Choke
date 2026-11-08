@@ -73,6 +73,13 @@ CREATE TABLE IF NOT EXISTS deck_slots (
   PRIMARY KEY (user_id, slot)
 );
 
+CREATE TABLE IF NOT EXISTS user_packs (
+  user_id text NOT NULL,
+  pool text NOT NULL,
+  count integer NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, pool)
+);
+
 CREATE TABLE IF NOT EXISTS pack_openings (
   id serial PRIMARY KEY,
   user_id text NOT NULL,

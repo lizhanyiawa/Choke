@@ -87,6 +87,16 @@ export const deckSlots = pgTable(
   (table) => [primaryKey({ columns: [table.userId, table.slot] })],
 )
 
+export const userPacks = pgTable(
+  "user_packs",
+  {
+    userId: text("user_id").notNull(),
+    pool: text("pool").notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.pool] })],
+)
+
 export const packOpenings = pgTable(
   "pack_openings",
   {

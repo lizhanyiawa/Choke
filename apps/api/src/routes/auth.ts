@@ -16,6 +16,7 @@ import { db } from "../db/client"
 import { cards, userCards, users } from "../db/schema"
 import { invalidateCardCache } from "../gacha/open"
 import { heroCardDef } from "../hero"
+import { grantStarterPacks } from "../packs/inventory"
 import { heroIndex, heroPersonalBonus, heroStatsFromOsu } from "../../../../src/pool/hero"
 
 /** 登录时把 /me/osu 写成 hero-{id} 卡定义，并放进该用户的卡册 */
@@ -24,6 +25,7 @@ async function claimHeroCard(
   me: Awaited<ReturnType<typeof fetchMe>>,
   onboarded: boolean,
   personalBonusBp: number,
+  grant: boolean,
 ) {
   const [pool] = await db
     .select({
@@ -51,7 +53,7 @@ async function claimHeroCard(
     .where(and(eq(userCards.userId, userId), eq(userCards.cardId, id)))
     .limit(1)
 
-  if (!owned) {
+  if (grant && !owned) {
     await db.insert(userCards).values({ userId, cardId: id })
   }
 
@@ -98,7 +100,7 @@ export async function authRoutes(app: FastifyInstance) {
       if (!user) throw new Error("用户写入失败")
 
       try {
-        await claimHeroCard(userId, me, user.onboarded, user.heroBonus)
+        await claimHeroCard(userId, me, user.onboarded, user.heroBonus, false)
       } catch (error) {
         // 认领失败不能挡住登录
         request.log.warn({ err: error }, "claim hero card failed")
@@ -182,9 +184,13 @@ export async function authRoutes(app: FastifyInstance) {
         .where(eq(cards.id, `hero-${user.osuId}`))
     }
 
+    if (!user.onboarded) {
+      await grantStarterPacks(userId)
+    }
+
     return {
       ok: true,
-      data: { onboarded: true, heroBonus: user.heroBonus },
+      data: { onboarded: true, heroBonus: user.heroBonus, starterGranted: !user.onboarded },
     }
   })
 

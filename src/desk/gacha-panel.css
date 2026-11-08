@@ -120,6 +120,15 @@
   color: #8ea9c9;
 }
 
+.gacha-panel__pool-count {
+  margin-left: auto;
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 11px;
+  color: #9fd9ea;
+  white-space: nowrap;
+}
+
 .gacha-panel__login {
   display: flex;
   align-items: center;

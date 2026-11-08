@@ -1,9 +1,5 @@
 import { useEffect, useState } from "react"
 
-import { CardFace } from "@/card/CardFace"
-import { battlePower } from "@/card/data"
-import { toFace, type ApiUserCard } from "@/desk/api"
-
 import "./intro.css"
 
 interface Me {
@@ -12,14 +8,14 @@ interface Me {
   osuId: number | null
   onboarded: boolean
   heroBonus: number
-  hero: ApiUserCard | null
+  hero: unknown
 }
 
 const STEPS = [
   {
     tag: "STEP 01",
     title: "你的 osu! 账号，就是你的本体卡",
-    body: "登录后我们会读取 /me/osu，把你的游玩数据写成一张只属于你的卡。稀有度由公开排行榜决定，个人数据只影响这张卡的成长。",
+    body: "登录后我们会读取 /me/osu，准备你的本体卡数据。它不会直接出现在桌面上，而是封在背包的「神秘卡包」里。",
   },
   {
     tag: "STEP 02",
@@ -143,11 +139,6 @@ export function IntroPage() {
     )
   }
 
-  const hero = me.hero
-  const heroFace = hero ? toFace(hero) : null
-  const heroBp = heroFace ? battlePower(heroFace) : 0
-  const bonusPct = Math.round(me.heroBonus / 100)
-
   if (step === 3) {
     return (
       <div className="intro">
@@ -157,38 +148,36 @@ export function IntroPage() {
         </header>
         <main className="intro-done">
           <div className="intro-done__card">
-            {heroFace ? (
-              <CardFace card={heroFace} />
-            ) : (
-              <div className="intro-landing__card-empty">
-                <img src="/brand/choke-icon.svg" alt="" />
-                <span>本体卡生成中</span>
-              </div>
-            )}
+            <div className="intro-mystery-pack">
+              <span>MYSTERY PACK</span>
+              <img src="/brand/choke-icon.svg" alt="" />
+              <b>神秘卡包</b>
+              <em>内有你的本体卡</em>
+            </div>
           </div>
           <div className="intro-done__copy">
             <span className="intro__eyebrow">OOBE COMPLETE</span>
-            <h1>本体卡已激活</h1>
+            <h1>新手奖励已发放</h1>
             <p>
-              你的本体卡稀有度来自公开排行榜；osu! 数据带来的个人加成现在已生效。
+              获得 30 个普通卡包和 1 个神秘卡包。本体卡不再随登录直接发放，需要去背包开启神秘卡包。
             </p>
             <div className="intro-done__stats">
               <div>
-                <span>稀有度</span>
-                <b>{hero?.rarity ?? "—"}</b>
+                <span>普通卡包</span>
+                <b>×30</b>
               </div>
               <div>
-                <span>战力</span>
-                <b>{heroBp.toLocaleString("en-US")}</b>
+                <span>神秘卡包</span>
+                <b>×1</b>
               </div>
               <div>
-                <span>个人加成</span>
-                <b>+{bonusPct}%</b>
+                <span>本体卡</span>
+                <b>待开启</b>
               </div>
             </div>
             <div className="intro-done__actions">
-              <a className="intro__cta" href="/gacha">
-                去开包
+              <a className="intro__cta" href="/?panel=backpack">
+                去背包开神秘卡包
                 <i aria-hidden>›</i>
               </a>
               <a className="intro__ghost" href="/">
@@ -211,18 +200,16 @@ export function IntroPage() {
       </header>
       <main className="intro-tutorial">
         <div className="intro-tutorial__card">
-          {heroFace ? (
-            <CardFace card={heroFace} />
-          ) : (
-            <div className="intro-landing__card-empty">
-              <img src="/brand/choke-icon.svg" alt="" />
-              <span>本体卡生成中</span>
-            </div>
-          )}
+          <div className="intro-mystery-pack intro-mystery-pack--small">
+            <span>MYSTERY PACK</span>
+            <img src="/brand/choke-icon.svg" alt="" />
+            <b>神秘卡包</b>
+            <em>内有你的本体卡</em>
+          </div>
           <div className="intro-tutorial__card-meta">
-            <span>{hero?.rarity ?? "—"}</span>
-            <b>BP {heroBp.toLocaleString("en-US")}</b>
-            <em>{step < 3 ? "引导完成后激活个人加成" : `个人加成 +${bonusPct}%`}</em>
+            <span>MYSTERY</span>
+            <b>本体卡 ×1</b>
+            <em>完成引导后去背包开启</em>
           </div>
         </div>
         <div className="intro-tutorial__copy">
@@ -250,14 +237,14 @@ export function IntroPage() {
               </button>
             ) : (
               <button type="button" className="intro__cta" onClick={() => void finish()} disabled={finishing}>
-                {finishing ? "激活中…" : "完成引导"}
+                {finishing ? "发放中…" : "完成引导"}
                 <i aria-hidden>›</i>
               </button>
             )}
           </div>
           {error && <p className="intro__error">{error}</p>}
           <p className="intro-tutorial__hint">
-            引导前本体卡会比 C 弱；完成后会拿到来自 osu! 数据的个人加成，上限 +20%。
+            完成引导会发 30 普通卡包 + 1 神秘卡包；本体卡在神秘卡包中开启。
           </p>
         </div>
       </main>

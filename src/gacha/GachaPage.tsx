@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { CardFace } from "@/card/CardFace"
 import { faceFromDef } from "@/card/def"
 import type { CardFaceData, CardSkill, Job, Rarity } from "@/card/types"
+import { fetchPackInventory } from "@/desk/api"
 
 import "./gacha.css"
 
@@ -60,6 +61,7 @@ export function GachaPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<{ id: string; username: string } | null>(null)
+  const [packs, setPacks] = useState<{ userId: string; data: Record<string, number> } | null>(null)
 
   useEffect(() => {
     fetch("/auth/me", { credentials: "include" })
@@ -70,9 +72,29 @@ export function GachaPage() {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    fetchPackInventory(user.id)
+      .then((data) => {
+        if (!cancelled) setPacks({ userId: user.id, data: data.packs })
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [user])
+
+  const currentPacks = packs && packs.userId === user?.id ? packs.data : null
+  const packCount = currentPacks?.[pool] ?? 0
+
   async function openPack() {
     if (!user) {
       setError("请先用 osu! 登录")
+      return
+    }
+    if (packCount <= 0) {
+      setError("背包里没有这个卡包")
       return
     }
     setLoading(true)
@@ -86,6 +108,7 @@ export function GachaPage() {
       })
       const data = await res.json()
       if (!data.ok) throw new Error(data.error?.message ?? "抽卡失败")
+      if (data.data?.packs) setPacks({ userId: user.id, data: data.data.packs })
 
       const details: ApiCard[] = await Promise.all(
         data.data.results.map((item: { cardId: string }) =>
@@ -147,6 +170,7 @@ export function GachaPage() {
           >
             <b>{item.name}</b>
             <small>{item.note}</small>
+            <em className="gacha__pool-count">×{currentPacks?.[item.id] ?? 0}</em>
           </button>
         ))}
       </div>
@@ -156,10 +180,11 @@ export function GachaPage() {
           type="button"
           className="gacha__open"
           onClick={openPack}
-          disabled={loading || !user}
+          disabled={loading || !user || packCount <= 0}
         >
-          {!user ? "先登录" : loading ? "开启中…" : "开启 5 张"}
+          {!user ? "先登录" : loading ? "开启中…" : packCount > 0 ? "开启 5 张" : "背包里没有"}
         </button>
+        {user && <span className="gacha__pack-count">卡包 ×{packCount}</span>}
         {!user && <span className="gacha__error">请先用 osu! 登录后再开包</span>}
         {error && <span className="gacha__error">{error}</span>}
       </div>
