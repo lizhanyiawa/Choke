@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm"
+import { and, eq, notLike } from "drizzle-orm"
 
 import { db } from "../db/client"
 import { cards, packOpenings, pity, userCards } from "../db/schema"
@@ -19,7 +19,11 @@ const idCache = new Map<string, string[]>()
 async function idsFor(rarity: string): Promise<string[]> {
   const cached = idCache.get(rarity)
   if (cached) return cached
-  const rows = await db.select({ id: cards.id }).from(cards).where(eq(cards.rarity, rarity))
+  // 本体卡 hero-* 是登录后写入的实例卡，不属于公共卡池
+  const rows = await db
+    .select({ id: cards.id })
+    .from(cards)
+    .where(and(eq(cards.rarity, rarity), notLike(cards.id, "hero-%")))
   const ids = rows.map((row) => row.id)
   idCache.set(rarity, ids)
   return ids

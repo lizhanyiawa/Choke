@@ -14,6 +14,7 @@ import {
 import { WEB_BASE } from "../auth/env"
 import { db } from "../db/client"
 import { cards, userCards, users } from "../db/schema"
+import { invalidateCardCache } from "../gacha/open"
 import { heroCardDef } from "../hero"
 
 /** 登录时把 /me/osu 写成 hero-{id} 卡定义，并放进该用户的卡册 */
@@ -46,6 +47,8 @@ async function claimHeroCard(userId: string, me: Awaited<ReturnType<typeof fetch
   if (!owned) {
     await db.insert(userCards).values({ userId, cardId: id })
   }
+
+  invalidateCardCache()
 }
 
 export async function authRoutes(app: FastifyInstance) {
