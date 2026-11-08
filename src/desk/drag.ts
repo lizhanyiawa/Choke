@@ -30,6 +30,7 @@ export function toDeskCard(card: CardFaceData, userCardId?: number): CardData {
     art: card.art,
     banner: card.banner,
     foil: card.foil,
+    isHero: card.id.startsWith("hero-"),
   }
 }
 

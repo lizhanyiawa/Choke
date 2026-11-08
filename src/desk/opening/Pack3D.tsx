@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+
+import { CardFace } from "@/card/CardFace"
+
+import { cardFromDesk } from "../cardFace"
 import type { CardData } from "../types"
 
 export interface OriginRect {
@@ -88,11 +92,11 @@ export function Pack3D({ cards, onDone, onQuick, onCancel, originRect }: Props) 
     transform: entered && !closing
       ? "translate(0px, 0px) scale(1)"
       : `translate(${zoom.dx}px, ${zoom.dy}px) scale(${closing ? zoom.scale * 0.55 : zoom.scale})`,
-    opacity: closing ? 0 : entered ? 1 : 0.35,
+    opacity: closing || done ? 0 : entered ? 1 : 0.35,
   }
 
   return (
-    <div className={`opener3d ${closing ? "is-closing" : ""}`}>
+    <div className={`opener3d ${closing ? "is-closing" : ""} ${done ? "is-done" : ""}`}>
       <div className="opener3d__backdrop" />
       <div className="opener3d__frame" style={style}>
         <iframe
@@ -104,9 +108,29 @@ export function Pack3D({ cards, onDone, onQuick, onCancel, originRect }: Props) 
         />
       </div>
 
-      <div className="opener3d__hint">
-        {done ? "卡牌已抽完，收入桌面后会留在桌上" : "点击卡包 · 拖动拉片向左撕开"}
-      </div>
+      {done && (
+        <div className="opener3d__result">
+          <div className="opener3d__result-head">
+            <span>YOU PULLED</span>
+            <b>{cards.length} 张</b>
+          </div>
+          <div className="opener3d__result-cards">
+            {cards.map((card, index) => (
+              <div
+                className="opener3d__result-card"
+                key={`${card.cardId ?? card.name}-${index}`}
+                style={{ animationDelay: `${index * 70}ms` }}
+              >
+                <CardFace card={cardFromDesk(card)} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!done && (
+        <div className="opener3d__hint">点击卡包 · 拖动拉片向左撕开</div>
+      )}
 
       {!done && (
         <button type="button" className="opener3d__close" onClick={onCancel} aria-label="返回桌面">

@@ -320,7 +320,7 @@ export function DeskPage() {
   const quickCollectAll = () => {
     const stage = stageRef.current
     const album = items.find((it) => it.kind === "album")
-    const cards = items.filter((it) => it.kind === "card" && !it.card?.isHero)
+    const cards = items.filter((it) => it.kind === "card")
     if (!stage || !album || !cards.length) return
     const rect = stage.getBoundingClientRect()
     const left = album.x * rect.width + ITEM_SIZE.album.w / 2 - ITEM_SIZE.card.w / 2
@@ -433,7 +433,10 @@ export function DeskPage() {
     let deckSlot: number | null = null
     let albumPanelHover = false
     let backpackPanelHover = false
-    const canAssign = item.kind === "card" && item.card?.userCardId != null
+    const assignId =
+      item.card?.userCardId ??
+      (item.card?.isHero ? user?.hero?.userCardId : undefined)
+    const canAssign = item.kind === "card" && assignId != null
     front(item.id)
     setDragId(item.id)
 
@@ -475,7 +478,7 @@ export function DeskPage() {
         )
       }
 
-      if (item.kind === "card" && !item.card?.isHero && albumHit) {
+      if (item.kind === "card" && albumHit) {
         const hit =
           ev.clientX >= albumHit.left &&
           ev.clientX <= albumHit.right &&
@@ -499,7 +502,7 @@ export function DeskPage() {
       const dropId = dropRef.current
       dropRef.current = null
       setDropTarget(null)
-      if (albumPanelHover && item.kind === "card" && !item.card?.isHero) {
+      if (albumPanelHover && item.kind === "card") {
         collect(item.id)
         showToast("已放入卡册")
         return
@@ -508,17 +511,17 @@ export function DeskPage() {
         void returnPack(item)
         return
       }
-      if (deckSlot != null && item.card?.userCardId != null) {
+      if (deckSlot != null && assignId != null) {
         window.dispatchEvent(
           new CustomEvent(DECK_ASSIGN_EVENT, {
-            detail: { userCardId: item.card.userCardId, slot: deckSlot },
+            detail: { userCardId: assignId, slot: deckSlot },
           }),
         )
         collect(item.id)
         showToast(`已放入卡组第 ${deckSlot + 1} 槽`)
         return
       }
-      if (dropId && album && item.kind === "card" && !item.card?.isHero) {
+      if (dropId && album && item.kind === "card") {
         collectCard(item, album)
         return
       }
@@ -676,7 +679,7 @@ export function DeskPage() {
               type="button"
               className="desk-button"
               onClick={quickCollectAll}
-              disabled={!items.some((it) => it.kind === "card" && !it.card?.isHero)}
+              disabled={!items.some((it) => it.kind === "card")}
             >
               快速收卡
             </button>

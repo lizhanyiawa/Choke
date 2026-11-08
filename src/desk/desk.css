@@ -2589,6 +2589,79 @@
   display: block;
   background: transparent;
 }
+.opener3d.is-done .opener3d__frame {
+  opacity: 0;
+  pointer-events: none;
+}
+.opener3d__result {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 64px 24px 140px;
+  pointer-events: none;
+  animation: opener3d-result-in 0.36s ease both;
+}
+@keyframes opener3d-result-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.opener3d__result-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.opener3d__result-head span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  color: rgba(244, 244, 246, 0.55);
+}
+.opener3d__result-head b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  color: #f4f4f6;
+}
+.opener3d__result-cards {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: min(1120px, 92vw);
+}
+.opener3d__result-card {
+  width: clamp(128px, 12vw, 176px);
+  flex: 0 0 auto;
+  opacity: 0;
+  transform: translateY(20px) rotate(-1deg);
+  animation: opener3d-result-card-in 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.opener3d__result-card .cf {
+  width: 100%;
+}
+@keyframes opener3d-result-card-in {
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+  }
+}
+.opener3d.is-closing .opener3d__result {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
 .opener3d__hint {
   position: absolute;
   left: 50%;
