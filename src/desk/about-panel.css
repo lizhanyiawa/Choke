@@ -78,87 +78,112 @@
   font-size: 13px;
 }
 
-.about-showcase {
+.about-tools {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.about-showcase__title {
-  padding-top: 8px;
+  padding-top: 10px;
   border-top: 1px solid rgba(60, 186, 219, 0.18);
 }
 
-.about-showcase__title span {
+.about-tools__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.about-tools__head > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.about-tools__head span {
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 8px;
   letter-spacing: 0.22em;
   color: #3cbadb;
 }
 
-.about-showcase__title b {
-  display: block;
-  margin-top: 3px;
+.about-tools__head b {
   font-family: "Fredoka", "Outfit", sans-serif;
   font-size: 22px;
   line-height: 1;
 }
 
-.about-showcase__title p {
-  margin: 4px 0 0;
+.about-tools__head p {
+  margin: 3px 0 0;
   color: #7f8da3;
   font-size: 11px;
   line-height: 1.55;
 }
 
-/* 把卡面实验室压进抽屉，而不是整页 */
-.about-panel .lab {
-  min-height: 0;
-  padding: 0;
-  background: transparent;
+.about-tools__preview {
+  width: 92px;
+  flex: 0 0 92px;
+  opacity: 0.9;
 }
 
-.about-panel .lab[data-bg="dark"],
-.about-panel .lab[data-bg="light"] {
-  background-image: none;
-  background-color: transparent;
-  color: var(--lab-ink);
+.about-tools__preview .cf {
+  width: 100%;
 }
 
-.about-panel .lab__bar {
-  padding-bottom: 14px;
+.about-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
-.about-panel .lab__title {
-  margin-top: 5px;
-  font-size: 24px;
-}
-
-.about-panel .lab__sub {
-  font-size: 11px;
-}
-
-.about-panel .lab__toggle {
-  display: none;
-}
-
-.about-panel .lab__section {
-  margin-top: 28px;
-}
-
-.about-panel .lab__section-head {
-  align-items: flex-start;
+.about-link {
+  position: relative;
+  display: flex;
   flex-direction: column;
   gap: 3px;
-  margin-bottom: 12px;
+  min-width: 0;
+  padding: 12px 34px 12px 13px;
+  border: 1.5px solid rgba(60, 186, 219, 0.22);
+  border-radius: 11px;
+  background: rgba(17, 29, 53, 0.58);
+  color: #e9e9ef;
+  text-decoration: none;
+  transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
 }
 
-.about-panel .lab__section-head h2 {
-  font-size: 13px;
+.about-link:hover {
+  border-color: #3cbadb;
+  background: rgba(60, 186, 219, 0.1);
+  transform: translateY(-1px);
 }
 
-.about-panel .lab__section-head p {
+.about-link > span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 7px;
+  letter-spacing: 0.18em;
+  color: #3cbadb;
+}
+
+.about-link > b {
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.about-link > em {
+  font-style: normal;
+  color: #7f8da3;
   font-size: 10px;
+  line-height: 1.5;
+}
+
+.about-link > i {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-style: normal;
+  color: #9fd9ea;
+  font-size: 20px;
+  line-height: 1;
 }
 
 @media (max-width: 760px) {
@@ -170,6 +195,16 @@
     max-width: 70%;
   }
   .about-meta {
+    grid-template-columns: 1fr;
+  }
+  .about-tools__head {
+    align-items: flex-start;
+  }
+  .about-tools__preview {
+    width: 76px;
+    flex-basis: 76px;
+  }
+  .about-links {
     grid-template-columns: 1fr;
   }
 }

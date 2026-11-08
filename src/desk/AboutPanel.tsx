@@ -1,6 +1,35 @@
-import { CardLab } from "@/card/CardLab"
+import { CardFace } from "@/card/CardFace"
+import { DEMO_CARDS } from "@/card/data"
 
 import "./about-panel.css"
+
+const TOOLS = [
+  {
+    href: "/card-lab",
+    label: "卡面实验室",
+    sub: "CARD FACE LAB",
+    note: "七档卡框材质、三档尺寸、战斗态和本体卡命座阶梯。",
+  },
+  {
+    href: "/card-editor",
+    label: "卡牌编辑器",
+    sub: "CARD EDITOR",
+    note: "手动拼一张卡，检查字段、卡面和技能排布。",
+  },
+  {
+    href: "/pool-lab",
+    label: "卡池实验室",
+    sub: "POOL LAB",
+    note: "导入排行榜数据，构建卡池并导出卡定义。",
+  },
+  {
+    href: "/holo-lab.html",
+    label: "全息参考",
+    sub: "HOLO REFERENCE",
+    note: "闪卡 / 箔面效果的视觉参考页。",
+    external: true,
+  },
+]
 
 export function AboutPanel() {
   return (
@@ -32,13 +61,34 @@ export function AboutPanel() {
         </div>
       </section>
 
-      <section className="about-showcase">
-        <div className="about-showcase__title">
-          <span>CARD FACE SHOWCASE</span>
-          <b>卡面展示</b>
-          <p>卡面实验室暂时保留在这里，后续做正式卡面规范时可以直接对照。</p>
+      <section className="about-tools">
+        <div className="about-tools__head">
+          <div>
+            <span>DEV / REFERENCE</span>
+            <b>卡面与开发工具</b>
+            <p>这些页面暂时保留，入口先集中在这里，之后可能继续用一段时间。</p>
+          </div>
+          <div className="about-tools__preview" aria-hidden>
+            <CardFace card={DEMO_CARDS[4]} />
+          </div>
         </div>
-        <CardLab />
+
+        <div className="about-links">
+          {TOOLS.map((tool) => (
+            <a
+              className="about-link"
+              key={tool.href}
+              href={tool.href}
+              target={tool.external ? "_blank" : undefined}
+              rel={tool.external ? "noreferrer" : undefined}
+            >
+              <span>{tool.sub}</span>
+              <b>{tool.label}</b>
+              <em>{tool.note}</em>
+              <i aria-hidden>›</i>
+            </a>
+          ))}
+        </div>
       </section>
     </div>
   )
