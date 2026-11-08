@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
 import { faceFromDef } from "@/card/def"
@@ -7,7 +7,7 @@ import { AlbumPanel } from "./AlbumPanel"
 import type { ApiUserCard } from "./api"
 import { BattlePanel } from "./BattlePanel"
 import { DeckPanel } from "./DeckPanel"
-import { POOL_META, POOL_ORDER } from "./rarity"
+import { GachaPanel } from "./GachaPanel"
 
 export type PanelId = "album" | "deck" | "battle" | "packs" | "mainline" | "market" | "account"
 
@@ -21,7 +21,7 @@ const ENTRIES: Entry[] = [
   { id: "album", label: "卡册", sub: "COLLECTION" },
   { id: "deck", label: "卡组", sub: "DECK" },
   { id: "battle", label: "战斗", sub: "BATTLE" },
-  { id: "packs", label: "卡包", sub: "PACKS" },
+  { id: "packs", label: "抽卡", sub: "GACHA" },
   { id: "mainline", label: "主线", sub: "STORY" },
   { id: "market", label: "市场", sub: "MARKET" },
   { id: "account", label: "账号", sub: "ACCOUNT" },
@@ -56,11 +56,45 @@ export function CommandPanel({
   const [stage, setStage] = useState<Stage>(initialStage)
   const [selected, setSelected] = useState<PanelId>(initialPanel)
   const [panel, setPanel] = useState<PanelId>(initialPanel)
+  const [leaving, setLeaving] = useState(false)
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(
+    () => () => {
+      if (leaveTimer.current) clearTimeout(leaveTimer.current)
+    },
+    [],
+  )
 
   const openPanel = (id: PanelId) => {
+    if (leaveTimer.current) {
+      clearTimeout(leaveTimer.current)
+      leaveTimer.current = null
+    }
+    setLeaving(false)
     setSelected(id)
     setPanel(id)
     setStage("open")
+  }
+
+  /** 二次展开 → 一次展开：先播 180ms 退场动画，再切回 rail */
+  const backToRail = () => {
+    if (leaveTimer.current) return
+    setLeaving(true)
+    leaveTimer.current = setTimeout(() => {
+      leaveTimer.current = null
+      setLeaving(false)
+      setStage("rail")
+    }, 180)
+  }
+
+  const closePanel = () => {
+    if (leaveTimer.current) {
+      clearTimeout(leaveTimer.current)
+      leaveTimer.current = null
+    }
+    setLeaving(false)
+    setStage("closed")
   }
 
   const entry = ENTRIES.find((item) => item.id === panel) ?? ENTRIES[0]
@@ -91,7 +125,7 @@ export function CommandPanel({
               <button
                 type="button"
                 className="command-panel__close"
-                onClick={() => setStage("closed")}
+                onClick={closePanel}
                 aria-label="收起菜单"
               >
                 ×
@@ -130,12 +164,12 @@ export function CommandPanel({
         )}
 
         {stage === "open" && (
-          <div className="command-drawer">
+          <div className={`command-drawer ${leaving ? "is-leaving" : ""}`}>
             <header className="command-drawer__head">
               <button
                 type="button"
                 className="command-drawer__back"
-                onClick={() => setStage("rail")}
+                onClick={backToRail}
                 aria-label="返回快捷菜单"
               >
                 ‹
@@ -147,7 +181,7 @@ export function CommandPanel({
               <button
                 type="button"
                 className="command-panel__close"
-                onClick={() => setStage("closed")}
+                onClick={closePanel}
                 aria-label="收起菜单"
               >
                 ×
@@ -158,7 +192,7 @@ export function CommandPanel({
               {panel === "album" && <AlbumPanel userId={userId} />}
               {panel === "deck" && <DeckPanel userId={userId} />}
               {panel === "battle" && <BattlePanel userId={userId} onOpenDeck={() => openPanel("deck")} />}
-              {panel === "packs" && <PacksPanel />}
+              {panel === "packs" && <GachaPanel userId={userId} />}
               {panel === "mainline" && <MainlinePanel />}
               {panel === "market" && <MarketPanel />}
               {panel === "account" && (
@@ -232,34 +266,6 @@ function PanelGlyph({ id }: { id: PanelId }) {
         </svg>
       )
   }
-}
-
-function PacksPanel() {
-  return (
-    <div className="command-section">
-      <p className="command-note">开包走服务端 RNG，结果和保底直接写进你的账号。</p>
-
-      <div className="command-packs">
-        {POOL_ORDER.map((pool) => {
-          const meta = POOL_META[pool]
-          return (
-            <div className="command-pack" key={pool}>
-              <span className="command-pack__dot" style={{ background: meta.color }} aria-hidden />
-              <div className="command-pack__text">
-                <b>{meta.label}</b>
-                <em>{meta.short} · 5 张一包</em>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      <a className="command-link" href="/gacha">
-        去开包
-        <i aria-hidden>›</i>
-      </a>
-    </div>
-  )
 }
 
 function MainlinePanel() {

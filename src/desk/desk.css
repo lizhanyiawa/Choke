@@ -360,7 +360,8 @@
   width: 190px;
 }
 .command-panel--open {
-  width: min(720px, calc(100vw - 48px));
+  width: min(70vw, 1440px);
+  min-width: 640px;
 }
 
 /* ----- 一级：一列大按钮 ----- */
@@ -555,6 +556,20 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+.command-drawer.is-leaving {
+  animation: command-drawer-out 0.18s ease-in forwards;
+  pointer-events: none;
+}
+@keyframes command-drawer-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(22px);
   }
 }
 .command-drawer__head {
@@ -1675,6 +1690,13 @@
   line-height: 1.55;
 }
 
+@media (max-width: 900px) {
+  .command-panel--open {
+    width: calc(100vw - 24px);
+    min-width: 0;
+  }
+}
+
 @media (max-width: 640px) {
   .command-panel {
     top: 12px;
@@ -1683,9 +1705,6 @@
   }
   .command-panel--rail {
     width: 176px;
-  }
-  .command-panel--open {
-    width: calc(100vw - 24px);
   }
   .command-packs {
     grid-template-columns: 1fr;
@@ -2131,6 +2150,9 @@
   .album-panel__skeleton,
   .card-detail,
   .deck-picker {
+    animation: none;
+  }
+  .command-drawer.is-leaving {
     animation: none;
   }
   .opener-2d__card {
