@@ -62,7 +62,7 @@ export function GachaPage() {
   const [user, setUser] = useState<{ id: string; username: string } | null>(null)
 
   useEffect(() => {
-    fetch("/auth/me")
+    fetch("/auth/me", { credentials: "include" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) setUser(d.data)
@@ -71,13 +71,18 @@ export function GachaPage() {
   }, [])
 
   async function openPack() {
+    if (!user) {
+      setError("请先用 osu! 登录")
+      return
+    }
     setLoading(true)
     setError(null)
     try {
       const res = await fetch(`${API}/packs/${pool}/open`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user?.id ?? "demo", count: 5 }),
+        body: JSON.stringify({ userId: user.id, count: 5 }),
       })
       const data = await res.json()
       if (!data.ok) throw new Error(data.error?.message ?? "抽卡失败")
@@ -111,7 +116,14 @@ export function GachaPage() {
           {user ? (
             <>
               <span>{user.username}</span>
-              <button type="button" onClick={() => fetch("/auth/logout", { method: "POST" }).then(() => setUser(null))}>
+              <button
+                type="button"
+                onClick={() =>
+                  fetch("/auth/logout", { method: "POST", credentials: "include" }).then(() =>
+                    setUser(null),
+                  )
+                }
+              >
                 退出
               </button>
             </>
@@ -140,9 +152,15 @@ export function GachaPage() {
       </div>
 
       <div className="gacha__actions">
-        <button type="button" className="gacha__open" onClick={openPack} disabled={loading}>
-          {loading ? "开启中…" : "开启 5 张"}
+        <button
+          type="button"
+          className="gacha__open"
+          onClick={openPack}
+          disabled={loading || !user}
+        >
+          {!user ? "先登录" : loading ? "开启中…" : "开启 5 张"}
         </button>
+        {!user && <span className="gacha__error">请先用 osu! 登录后再开包</span>}
         {error && <span className="gacha__error">{error}</span>}
       </div>
 

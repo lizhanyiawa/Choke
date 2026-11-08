@@ -26,7 +26,7 @@ export function BattlePage() {
 
   useEffect(() => {
     let cancelled = false
-    fetch("/auth/me")
+    fetch("/auth/me", { credentials: "include" })
       .then((response) => response.json())
       .then((data) => {
         if (cancelled) return

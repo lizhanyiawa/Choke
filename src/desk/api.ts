@@ -68,7 +68,7 @@ export function toFace(row: ApiUserCard): CardFaceData {
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init)
+  const res = await fetch(url, { credentials: "include", ...init })
   const data = await res.json()
   if (!data.ok) throw new Error(data.error?.message ?? "请求失败")
   return data.data as T

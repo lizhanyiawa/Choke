@@ -71,7 +71,7 @@ export function DeskPage() {
   }, [pool])
 
   useEffect(() => {
-    fetch("/auth/me")
+    fetch("/auth/me", { credentials: "include" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) setUser({ id: d.data.id, username: d.data.username, hero: d.data.hero ?? null })
@@ -80,7 +80,7 @@ export function DeskPage() {
   }, [])
 
   const logout = () => {
-    fetch("/auth/logout", { method: "POST" })
+    fetch("/auth/logout", { method: "POST", credentials: "include" })
       .catch(() => {})
       .finally(() => setUser(null))
   }

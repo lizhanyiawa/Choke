@@ -10,6 +10,7 @@ import {
   meltExpOf,
 } from "../../../../src/card/progression"
 import type { Rarity } from "../../../../src/card/types"
+import { requireSelf } from "../auth/guard"
 import { db } from "../db/client"
 import { cards, deckSlots, userCards } from "../db/schema"
 
@@ -66,7 +67,10 @@ async function loadFuel(userId: string, excludeUserCardId: number) {
 export async function progressionRoutes(app: FastifyInstance) {
   /** 可作为熔卡/升命座材料的重复卡 */
   app.get("/users/:userId/cards/:userCardId/fuel", async (request, reply) => {
-    const { userId, userCardId } = paramsSchema.parse(request.params)
+    const params = paramsSchema.parse(request.params)
+    const userId = requireSelf(request, reply, params.userId)
+    if (!userId) return
+    const { userCardId } = params
     const target = await loadCard(userId, userCardId)
     if (!target) {
       return reply.code(404).send({
@@ -78,7 +82,10 @@ export async function progressionRoutes(app: FastifyInstance) {
   })
 
   app.post("/users/:userId/cards/:userCardId/level", async (request, reply) => {
-    const { userId, userCardId } = paramsSchema.parse(request.params)
+    const params = paramsSchema.parse(request.params)
+    const userId = requireSelf(request, reply, params.userId)
+    if (!userId) return
+    const { userCardId } = params
     const target = await loadCard(userId, userCardId)
     if (!target) {
       return reply.code(404).send({
@@ -121,7 +128,10 @@ export async function progressionRoutes(app: FastifyInstance) {
   })
 
   app.post("/users/:userId/cards/:userCardId/constellation", async (request, reply) => {
-    const { userId, userCardId } = paramsSchema.parse(request.params)
+    const params = paramsSchema.parse(request.params)
+    const userId = requireSelf(request, reply, params.userId)
+    if (!userId) return
+    const { userCardId } = params
     const target = await loadCard(userId, userCardId)
     if (!target) {
       return reply.code(404).send({
@@ -178,7 +188,10 @@ export async function progressionRoutes(app: FastifyInstance) {
   })
 
   app.post("/users/:userId/cards/:userCardId/melt", async (request, reply) => {
-    const { userId, userCardId } = paramsSchema.parse(request.params)
+    const params = paramsSchema.parse(request.params)
+    const userId = requireSelf(request, reply, params.userId)
+    if (!userId) return
+    const { userCardId } = params
     const body = z
       .object({ sourceUserCardId: z.number().int().positive() })
       .parse(request.body)

@@ -2,6 +2,7 @@ import { and, asc, count, desc, eq, getTableColumns, ilike, sql } from "drizzle-
 import type { FastifyInstance } from "fastify"
 import { z } from "zod"
 
+import { requireSelf } from "../auth/guard"
 import { db } from "../db/client"
 import { cards, userCards } from "../db/schema"
 
@@ -67,8 +68,11 @@ export async function cardRoutes(app: FastifyInstance) {
     return { ok: true, data: row }
   })
 
-  app.get("/users/:userId/cards", async (request) => {
-    const { userId } = z.object({ userId: z.string() }).parse(request.params)
+  app.get("/users/:userId/cards", async (request, reply) => {
+    const params = z.object({ userId: z.string() }).parse(request.params)
+    const userId = requireSelf(request, reply, params.userId)
+    if (!userId) return
+
     const query = z
       .object({
         rarity: z.string().optional(),

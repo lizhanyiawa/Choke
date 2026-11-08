@@ -2,6 +2,7 @@ import { and, eq, getTableColumns, inArray } from "drizzle-orm"
 import type { FastifyInstance } from "fastify"
 import { z } from "zod"
 
+import { requireSelf } from "../auth/guard"
 import { db } from "../db/client"
 import { cards, decks, deckSlots, userCards } from "../db/schema"
 
@@ -50,13 +51,17 @@ async function loadDeck(userId: string) {
 }
 
 export async function deckRoutes(app: FastifyInstance) {
-  app.get("/users/:userId/deck", async (request) => {
-    const { userId } = z.object({ userId: z.string() }).parse(request.params)
+  app.get("/users/:userId/deck", async (request, reply) => {
+    const params = z.object({ userId: z.string() }).parse(request.params)
+    const userId = requireSelf(request, reply, params.userId)
+    if (!userId) return
     return { ok: true, data: await loadDeck(userId) }
   })
 
   app.put("/users/:userId/deck", async (request, reply) => {
-    const { userId } = z.object({ userId: z.string() }).parse(request.params)
+    const params = z.object({ userId: z.string() }).parse(request.params)
+    const userId = requireSelf(request, reply, params.userId)
+    if (!userId) return
     const body = z
       .object({
         slots: z.array(z.number().int().positive().nullable()).length(DECK_SIZE),

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify"
 import { z } from "zod"
 
+import { requireSession } from "../auth/guard"
 import { openPack } from "../gacha/open"
 import { POOL_NAMES, POOL_WEIGHTS, type PoolId } from "../gacha/pools"
 
@@ -19,13 +20,17 @@ export async function packRoutes(app: FastifyInstance) {
   })
 
   app.post("/packs/:pool/open", async (request, reply) => {
+    // 只认 session，body.userId 仅为兼容旧前端而保留
+    const userId = requireSession(request, reply)
+    if (!userId) return
+
     const params = z.object({ pool: z.enum(poolIds) }).safeParse(request.params)
     const body = z
       .object({
-        userId: z.string().min(1).max(64),
+        userId: z.string().min(1).max(64).optional(),
         count: z.number().int().min(1).max(10).optional(),
       })
-      .safeParse(request.body)
+      .safeParse(request.body ?? {})
 
     if (!params.success || !body.success) {
       return reply.code(400).send({
@@ -43,7 +48,7 @@ export async function packRoutes(app: FastifyInstance) {
     }
 
     try {
-      const result = await openPack(body.data.userId, params.data.pool, body.data.count ?? 5)
+      const result = await openPack(userId, params.data.pool, body.data.count ?? 5)
       return { ok: true, data: result }
     } catch (error) {
       request.log.error(error)
