@@ -1,9 +1,7 @@
 import { CardEditor } from "@/card/CardEditor"
-import { CardLab } from "@/card/CardLab"
 import { BattlePage } from "@/battle/BattlePage"
 import { BackToDesk } from "@/components/BackToDesk"
 import { DeskPage } from "@/desk/DeskPage"
-import { GachaPage } from "@/gacha/GachaPage"
 import { IntroPage } from "@/intro/IntroPage"
 import { PoolLab } from "@/pool/PoolLab"
 
@@ -19,12 +17,12 @@ export function App() {
     )
   }
   if (path.endsWith("gacha")) {
-    return (
-      <>
-        <GachaPage />
-        <BackToDesk />
-      </>
-    )
+    window.history.replaceState(null, "", "/?panel=packs")
+    return <DeskPage />
+  }
+  if (path.endsWith("card-lab")) {
+    window.history.replaceState(null, "", "/?panel=about")
+    return <DeskPage />
   }
   if (path.endsWith("card-editor")) {
     return (
@@ -38,14 +36,6 @@ export function App() {
     return (
       <>
         <PoolLab />
-        <BackToDesk />
-      </>
-    )
-  }
-  if (path.endsWith("card-lab")) {
-    return (
-      <>
-        <CardLab />
         <BackToDesk />
       </>
     )

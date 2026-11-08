@@ -1,6 +1,6 @@
 export type Rarity = "C" | "UC" | "R" | "E" | "L" | "Radiant" | "Prismatic"
 
-export type ItemKind = "album" | "pack" | "card" | "mainline" | "market"
+export type ItemKind = "album" | "pack" | "card" | "market"
 
 export type PackPool = "normal" | "idle" | "quest" | "radiant" | "sky" | "prism"
 

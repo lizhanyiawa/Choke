@@ -222,10 +222,6 @@
   background: #3cbadb;
   color: #42464f;
 }
-.desk-object--mainline {
-  background: #42464f;
-  color: #f4f4f6;
-}
 .desk-object--market {
   background: #f4f4f6;
   color: #42464f;
@@ -1878,11 +1874,6 @@
   border: 2px solid #14244a;
   border-radius: 16px;
   background: #1b2d57;
-}
-.command-hero--story {
-  background:
-    linear-gradient(150deg, rgba(60, 186, 219, 0.18), transparent 60%),
-    #1b2d57;
 }
 .command-hero--market {
   background:

@@ -5,6 +5,7 @@ import { RARITY_LABEL } from "@/card/data"
 import { faceFromDef } from "@/card/def"
 
 import { AlbumPanel } from "./AlbumPanel"
+import { AboutPanel } from "./AboutPanel"
 import type { ApiUserCard } from "./api"
 import { BackpackPanel } from "./BackpackPanel"
 import { BattlePanel } from "./BattlePanel"
@@ -13,7 +14,7 @@ import { DeckPanel } from "./DeckPanel"
 import { GachaPanel, type PoolId } from "./GachaPanel"
 import { MarketPanel } from "./MarketPanel"
 
-export type PanelId = "codex" | "album" | "deck" | "backpack" | "battle" | "packs" | "mainline" | "market" | "account"
+export type PanelId = "codex" | "album" | "deck" | "backpack" | "battle" | "packs" | "market" | "about" | "account"
 
 interface Entry {
   id: PanelId
@@ -28,8 +29,8 @@ const ENTRIES: Entry[] = [
   { id: "backpack", label: "背包", sub: "BACKPACK" },
   { id: "battle", label: "战斗", sub: "BATTLE" },
   { id: "packs", label: "抽卡", sub: "GACHA" },
-  { id: "mainline", label: "主线", sub: "STORY" },
   { id: "market", label: "市场", sub: "MARKET" },
+  { id: "about", label: "关于", sub: "ABOUT" },
   { id: "account", label: "账号", sub: "ACCOUNT" },
 ]
 
@@ -247,10 +248,10 @@ export function CommandPanel({
                 )}
                 {panel === "battle" && <BattlePanel userId={userId} onOpenDeck={() => openPanel("deck")} />}
                 {panel === "packs" && <GachaPanel userId={userId} initialPool={gachaPool} />}
-                {panel === "mainline" && <MainlinePanel />}
                 {panel === "market" && (
                   <MarketPanel userId={userId} onOpenAlbum={() => openPanel("album")} />
                 )}
+                {panel === "about" && <AboutPanel />}
                 {panel === "account" && (
                   <AccountPanel
                     userId={userId}
@@ -325,18 +326,18 @@ function PanelGlyph({ id }: { id: PanelId }) {
           <path d="M4.5 7.5L12 11.5l7.5-4M12 11.5v9" {...line} />
         </svg>
       )
-    case "mainline":
-      return (
-        <svg viewBox="0 0 24 24">
-          <path d="M5 4.5v15M5 5.5h11l-2 3.5 2 3.5H5" {...line} />
-          <circle cx="18.5" cy="17.5" r="2" {...line} />
-        </svg>
-      )
     case "market":
       return (
         <svg viewBox="0 0 24 24">
           <path d="M4.5 9h15l-1.2 9.5H5.7z" {...line} />
           <path d="M9 9V6.5a3 3 0 0 1 6 0V9M9.5 13.5h5" {...line} />
+        </svg>
+      )
+    case "about":
+      return (
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="8" {...line} />
+          <path d="M12 11v5M12 7.5v.5" {...line} />
         </svg>
       )
     case "account":
@@ -347,22 +348,6 @@ function PanelGlyph({ id }: { id: PanelId }) {
         </svg>
       )
   }
-}
-
-function MainlinePanel() {
-  return (
-    <div className="command-section">
-      <div className="command-hero command-hero--story">
-        <span className="command-hero__tag">CHAPTER 01</span>
-        <b>第一拍</b>
-        <p>从新手村的第一张卡开始，沿着 osu! 的谱面线一路打到主舞台。</p>
-      </div>
-      <div className="command-status">
-        <span>状态</span>
-        <em>剧本制作中</em>
-      </div>
-    </div>
-  )
 }
 
 function AccountPanel({

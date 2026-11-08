@@ -42,13 +42,12 @@
 ```
 .
 ├─ src/                     # 前端（Vite root），入口在根目录
-│  ├─ gacha/                # /gacha 开包页
-│  ├─ desk/                 # / 桌面、卡册、卡牌详情、开包动画
+│  ├─ desk/                 # / 桌面、卡册、卡组、开包、市场、关于
 │  └─ pool/                 # 卡池构建与 lab 页面
 ├─ apps/api/                # Fastify API
 │  ├─ src/auth/             # osu! OAuth、session、鉴权
 │  ├─ src/gacha/            # 六池权重、服务端 RNG、60 抽保底
-│  ├─ src/routes/           # auth / cards / packs / decks / progression
+│  ├─ src/routes/           # auth / cards / packs / decks / market / progression
 │  ├─ src/db/               # Drizzle schema + PGlite 建表
 │  ├─ samples/              # 仓库跟踪的 7 张示例卡
 │  └─ data/                 # 全量卡池（gitignore）

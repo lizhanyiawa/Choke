@@ -1,0 +1,175 @@
+.about-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.about-hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px;
+  border: 2px solid #14244a;
+  border-radius: 16px;
+  background:
+    radial-gradient(ellipse 70% 120% at 10% 0%, rgba(60, 186, 219, 0.16), transparent 60%),
+    #1b2d57;
+}
+
+.about-hero img {
+  width: 190px;
+  max-width: 36%;
+  filter: brightness(0) invert(1);
+  opacity: 0.95;
+}
+
+.about-hero > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.about-hero span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  color: #3cbadb;
+}
+
+.about-hero b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.about-hero p {
+  max-width: 620px;
+  margin: 4px 0 0;
+  color: #8ea9c9;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.about-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.about-meta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1.5px solid rgba(60, 186, 219, 0.2);
+  border-radius: 10px;
+  background: rgba(17, 29, 53, 0.55);
+}
+
+.about-meta span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: #8ea9c9;
+}
+
+.about-meta b {
+  font-size: 13px;
+}
+
+.about-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.about-showcase__title {
+  padding-top: 8px;
+  border-top: 1px solid rgba(60, 186, 219, 0.18);
+}
+
+.about-showcase__title span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  color: #3cbadb;
+}
+
+.about-showcase__title b {
+  display: block;
+  margin-top: 3px;
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.about-showcase__title p {
+  margin: 4px 0 0;
+  color: #7f8da3;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+/* 把卡面实验室压进抽屉，而不是整页 */
+.about-panel .lab {
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.about-panel .lab[data-bg="dark"],
+.about-panel .lab[data-bg="light"] {
+  background-image: none;
+  background-color: transparent;
+  color: var(--lab-ink);
+}
+
+.about-panel .lab__bar {
+  padding-bottom: 14px;
+}
+
+.about-panel .lab__title {
+  margin-top: 5px;
+  font-size: 24px;
+}
+
+.about-panel .lab__sub {
+  font-size: 11px;
+}
+
+.about-panel .lab__toggle {
+  display: none;
+}
+
+.about-panel .lab__section {
+  margin-top: 28px;
+}
+
+.about-panel .lab__section-head {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 12px;
+}
+
+.about-panel .lab__section-head h2 {
+  font-size: 13px;
+}
+
+.about-panel .lab__section-head p {
+  font-size: 10px;
+}
+
+@media (max-width: 760px) {
+  .about-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .about-hero img {
+    max-width: 70%;
+  }
+  .about-meta {
+    grid-template-columns: 1fr;
+  }
+}

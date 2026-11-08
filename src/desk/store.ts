@@ -7,14 +7,12 @@ export const ITEM_SIZE: Record<DeskItem["kind"], { w: number; h: number }> = {
   album: { w: 150, h: 200 },
   pack: { w: 170, h: 240 },
   card: { w: 168, h: 252 },
-  mainline: { w: 170, h: 170 },
   market: { w: 150, h: 150 },
 }
 
 const DEFAULT_ITEMS: DeskItem[] = [
   { id: "hero", kind: "card", x: 0.4, y: 0.06, z: 1, card: { name: "你的本体卡", mapper: "No.1", rarity: "Prismatic", isHero: true } },
   { id: "album", kind: "album", x: 0.25, y: 0.46, z: 2 },
-  { id: "mainline", kind: "mainline", x: 0.6, y: 0.12, z: 4 },
   { id: "market", kind: "market", x: 0.6, y: 0.58, z: 5 },
 ]
 
@@ -31,7 +29,14 @@ function initial(): DeskState {
     const raw = localStorage.getItem(KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as DeskState
-      if (parsed.version === 2 && Array.isArray(parsed.items)) return parsed
+      if (parsed.version === 2 && Array.isArray(parsed.items)) {
+        return {
+          version: 2,
+          items: parsed.items.filter(
+            (item) => item && typeof item.kind === "string" && item.kind in ITEM_SIZE,
+          ),
+        }
+      }
     }
   } catch {
     // 忽略损坏的存档，回退到默认布局

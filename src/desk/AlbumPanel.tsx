@@ -157,7 +157,7 @@ export function AlbumPanel({ userId }: { userId: string | null }) {
       ) : result.rows.length === 0 ? (
         <div className="album-panel__empty">
           <p>{rarity || deferredQuery ? "没有符合条件的卡" : "还没有卡"}</p>
-          {!rarity && !deferredQuery && <a href="/gacha">去开包</a>}
+          {!rarity && !deferredQuery && <a href="/?panel=packs">去开包</a>}
         </div>
       ) : (
         <div className="album-panel__grid">

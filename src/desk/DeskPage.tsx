@@ -616,7 +616,6 @@ export function DeskPage() {
     }
 
     if (item.kind === "album") showToast("双击卡册，翻开收藏")
-    if (item.kind === "mainline") showToast("双击主线，查看章节")
     if (item.kind === "market") showToast("双击市场，查看交易行")
   }
 
@@ -660,7 +659,7 @@ export function DeskPage() {
   const drawAvailable = !!user && poolPacks > 0
   const queryPanel = new URLSearchParams(window.location.search).get("panel") as PanelId | null
   const requestedPanel =
-    queryPanel && (["codex", "album", "deck", "backpack", "battle", "packs", "mainline", "market", "account"] as PanelId[]).includes(queryPanel)
+    queryPanel && (["codex", "album", "deck", "backpack", "battle", "packs", "market", "about", "account"] as PanelId[]).includes(queryPanel)
       ? queryPanel
       : null
 
@@ -686,12 +685,6 @@ export function DeskPage() {
             >
               快速收卡
             </button>
-            <a className="desk-button desk-button--link" href="/card-lab">
-              卡面
-            </a>
-            <a className="desk-button desk-button--link" href="/holo-lab.html" target="_blank" rel="noreferrer">
-              全息参考
-            </a>
             <button type="button" className="desk-button" onClick={reset}>
               重置桌面
             </button>
@@ -773,7 +766,6 @@ export function DeskPage() {
               }}
               onDoubleClick={() => {
                 if (item.kind === "album") requestPanel("album")
-                if (item.kind === "mainline") requestPanel("mainline")
                 if (item.kind === "market") requestPanel("market")
               }}
               role="group"
@@ -920,8 +912,6 @@ function labelOf(item: DeskItem) {
       return POOL_META[item.pool ?? "normal"].label
     case "album":
       return "卡册"
-    case "mainline":
-      return "主线"
     case "market":
       return "市场"
     case "card":
@@ -954,20 +944,12 @@ function ItemView({ item, hero }: { item: DeskItem; hero: ApiUserCard | null }) 
           <div className="desk-object__sub">双击翻开</div>
         </div>
       )
-    case "mainline":
-      return (
-        <div className="desk-object desk-object--mainline" style={{ position: "absolute", inset: 0 }}>
-          <div className="desk-object__tag">剧情 · 第 1 章</div>
-          <div className="desk-object__title">主线</div>
-          <div className="desk-object__sub">通关奖励仅限首次</div>
-        </div>
-      )
     case "market":
       return (
         <div className="desk-object desk-object--market" style={{ position: "absolute", inset: 0 }}>
           <div className="desk-object__tag">交易</div>
           <div className="desk-object__title">市场</div>
-          <div className="desk-object__sub">即将开放</div>
+          <div className="desk-object__sub">双击进入</div>
         </div>
       )
     case "card":
