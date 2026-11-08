@@ -28,17 +28,23 @@ CREATE TABLE IF NOT EXISTS cards (
   art text,
   banner text,
   skills jsonb NOT NULL,
+  hero_bonus integer NOT NULL DEFAULT 0,
   version integer NOT NULL DEFAULT 1
 );
 CREATE INDEX IF NOT EXISTS cards_rarity_idx ON cards (rarity);
 CREATE INDEX IF NOT EXISTS cards_name_idx ON cards (name);
+ALTER TABLE cards ADD COLUMN IF NOT EXISTS hero_bonus integer NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS users (
   id text PRIMARY KEY,
   username text NOT NULL,
   osu_id bigint UNIQUE,
+  onboarded boolean NOT NULL DEFAULT false,
+  hero_bonus integer NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarded boolean NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS hero_bonus integer NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS user_cards (
   id serial PRIMARY KEY,

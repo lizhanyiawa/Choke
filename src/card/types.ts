@@ -63,6 +63,8 @@ export interface CardFaceData {
   globalRank?: number | null
   pp?: number | null
   isHero?: boolean
+  /** 本体卡个人加成，单位 basis point：-2000 = -20%，2000 = +20% */
+  heroBonus?: number
 }
 
 /** 卡面显示层：收藏态全显，战斗态只留立绘 + 技能 */

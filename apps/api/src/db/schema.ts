@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm"
 import {
   bigint,
+  boolean,
   index,
   integer,
   jsonb,
@@ -29,6 +30,8 @@ export const cards = pgTable(
     art: text("art"),
     banner: text("banner"),
     skills: jsonb("skills").notNull(),
+    /** 本体卡个人加成（basis point）；池卡为 0 */
+    heroBonus: integer("hero_bonus").notNull().default(0),
     version: integer("version").notNull().default(1),
   },
   (table) => [
@@ -41,6 +44,10 @@ export const users = pgTable("users", {
   id: text("id").primaryKey(),
   username: text("username").notNull(),
   osuId: bigint("osu_id", { mode: "number" }).unique(),
+  /** 是否完成新手引导；引导完成后才激活本体卡个人加成 */
+  onboarded: boolean("onboarded").notNull().default(false),
+  /** 由 /me/osu 算出的个人加成（basis point），0–2000 */
+  heroBonus: integer("hero_bonus").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })
 

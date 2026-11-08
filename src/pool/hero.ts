@@ -89,3 +89,11 @@ export function heroIndex(stats: HeroStats): HeroIndex {
   const power = Math.round(RARITY_BASE[band] * (0.9 + 0.2 * t))
   return { index: Math.round(index * 10) / 10, band, power }
 }
+
+/**
+ * 本体卡的个人数值加成，只影响强度，不影响稀有度。
+ * 0–20%：index 80 以下为 0，300 以上封顶 20%。
+ */
+export function heroPersonalBonus(index: number): number {
+  return Math.min(0.2, Math.max(0, (index - 80) / 1100))
+}

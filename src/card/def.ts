@@ -21,6 +21,8 @@ export interface CardDef {
   art?: string
   banner?: string
   skills: CardSkill[]
+  /** 本体卡个人加成，单位 basis point */
+  heroBonus?: number
   /** 定义版本，用于热更和回滚 */
   version: number
 }
@@ -39,6 +41,7 @@ export function faceFromDef(
     mods: state.mods ?? [],
     constellation: state.constellation ?? 0,
     isHero: def.id.startsWith("hero-"),
+    heroBonus: def.heroBonus ?? 0,
     no: def.no,
     total: def.total,
     country: def.country,
@@ -68,6 +71,7 @@ export function defFromFace(face: CardFaceData, version = 1): CardDef {
     art: face.art,
     banner: face.banner,
     skills: face.skills,
+    heroBonus: face.heroBonus,
     version,
   }
 }

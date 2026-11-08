@@ -21,6 +21,7 @@ export interface ApiUserCard {
   level: number
   constellation: number
   exp: number
+  heroBonus?: number
   obtainedAt?: string
 }
 
@@ -61,6 +62,7 @@ export function toFace(row: ApiUserCard): CardFaceData {
       art: row.art ?? undefined,
       banner: row.banner ?? undefined,
       skills: row.skills,
+      heroBonus: row.heroBonus,
       version: row.version ?? 1,
     },
     { level: row.level, constellation: row.constellation },

@@ -105,7 +105,7 @@ function heroLevelFactor(level: number): number {
 }
 
 function basePower(face: CardFaceData): number {
-  if (face.isHero) return 400 * heroLevelFactor(face.level)
+  if (face.isHero) return 400 * heroLevelFactor(face.level) * (1 + (face.heroBonus ?? 0) / 10000)
   const levelFactor = 1 + 0.06 * (Math.max(face.level, 1) - 1)
   const starFactor = 1 + CONSTELLATION_BONUS[face.rarity] * face.constellation
   return RARITY_BASE[face.rarity] * levelFactor * starFactor

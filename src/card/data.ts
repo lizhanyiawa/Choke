@@ -138,7 +138,8 @@ export function battlePower(card: CardFaceData): number {
   if (card.isHero) {
     const lv = Math.min(Math.max(card.level, 1), 12)
     const factor = lv <= 6 ? 1 + 0.03 * (lv - 1) : 1.18 * 1.2 ** (lv - 6)
-    return Math.round(400 * factor)
+    const bonus = 1 + (card.heroBonus ?? 0) / 10000
+    return Math.round(400 * factor * bonus)
   }
   const levelFactor = 1 + 0.06 * (Math.max(card.level, 1) - 1)
   const starFactor = 1 + CONSTELLATION_BONUS[card.rarity] * card.constellation
