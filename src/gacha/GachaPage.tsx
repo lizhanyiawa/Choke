@@ -25,9 +25,9 @@ interface ApiCard {
   no: number
   total: number
   country: string | null
-  global_rank: number | null
+  globalRank: number | null
   pp: string | null
-  profile_url: string | null
+  profileUrl: string | null
   art: string | null
   banner: string | null
   skills: CardSkill[]
@@ -43,9 +43,9 @@ function toFace(row: ApiCard): CardFaceData {
     no: row.no,
     total: row.total,
     country: row.country ?? undefined,
-    globalRank: row.global_rank,
+    globalRank: row.globalRank,
     pp: row.pp == null ? null : Number(row.pp),
-    profileUrl: row.profile_url ?? undefined,
+    profileUrl: row.profileUrl ?? undefined,
     art: row.art ?? undefined,
     banner: row.banner ?? undefined,
     skills: row.skills,

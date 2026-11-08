@@ -4,11 +4,11 @@ import { CardFace } from "@/card/CardFace"
 import { cardFromDesk } from "./cardFace"
 import { CommandPanel, type PanelId, type PanelRequest } from "./CommandPanel"
 import { toFace, type ApiUserCard } from "./api"
-import { POOL_META, POOL_ORDER, rollPack } from "./rarity"
+import { POOL_META, POOL_ORDER } from "./rarity"
 import { DEFAULT_SKIN } from "./skins"
 import { SidePanel } from "./SidePanel"
 import { cardsToItems, ITEM_SIZE, newId, useDesk } from "./store"
-import type { CardData, DeskItem, PackPool } from "./types"
+import type { CardData, DeskItem, PackPool, Rarity } from "./types"
 import { Pack2D } from "./opening/Pack2D"
 import { Pack3D, type OriginRect } from "./opening/Pack3D"
 import "./desk.css"
@@ -16,6 +16,36 @@ import "./desk.css"
 const QUALITY_KEY = "choke.quality"
 const POOL_KEY = "choke.pool"
 type Quality = "3d" | "light"
+
+/** 桌面卡池 → 服务端卡池 id（任务包在服务端叫 golden） */
+const SERVER_POOL: Record<PackPool, string> = {
+  normal: "normal",
+  idle: "idle",
+  quest: "golden",
+  radiant: "radiant",
+  sky: "sky",
+  prism: "prism",
+}
+
+interface OpenResponse {
+  ok: boolean
+  data?: { results: { cardId: string }[]; pity: { before: number; after: number } }
+  error?: { message?: string }
+}
+
+interface CardRow {
+  id: string
+  name: string
+  rarity: Rarity
+  art: string | null
+  banner: string | null
+}
+
+interface CardResponse {
+  ok: boolean
+  data?: CardRow
+  error?: { message?: string }
+}
 
 let webglSupport: boolean | null = null
 function hasWebGL() {
@@ -57,6 +87,7 @@ export function DeskPage() {
   const collectTimer = useRef<number | null>(null)
   const quickTimer = useRef<number | null>(null)
   const toastTimer = useRef<number | null>(null)
+  const openingBusy = useRef(false)
   const [quality, setQuality] = useState<Quality>(() => {
     const saved = localStorage.getItem(QUALITY_KEY)
     return saved === "light" ? "light" : "3d"
@@ -238,8 +269,14 @@ export function DeskPage() {
     window.addEventListener("pointerup", onUp)
   }
 
-  const onTap = (item: DeskItem) => {
+  const onTap = async (item: DeskItem) => {
     if (item.kind === "pack") {
+      if (openingBusy.current) return
+      if (!user) {
+        showToast("请先用 osu! 登录")
+        return
+      }
+
       const stage = stageRef.current
       let rect: OriginRect | undefined
       if (stage) {
@@ -253,7 +290,49 @@ export function DeskPage() {
         }
       }
       const packPool = item.pool ?? "normal"
-      setOpening({ pack: item, cards: rollPack(5, packPool), pool: packPool, rect })
+
+      openingBusy.current = true
+      showToast("开包中…")
+      try {
+        const res = await fetch(`/api/packs/${SERVER_POOL[packPool]}/open`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ count: 5 }),
+        })
+        const payload = (await res.json()) as OpenResponse
+        if (!res.ok || !payload.ok || !payload.data) {
+          showToast(payload.error?.message ?? "开包失败")
+          return
+        }
+
+        const cards: CardData[] = await Promise.all(
+          payload.data.results.map(async (result) => {
+            const detailRes = await fetch(`/api/cards/${result.cardId}`, { credentials: "include" })
+            const detail = (await detailRes.json()) as CardResponse
+            if (!detailRes.ok || !detail.ok || !detail.data) {
+              throw new Error(detail.error?.message ?? "卡牌详情加载失败")
+            }
+            const row = detail.data
+            return {
+              cardId: row.id,
+              name: row.name,
+              mapper: row.name,
+              rarity: row.rarity,
+              art: row.art ?? undefined,
+              banner: row.banner ?? undefined,
+            }
+          }),
+        )
+
+        // 抽卡已成功落库，立刻消耗桌面上的卡包，避免取消后重复开同一包
+        consumePack(item.id)
+        setOpening({ pack: item, cards, pool: packPool, rect })
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "开包失败")
+      } finally {
+        openingBusy.current = false
+      }
       return
     }
 

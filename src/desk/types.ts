@@ -5,9 +5,15 @@ export type ItemKind = "album" | "pack" | "card" | "mainline" | "market"
 export type PackPool = "normal" | "idle" | "quest" | "radiant" | "sky" | "prism"
 
 export interface CardData {
+  /** 服务端卡牌 id；桌面本地原型卡没有 */
+  cardId?: string
   name: string
   mapper: string
   rarity: Rarity
+  /** 立绘地址；缺省时使用占位图 */
+  art?: string
+  /** 个人主页 banner */
+  banner?: string
   isHero?: boolean
 }
 

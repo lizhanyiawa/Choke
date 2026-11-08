@@ -26,6 +26,8 @@ export function cardFromDesk(card: CardData): CardFaceData {
     no: 1 + (h % 100000),
     total: 100000,
     isHero,
+    art: card.art,
+    banner: card.banner,
     skills: skillsFor(job, card.rarity, (h % 3) === 0, seed),
   })
 }
