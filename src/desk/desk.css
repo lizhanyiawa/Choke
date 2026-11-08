@@ -107,13 +107,15 @@
 }
 .desk-item.is-dragging {
   cursor: grabbing;
-  opacity: 0.14;
+}
+.desk-item.is-ghosted {
+  opacity: 0;
+  animation: none;
 }
 .desk-drag-ghost {
   position: fixed;
   z-index: 2000;
   pointer-events: none;
-  transform: translate(-50%, -50%) rotate(2deg) scale(1.04);
   filter: drop-shadow(0 20px 24px rgba(0, 0, 0, 0.55));
   will-change: left, top;
 }

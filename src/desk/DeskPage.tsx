@@ -399,7 +399,7 @@ export function DeskPage() {
         | null
       if (payload?.ok && payload.data) {
         setPackState({ userId: user.id, data: payload.data.packs })
-      window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
+        window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
         showToast("卡包已放回背包")
       } else {
         refreshPacks()
@@ -441,15 +441,10 @@ export function DeskPage() {
       const dx = ev.clientX - startX
       const dy = ev.clientY - startY
       if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return
-      if (!moved) {
-        moved = true
-        setDragGhost({ item, x: ev.clientX, y: ev.clientY })
-      }
-      setDragGhost((current) =>
-        current ? { ...current, x: ev.clientX, y: ev.clientY } : current,
-      )
+      moved = true
       const nx = Math.min(Math.max(originX + dx, 0), rect.width - size.w)
       const ny = Math.min(Math.max(originY + dy, 0), rect.height - size.h)
+      setDragGhost({ item, x: rect.left + nx, y: rect.top + ny })
       move(item.id, nx / rect.width, ny / rect.height)
 
       const elements = document.elementsFromPoint(ev.clientX, ev.clientY)
@@ -736,7 +731,7 @@ export function DeskPage() {
             transform: isCollecting || isQuick
               ? `rotate(${tiltOf(item.id)}deg) scale(0.16)`
               : `rotate(${tiltOf(item.id)}deg)`,
-            opacity: isCollecting || isQuick ? 0 : 1,
+            opacity: isCollecting || isQuick || dragGhost?.item.id === item.id ? 0 : 1,
             transition: isCollecting || isQuick
               ? `left .42s cubic-bezier(.2,.8,.2,1), top .42s cubic-bezier(.2,.8,.2,1), transform .42s cubic-bezier(.2,.8,.2,1), opacity .42s ease${isQuick ? ` ${quickIndex * 24}ms` : ""}`
               : undefined,
@@ -748,6 +743,7 @@ export function DeskPage() {
           const classes = [
             "desk-item",
             dragging && "is-dragging",
+            dragGhost?.item.id === item.id && "is-ghosted",
             (isCollecting || isQuick) && "is-collecting",
             dropTarget === item.id && "is-drop-target",
             albumPulse && item.kind === "album" && "is-pulsing",
@@ -891,6 +887,7 @@ export function DeskPage() {
             top: dragGhost.y,
             width: ITEM_SIZE[dragGhost.item.kind].w,
             height: ITEM_SIZE[dragGhost.item.kind].h,
+            transform: `rotate(${tiltOf(dragGhost.item.id)}deg)`,
           }}
         >
           <ItemView item={dragGhost.item} hero={user?.hero ?? null} />
