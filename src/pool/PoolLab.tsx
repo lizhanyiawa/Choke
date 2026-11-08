@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
+import { RARITY_LABEL } from "@/card/data"
 import type { Rarity } from "@/card/types"
 
 import { defRow } from "@/card/def"
@@ -354,7 +355,7 @@ export function PoolLab() {
                 {fmt(selectedCard.scoreParts.fans)} · 创作 {fmt(selectedCard.scoreParts.creation)}
               </dd>
               <dt>卡池档</dt>
-              <dd>{selectedCard.rarity}</dd>
+              <dd>{RARITY_LABEL[selectedCard.rarity]}</dd>
               <dt>国榜下限</dt>
               <dd>{selectedCard.floor ?? "未触发"}</dd>
               <dt>粉丝 / 谱面关注</dt>

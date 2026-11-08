@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
-import { battlePower } from "@/card/data"
+import { RARITY_LABEL, battlePower } from "@/card/data"
 import type { Rarity } from "@/card/types"
 
 import {
@@ -18,8 +18,10 @@ import {
   hasDragType,
   readUserCardDrag,
   setUserCardDrag,
+  toDeskCard,
   USER_CARD_MIME,
 } from "./drag"
+import { useDeskCardIds } from "./presence"
 
 const RARITIES: (Rarity | "")[] = ["", "C", "UC", "R", "E", "L", "Radiant", "Prismatic"]
 
@@ -37,6 +39,7 @@ export function DeckPanel({ userId }: { userId: string | null }) {
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [dropSlot, setDropSlot] = useState<number | null>(null)
+  const deskIds = useDeskCardIds()
 
   const [pickerSlot, setPickerSlot] = useState<number | null>(null)
   const [query, setQuery] = useState("")
@@ -221,7 +224,7 @@ export function DeckPanel({ userId }: { userId: string | null }) {
           const isDropTarget = dropSlot === index
           return (
             <div
-              className={`deck-slot ${slot.card ? "has-card" : "is-empty"} ${isDropTarget ? "is-drop-target" : ""}`}
+              className={`deck-slot ${slot.card ? "has-card" : "is-empty"} ${isDropTarget ? "is-drop-target" : ""} ${slot.card && deskIds.has(slot.card.userCardId) ? "is-on-desk" : ""}`}
               key={index}
               data-slot={index}
               role="button"
@@ -232,6 +235,7 @@ export function DeckPanel({ userId }: { userId: string | null }) {
                 setUserCardDrag(event.nativeEvent, {
                   userCardId: slot.card.userCardId,
                   fromSlot: index,
+                  card: toDeskCard(toFace(slot.card), slot.card.userCardId),
                 })
               }}
               onDragOver={(event) => {
@@ -259,6 +263,9 @@ export function DeckPanel({ userId }: { userId: string | null }) {
               aria-label={slot.card ? `第 ${index + 1} 槽 ${slot.card.name}，点击更换` : `第 ${index + 1} 槽，空`}
             >
               <span className="deck-slot__no">{index + 1}</span>
+              {slot.card && deskIds.has(slot.card.userCardId) && (
+                <span className="deck-slot__on-desk">在桌面</span>
+              )}
               {slot.card ? (
                 <CardFace card={toFace(slot.card)} />
               ) : (
@@ -307,7 +314,7 @@ export function DeckPanel({ userId }: { userId: string | null }) {
               >
                 {RARITIES.map((item) => (
                   <option key={item || "all"} value={item}>
-                    {item || "全部品质"}
+                    {item ? RARITY_LABEL[item] : "全部品质"}
                   </option>
                 ))}
               </select>

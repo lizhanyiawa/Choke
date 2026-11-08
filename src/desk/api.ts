@@ -21,6 +21,7 @@ export interface ApiUserCard {
   level: number
   constellation: number
   exp: number
+  foil?: boolean
   heroBonus?: number
   obtainedAt?: string
 }
@@ -65,7 +66,7 @@ export function toFace(row: ApiUserCard): CardFaceData {
       heroBonus: row.heroBonus,
       version: row.version ?? 1,
     },
-    { level: row.level, constellation: row.constellation },
+    { level: row.level, constellation: row.constellation, foil: row.foil },
   )
 }
 
@@ -148,15 +149,24 @@ export function meltCard(
   userId: string,
   userCardId: number,
   sourceUserCardId: number,
-): Promise<{ card: ApiUserCard; gained: number; consumedUserCardId: number }> {
-  return request<{ card: ApiUserCard; gained: number; consumedUserCardId: number }>(
-    `/api/users/${userId}/cards/${userCardId}/melt`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sourceUserCardId }),
-    },
-  )
+): Promise<{
+  card: ApiUserCard
+  gained: number
+  essenceGained: number
+  essence: number
+  consumedUserCardId: number
+}> {
+  return request<{
+    card: ApiUserCard
+    gained: number
+    essenceGained: number
+    essence: number
+    consumedUserCardId: number
+  }>(`/api/users/${userId}/cards/${userCardId}/melt`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sourceUserCardId }),
+  })
 }
 
 export interface PackInventory {
@@ -180,4 +190,95 @@ export function openMysteryPack(
       body: JSON.stringify({ answers }),
     },
   )
+}
+
+export interface AccountMe {
+  id: string
+  publicId: number | null
+  username: string
+  osuId: number | null
+  avatarUrl: string | null
+  profileUrl: string | null
+  onboarded: boolean
+  heroBonus: number
+  essence: number
+  hero: ApiUserCard | null
+}
+
+export function fetchMe(signal?: AbortSignal): Promise<AccountMe> {
+  return request<AccountMe>("/auth/me", { signal })
+}
+
+export function enhanceCard(
+  userId: string,
+  userCardId: number,
+  action: "foil" | "polish",
+): Promise<{
+  card: ApiUserCard
+  cost: number
+  essence: number
+  action: "foil" | "polish"
+  gainedExp: number
+}> {
+  return request(`/api/users/${userId}/cards/${userCardId}/enhance`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action }),
+  })
+}
+
+export interface MarketListing {
+  id: number
+  price: number
+  sellerId: string
+  sellerName: string
+  sellerPublicId: number | null
+  card: ApiUserCard
+}
+
+export interface OwnMarketListing {
+  id: number
+  price: number
+  card: ApiUserCard
+}
+
+export function fetchMarketListings(signal?: AbortSignal): Promise<MarketListing[]> {
+  return request<MarketListing[]>("/api/market/listings", { signal })
+}
+
+export function fetchOwnListings(
+  userId: string,
+  signal?: AbortSignal,
+): Promise<OwnMarketListing[]> {
+  return request<OwnMarketListing[]>(`/api/users/${userId}/market/listings`, { signal })
+}
+
+export function listMarketCard(
+  userId: string,
+  userCardId: number,
+  price: number,
+): Promise<{ id: number; price: number; card: ApiUserCard }> {
+  return request(`/api/users/${userId}/market/list`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userCardId, price }),
+  })
+}
+
+export function unlistMarketCard(
+  userId: string,
+  listingId: number,
+): Promise<{ id: number }> {
+  return request(`/api/users/${userId}/market/listings/${listingId}`, {
+    method: "DELETE",
+  })
+}
+
+export function buyMarketListing(
+  userId: string,
+  listingId: number,
+): Promise<{ card: ApiUserCard; price: number; essence: number }> {
+  return request(`/api/users/${userId}/market/buy/${listingId}`, {
+    method: "POST",
+  })
 }

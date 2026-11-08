@@ -98,21 +98,39 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 72px;
+  height: 84px;
   border-radius: 10px;
   background:
-    radial-gradient(circle at 50% 40%, rgba(60, 186, 219, 0.16), transparent 65%),
-    rgba(11, 13, 16, 0.35);
+    radial-gradient(circle at 50% 38%, rgba(60, 186, 219, 0.16), transparent 65%),
+    linear-gradient(155deg, rgba(27, 45, 87, 0.8), rgba(7, 10, 18, 0.72));
   overflow: hidden;
 }
 .backpack-pack.is-mystery .backpack-pack__art {
   background:
-    radial-gradient(circle at 50% 40%, rgba(237, 95, 159, 0.28), transparent 65%),
-    rgba(11, 13, 16, 0.35);
+    radial-gradient(circle at 50% 38%, rgba(237, 95, 159, 0.28), transparent 65%),
+    linear-gradient(155deg, rgba(43, 23, 48, 0.8), rgba(7, 10, 18, 0.72));
+}
+.backpack-pack__art-strip {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 6px;
+  opacity: 0.9;
 }
 .backpack-pack__art img {
-  width: 42px;
-  opacity: 0.9;
+  width: 62%;
+  max-height: 42px;
+  object-fit: contain;
+  filter: brightness(0) invert(1) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+  opacity: 0.92;
+}
+.backpack-pack__art-series {
+  position: absolute;
+  left: 14px;
+  bottom: 8px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 7px;
+  letter-spacing: 0.2em;
+  color: rgba(244, 244, 246, 0.42);
 }
 .backpack-pack__art em {
   position: absolute;

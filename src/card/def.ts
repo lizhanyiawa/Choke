@@ -30,7 +30,12 @@ export interface CardDef {
 /** 卡定义转运行期卡面：等级、命座由实例决定 */
 export function faceFromDef(
   def: CardDef,
-  state: { level?: number; constellation?: number; mods?: CardFaceData["mods"] } = {},
+  state: {
+    level?: number
+    constellation?: number
+    mods?: CardFaceData["mods"]
+    foil?: boolean
+  } = {},
 ): CardFaceData {
   return makeCard({
     id: def.id,
@@ -42,6 +47,7 @@ export function faceFromDef(
     constellation: state.constellation ?? 0,
     isHero: def.id.startsWith("hero-"),
     heroBonus: def.heroBonus ?? 0,
+    foil: state.foil,
     no: def.no,
     total: def.total,
     country: def.country,

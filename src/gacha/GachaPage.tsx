@@ -32,6 +32,7 @@ interface ApiCard {
   art: string | null
   banner: string | null
   skills: CardSkill[]
+  foil?: boolean
 }
 
 function toFace(row: ApiCard): CardFaceData {
@@ -51,7 +52,7 @@ function toFace(row: ApiCard): CardFaceData {
     banner: row.banner ?? undefined,
     skills: row.skills,
     version: 1,
-  })
+  }, { foil: row.foil })
 }
 
 export function GachaPage() {
@@ -111,10 +112,10 @@ export function GachaPage() {
       if (data.data?.packs) setPacks({ userId: user.id, data: data.data.packs })
 
       const details: ApiCard[] = await Promise.all(
-        data.data.results.map((item: { cardId: string }) =>
+        data.data.results.map((item: { cardId: string; foil?: boolean }) =>
           fetch(`${API}/cards/${item.cardId}`)
             .then((r) => r.json())
-            .then((d) => d.data as ApiCard),
+            .then((d) => ({ ...(d.data as ApiCard), foil: item.foil })),
         ),
       )
 

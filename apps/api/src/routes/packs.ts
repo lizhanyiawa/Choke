@@ -19,6 +19,7 @@ async function loadHero(userId: string, heroId: string) {
       level: userCards.level,
       constellation: userCards.constellation,
       exp: userCards.exp,
+      foil: userCards.foil,
     })
     .from(userCards)
     .innerJoin(cards, eq(cards.id, userCards.cardId))

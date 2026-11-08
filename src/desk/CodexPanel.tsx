@@ -136,6 +136,7 @@ export function CodexPanel({ userId }: { userId: string | null }) {
   const [ownedFilter, setOwnedFilter] = useState<OwnedFilter>("all")
   const [pageSize, setPageSize] = useState<PageSize>(readPageSize)
   const [page, setPage] = useState(0)
+  const [dimUnseen, setDimUnseen] = useState(false)
   const [result, setResult] = useState<Result | null>(null)
   const [stats, setStats] = useState<CodexStats | null>(null)
   const [detail, setDetail] = useState<ApiCardDef | null>(null)
@@ -318,7 +319,7 @@ export function CodexPanel({ userId }: { userId: string | null }) {
                 style={{ background: RARITY_COLOR[item] }}
                 aria-hidden
               />
-              <b>{item}</b>
+              <b>{RARITY_LABEL[item]}</b>
               <em>
                 {tier
                   ? `${tier.owned.toLocaleString("en-US")} / ${tier.total.toLocaleString("en-US")}`
@@ -385,23 +386,34 @@ export function CodexPanel({ userId }: { userId: string | null }) {
         </select>
       </div>
 
-      {userId && (
-        <div className="codex-owned" role="group" aria-label="收集筛选">
-          {OWNED_FILTERS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={ownedFilter === item.id ? "is-active" : ""}
-              onClick={() => {
-                setOwnedFilter(item.id)
-                setPage(0)
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="codex-filter-row">
+        {userId && (
+          <div className="codex-owned" role="group" aria-label="收集筛选">
+            {OWNED_FILTERS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={ownedFilter === item.id ? "is-active" : ""}
+                onClick={() => {
+                  setOwnedFilter(item.id)
+                  setPage(0)
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          className={`codex-dim ${dimUnseen ? "is-active" : ""}`}
+          aria-pressed={dimUnseen}
+          onClick={() => setDimUnseen((value) => !value)}
+          title="未见卡只保留问号，并进一步压暗"
+        >
+          {dimUnseen ? "暗化未见 · 开" : "暗化未见 · 关"}
+        </button>
+      </div>
 
       <div className="codex-count">
         <span>{filterLabel}</span>
@@ -449,7 +461,7 @@ export function CodexPanel({ userId }: { userId: string | null }) {
               </div>
             ) : (
               <div
-                className="codex-slot codex-slot--unknown"
+                className={`codex-slot codex-slot--unknown ${dimUnseen ? "is-dimmed" : ""}`}
                 key={row.id}
                 aria-label="未收集的卡"
               >

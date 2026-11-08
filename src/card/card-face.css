@@ -827,6 +827,50 @@
   opacity: 0.72;
 }
 
+/* ---------- 闪卡 ---------- */
+
+.cf__foil {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.55;
+  mix-blend-mode: soft-light;
+  background:
+    repeating-linear-gradient(
+      116deg,
+      transparent 0 7%,
+      rgb(255 255 255 / 0.42) 8.2%,
+      transparent 9.4% 17%
+    ),
+    conic-gradient(
+      from 210deg at 32% 18%,
+      rgb(255 64 158 / 0.32),
+      rgb(64 231 255 / 0.3),
+      rgb(255 236 96 / 0.24),
+      rgb(170 91 255 / 0.3),
+      rgb(255 64 158 / 0.32)
+    );
+  background-size: 220% 220%, 180% 180%;
+  animation: cf-foil-shift 7s linear infinite;
+}
+
+@keyframes cf-foil-shift {
+  from {
+    background-position: 0% 0%, 0% 50%;
+  }
+  to {
+    background-position: 220% 0%, 180% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cf__foil {
+    animation: none;
+  }
+}
+
 /* ---------- 调试参考线（?guides=1） ---------- */
 
 .cf--guides::before {

@@ -1,0 +1,313 @@
+.market-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.market-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.market-head > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.market-head span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  color: #3cbadb;
+}
+
+.market-head b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.market-wallet {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1.5px solid rgba(255, 194, 75, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 194, 75, 0.08);
+}
+
+.market-wallet span {
+  color: #ffc24b;
+  letter-spacing: 0.12em;
+}
+
+.market-wallet b {
+  font-size: 22px;
+  color: #ffe5a8;
+}
+
+.market-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 13px;
+  border: 1px solid rgba(60, 186, 219, 0.2);
+  border-radius: 10px;
+  color: #8ea9c9;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.market-note button,
+.market-empty button {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 12px;
+  border: 1.5px solid rgba(60, 186, 219, 0.45);
+  border-radius: 999px;
+  background: transparent;
+  color: #9fd9ea;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.market-note button:hover,
+.market-empty button:hover {
+  background: #3cbadb;
+  border-color: #3cbadb;
+  color: #0b0d10;
+}
+
+.market-message {
+  padding: 8px 11px;
+  border: 1px solid rgba(33, 233, 133, 0.32);
+  border-radius: 8px;
+  background: rgba(33, 233, 133, 0.08);
+  color: #7cf7bb;
+  font-size: 11px;
+}
+
+.market-section {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.market-section__title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.market-section__title span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  color: #3cbadb;
+}
+
+.market-section__title b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.market-own {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 3px;
+}
+
+.market-own__item {
+  display: flex;
+  gap: 9px;
+  flex: 0 0 auto;
+  width: 250px;
+  padding: 9px;
+  border: 1.5px solid rgba(60, 186, 219, 0.22);
+  border-radius: 11px;
+  background: rgba(17, 29, 53, 0.62);
+}
+
+.market-own__face {
+  width: 74px;
+  flex: 0 0 74px;
+}
+
+.market-own__face .cf {
+  width: 100%;
+}
+
+.market-own__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.market-own__meta b {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.market-own__meta em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  color: #ffc24b;
+}
+
+.market-own__meta button {
+  margin-top: auto;
+  align-self: flex-start;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid rgba(237, 95, 159, 0.45);
+  border-radius: 7px;
+  background: transparent;
+  color: #ff9ac6;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.market-own__meta button:hover:not(:disabled) {
+  background: rgba(237, 95, 159, 0.16);
+}
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.market-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 10px;
+  border: 2px solid #14244a;
+  border-radius: 14px;
+  background: rgba(17, 29, 53, 0.72);
+}
+
+.market-card.is-mine {
+  border-color: rgba(60, 186, 219, 0.45);
+}
+
+.market-card__face {
+  width: 100%;
+}
+
+.market-card__face .cf {
+  width: 100%;
+}
+
+.market-card__face .cf a {
+  pointer-events: none;
+}
+
+.market-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
+}
+
+.market-card__body > b {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.market-card__body > em {
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  color: #8ea9c9;
+}
+
+.market-card__seller {
+  color: #7f8da3;
+  font-size: 10px;
+}
+
+.market-card__buy {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(60, 186, 219, 0.16);
+}
+
+.market-card__buy strong {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 20px;
+  color: #ffc24b;
+}
+
+.market-card__buy span {
+  color: #8ea9c9;
+  font-size: 9px;
+}
+
+.market-card__buy button {
+  margin-left: auto;
+  height: 28px;
+  padding: 0 12px;
+  border: 1.5px solid #3cbadb;
+  border-radius: 8px;
+  background: #3cbadb;
+  color: #0b0d10;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.market-card__buy button:hover:not(:disabled) {
+  background: #5fd0ec;
+}
+
+.market-card__buy button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.market-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 200px;
+  border: 2px dashed rgba(60, 186, 219, 0.22);
+  border-radius: 14px;
+  color: #8ea9c9;
+  font-size: 12px;
+}
+
+.market-empty p {
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .market-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+  .market-note {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

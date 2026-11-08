@@ -40,6 +40,7 @@ export interface BattleCard {
   level: number
   constellation: number
   art?: string
+  face: CardFaceData
   stats: BattleStats
   skills: SkillDef[]
   acted: boolean
@@ -142,6 +143,7 @@ export function createBattleCard(face: CardFaceData, uid: number, cardId: string
     level: face.level,
     constellation: face.constellation,
     art: face.art,
+    face,
     stats: statsFor(face, subjob),
     skills: skillDefsFor(seed, face.job, face.rarity),
     acted: false,

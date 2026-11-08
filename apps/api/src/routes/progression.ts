@@ -9,10 +9,16 @@ import {
   levelCap,
   meltExpOf,
 } from "../../../../src/card/progression"
+import {
+  FOIL_COST,
+  POLISH_COST,
+  POLISH_EXP,
+  essenceOf,
+} from "../../../../src/card/economy"
 import type { Rarity } from "../../../../src/card/types"
 import { requireSelf } from "../auth/guard"
 import { db } from "../db/client"
-import { cards, deckSlots, userCards } from "../db/schema"
+import { cards, deckSlots, marketListings, userCards, users } from "../db/schema"
 
 const cardColumns = {
   ...getTableColumns(cards),
@@ -20,6 +26,7 @@ const cardColumns = {
   level: userCards.level,
   constellation: userCards.constellation,
   exp: userCards.exp,
+  foil: userCards.foil,
   obtainedAt: userCards.obtainedAt,
 }
 
@@ -171,6 +178,10 @@ export async function progressionRoutes(app: FastifyInstance) {
 
     await db.transaction(async (tx) => {
       await tx.delete(deckSlots).where(eq(deckSlots.userCardId, duplicate.id))
+      await tx
+        .update(marketListings)
+        .set({ status: "cancelled" })
+        .where(eq(marketListings.userCardId, duplicate.id))
       await tx.delete(userCards).where(eq(userCards.id, duplicate.id))
       await tx
         .update(userCards)
@@ -215,6 +226,7 @@ export async function progressionRoutes(app: FastifyInstance) {
         id: userCards.id,
         cardId: userCards.cardId,
         rarity: cards.rarity,
+        foil: userCards.foil,
       })
       .from(userCards)
       .innerJoin(cards, eq(cards.id, userCards.cardId))
@@ -241,14 +253,24 @@ export async function progressionRoutes(app: FastifyInstance) {
     }
 
     const gained = meltExpOf(source.rarity as Rarity)
+    const essenceGained = essenceOf(source.rarity as Rarity, source.foil)
 
-    await db.transaction(async (tx) => {
+    const [wallet] = await db.transaction(async (tx) => {
       await tx.delete(deckSlots).where(eq(deckSlots.userCardId, source.id))
+      await tx
+        .update(marketListings)
+        .set({ status: "cancelled" })
+        .where(eq(marketListings.userCardId, source.id))
       await tx.delete(userCards).where(eq(userCards.id, source.id))
       await tx
         .update(userCards)
         .set({ exp: target.exp + gained })
         .where(eq(userCards.id, userCardId))
+      return tx
+        .update(users)
+        .set({ essence: sql`${users.essence} + ${essenceGained}` })
+        .where(eq(users.id, userId))
+        .returning({ essence: users.essence })
     })
 
     return {
@@ -256,7 +278,80 @@ export async function progressionRoutes(app: FastifyInstance) {
       data: {
         card: await loadCard(userId, userCardId),
         gained,
+        essenceGained,
+        essence: wallet?.essence ?? 0,
         consumedUserCardId: source.id,
+      },
+    }
+  })
+
+  app.post("/users/:userId/cards/:userCardId/enhance", async (request, reply) => {
+    const params = paramsSchema.parse(request.params)
+    const userId = requireSelf(request, reply, params.userId)
+    if (!userId) return
+    const { userCardId } = params
+    const body = z
+      .object({ action: z.enum(["foil", "polish"]) })
+      .parse(request.body)
+
+    const target = await loadCard(userId, userCardId)
+    if (!target) {
+      return reply.code(404).send({
+        ok: false,
+        error: { code: "not_found", message: "卡不在这个账号的卡册里" },
+      })
+    }
+
+    if (body.action === "foil" && target.foil) {
+      return reply.code(400).send({
+        ok: false,
+        error: { code: "already_foil", message: "这张卡已经是闪卡" },
+      })
+    }
+
+    const cost = body.action === "foil" ? FOIL_COST : POLISH_COST
+    const [user] = await db
+      .select({ essence: users.essence })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+
+    if (!user || user.essence < cost) {
+      return reply.code(400).send({
+        ok: false,
+        error: {
+          code: "not_enough_essence",
+          message: `精华不足：${user?.essence ?? 0} / ${cost}`,
+          need: cost,
+          essence: user?.essence ?? 0,
+        },
+      })
+    }
+
+    const [wallet] = await db.transaction(async (tx) => {
+      await tx
+        .update(userCards)
+        .set(
+          body.action === "foil"
+            ? { foil: true }
+            : { exp: target.exp + POLISH_EXP },
+        )
+        .where(eq(userCards.id, userCardId))
+      return tx
+        .update(users)
+        .set({ essence: sql`${users.essence} - ${cost}` })
+        .where(eq(users.id, userId))
+        .returning({ essence: users.essence })
+    })
+
+    return {
+      ok: true,
+      data: {
+        card: await loadCard(userId, userCardId),
+        cost,
+        essence: wallet?.essence ?? 0,
+        action: body.action,
+        gainedExp: body.action === "polish" ? POLISH_EXP : 0,
       },
     }
   })

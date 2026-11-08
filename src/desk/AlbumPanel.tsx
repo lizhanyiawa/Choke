@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
+import { RARITY_LABEL } from "@/card/data"
 import { expToNext, isHeroCardId, levelCap } from "@/card/progression"
 import type { Rarity } from "@/card/types"
 
 import { fetchUserCards, toFace, type ApiUserCard, type CardSort } from "./api"
 import { CardDetail } from "./CardDetail"
+import { setCardDrag, toDeskCard } from "./drag"
+import { useDeskCardIds } from "./presence"
 import { RARITY_COLOR } from "./rarity"
 
 const PAGE_SIZE = 16
@@ -28,6 +31,7 @@ export function AlbumPanel({ userId }: { userId: string | null }) {
   const [result, setResult] = useState<Result | null>(null)
   const [detail, setDetail] = useState<ApiUserCard | null>(null)
   const [refresh, setRefresh] = useState(0)
+  const deskIds = useDeskCardIds()
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -121,7 +125,7 @@ export function AlbumPanel({ userId }: { userId: string | null }) {
             }}
           >
             <i style={{ background: RARITY_COLOR[item] }} aria-hidden />
-            {item}
+            {RARITY_LABEL[item]}
           </button>
         ))}
       </div>
@@ -149,10 +153,14 @@ export function AlbumPanel({ userId }: { userId: string | null }) {
         <div className="album-panel__grid">
           {result.rows.map((row) => (
             <div
-              className="album-panel__slot"
+              className={`album-panel__slot ${deskIds.has(row.userCardId) ? "is-on-desk" : ""}`}
               key={row.userCardId}
               role="button"
               tabIndex={0}
+              draggable
+              onDragStart={(event) => {
+                setCardDrag(event.nativeEvent, toDeskCard(toFace(row), row.userCardId))
+              }}
               onClick={() => setDetail(row)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
@@ -162,6 +170,9 @@ export function AlbumPanel({ userId }: { userId: string | null }) {
               }}
             >
               <CardFace card={toFace(row)} />
+              {deskIds.has(row.userCardId) && (
+                <span className="album-panel__on-desk">在桌面</span>
+              )}
               {row.level < levelCap(isHeroCardId(row.id)) && (
                 <ReadyBadge row={row} />
               )}

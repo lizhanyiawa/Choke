@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
+import { RARITY_LABEL } from "@/card/data"
 import { faceFromDef } from "@/card/def"
 
 import { AlbumPanel } from "./AlbumPanel"
@@ -10,6 +11,7 @@ import { BattlePanel } from "./BattlePanel"
 import { CodexPanel } from "./CodexPanel"
 import { DeckPanel } from "./DeckPanel"
 import { GachaPanel, type PoolId } from "./GachaPanel"
+import { MarketPanel } from "./MarketPanel"
 
 export type PanelId = "codex" | "album" | "deck" | "backpack" | "battle" | "packs" | "mainline" | "market" | "account"
 
@@ -43,6 +45,7 @@ interface Props {
   username: string | null
   publicId?: number | null
   avatarUrl?: string | null
+  essence?: number
   hero?: ApiUserCard | null
   /** 桌面物件双击时直接进入的子界面（配合 key 重新挂载） */
   initialStage?: Stage
@@ -57,6 +60,7 @@ export function CommandPanel({
   username,
   publicId = null,
   avatarUrl = null,
+  essence = 0,
   hero,
   initialStage = "closed",
   initialPanel = "album",
@@ -176,58 +180,88 @@ export function CommandPanel({
 
         {stage === "open" && (
           <div className={`command-drawer ${leaving ? "is-leaving" : ""}`}>
-            <header className="command-drawer__head">
+            <nav className="command-drawer__nav" aria-label="侧栏入口">
               <button
                 type="button"
-                className="command-drawer__back"
+                className="command-drawer__collapse"
                 onClick={backToRail}
-                aria-label="返回快捷菜单"
+                aria-label="收起为快捷栏"
               >
                 ‹
               </button>
-              <div className="command-drawer__titles">
-                <span className="command-drawer__eyebrow">{entry.sub}</span>
-                <h2 className="command-drawer__title">{entry.label}</h2>
+              <div className="command-drawer__navlist">
+                {ENTRIES.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`command-drawer__navbtn ${panel === item.id ? "is-active" : ""}`}
+                    onClick={() => {
+                      setSelected(item.id)
+                      setPanel(item.id)
+                    }}
+                    aria-current={panel === item.id ? "page" : undefined}
+                  >
+                    <span className="command-drawer__navglyph" aria-hidden>
+                      <PanelGlyph id={item.id} />
+                    </span>
+                    <span className="command-drawer__navtext">
+                      <b>{item.label}</b>
+                      <em>{item.sub}</em>
+                    </span>
+                  </button>
+                ))}
               </div>
-              <button
-                type="button"
-                className="command-panel__close"
-                onClick={closePanel}
-                aria-label="收起菜单"
-              >
-                ×
-              </button>
-            </header>
+            </nav>
 
-            <div className="command-drawer__body">
-              {panel === "codex" && <CodexPanel userId={userId} />}
-              {panel === "album" && <AlbumPanel userId={userId} />}
-              {panel === "deck" && <DeckPanel userId={userId} />}
-              {panel === "backpack" && (
-                <BackpackPanel
-                  userId={userId}
-                  onOpenGacha={(pool) => {
-                    setGachaPool(pool as PoolId)
-                    openPanel("packs")
-                  }}
-                  onHeroClaimed={onHeroClaimed}
-                />
-              )}
-              {panel === "battle" && <BattlePanel userId={userId} onOpenDeck={() => openPanel("deck")} />}
-              {panel === "packs" && <GachaPanel userId={userId} initialPool={gachaPool} />}
-              {panel === "mainline" && <MainlinePanel />}
-              {panel === "market" && <MarketPanel />}
-              {panel === "account" && (
-                <AccountPanel
-                  userId={userId}
-                  username={username}
-                  publicId={publicId}
-                  avatarUrl={avatarUrl}
-                  hero={hero}
-                  onLogout={onLogout}
-                  onOpenBackpack={() => openPanel("backpack")}
-                />
-              )}
+            <div className="command-drawer__content">
+              <header className="command-drawer__head">
+                <div className="command-drawer__titles">
+                  <span className="command-drawer__eyebrow">{entry.sub}</span>
+                  <h2 className="command-drawer__title">{entry.label}</h2>
+                </div>
+                <button
+                  type="button"
+                  className="command-panel__close"
+                  onClick={closePanel}
+                  aria-label="收起菜单"
+                >
+                  ×
+                </button>
+              </header>
+
+              <div className="command-drawer__body">
+                {panel === "codex" && <CodexPanel userId={userId} />}
+                {panel === "album" && <AlbumPanel userId={userId} />}
+                {panel === "deck" && <DeckPanel userId={userId} />}
+                {panel === "backpack" && (
+                  <BackpackPanel
+                    userId={userId}
+                    onOpenGacha={(pool) => {
+                      setGachaPool(pool as PoolId)
+                      openPanel("packs")
+                    }}
+                    onHeroClaimed={onHeroClaimed}
+                  />
+                )}
+                {panel === "battle" && <BattlePanel userId={userId} onOpenDeck={() => openPanel("deck")} />}
+                {panel === "packs" && <GachaPanel userId={userId} initialPool={gachaPool} />}
+                {panel === "mainline" && <MainlinePanel />}
+                {panel === "market" && (
+                  <MarketPanel userId={userId} onOpenAlbum={() => openPanel("album")} />
+                )}
+                {panel === "account" && (
+                  <AccountPanel
+                    userId={userId}
+                    username={username}
+                    publicId={publicId}
+                    avatarUrl={avatarUrl}
+                    essence={essence}
+                    hero={hero}
+                    onLogout={onLogout}
+                    onOpenBackpack={() => openPanel("backpack")}
+                  />
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -328,27 +362,12 @@ function MainlinePanel() {
   )
 }
 
-function MarketPanel() {
-  return (
-    <div className="command-section">
-      <div className="command-hero command-hero--market">
-        <span className="command-hero__tag">TRADE</span>
-        <b>交易行</b>
-        <p>用重复卡换缺失卡，或把高命座卡挂出去。</p>
-      </div>
-      <div className="command-status">
-        <span>状态</span>
-        <em>未开放</em>
-      </div>
-    </div>
-  )
-}
-
 function AccountPanel({
   userId,
   username,
   publicId,
   avatarUrl,
+  essence = 0,
   hero,
   onLogout,
   onOpenBackpack,
@@ -357,6 +376,7 @@ function AccountPanel({
   username: string | null
   publicId?: number | null
   avatarUrl?: string | null
+  essence?: number
   hero?: ApiUserCard | null
   onLogout?: () => void
   onOpenBackpack?: () => void
@@ -400,6 +420,7 @@ function AccountPanel({
       </div>
 
       <div className="command-account__meta">
+        <span className="command-account__essence">精华 {essence.toLocaleString("en-US")}</span>
         {userId?.startsWith("osu-") ? (
           <a
             className="command-account__link"
@@ -444,7 +465,7 @@ function AccountPanel({
             <span>YOUR HERO CARD</span>
             <b>{hero.name}</b>
             <em>
-              {hero.rarity} · Lv.{hero.level}
+              {RARITY_LABEL[hero.rarity]} · Lv.{hero.level}
             </em>
             <p>本体卡已绑定，抽到自己的镜像卡会单独记进卡册。</p>
           </div>

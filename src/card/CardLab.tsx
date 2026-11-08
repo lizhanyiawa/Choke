@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react"
 
 import { CardFace } from "./CardFace"
-import { DEMO_CARDS, makeCard } from "./data"
+import { DEMO_CARDS, RARITY_LABEL, makeCard } from "./data"
 import type { CardFaceData } from "./types"
 import "./card-lab.css"
 
@@ -105,7 +105,7 @@ export function CardLab() {
           {DEMO_CARDS.map((card) => (
             <div className="lab__slot" style={{ width: 200 }} key={card.id}>
               <CardFace card={card} />
-              <span className="lab__tag">{card.rarity}</span>
+              <span className="lab__tag">{RARITY_LABEL[card.rarity]}</span>
             </div>
           ))}
         </div>

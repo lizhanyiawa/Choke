@@ -7,10 +7,13 @@ import { toFace, type ApiUserCard } from "./api"
 import {
   CARD_MIME,
   DESK_ADD_CARDS_EVENT,
+  DESK_ITEMS_EVENT,
   DECK_ASSIGN_EVENT,
   DECK_HOVER_EVENT,
   PACKS_CHANGED_EVENT,
+  USER_CARD_MIME,
   readCardDrag,
+  readUserCardDrag,
 } from "./drag"
 import { POOL_META, POOL_ORDER } from "./rarity"
 import { DEFAULT_SKIN } from "./skins"
@@ -38,11 +41,11 @@ const SERVER_POOL: Record<PackPool, string> = {
 interface OpenResponse {
   ok: boolean
   data?: {
-    results: { cardId: string; userCardId: number }[]
+    results: { cardId: string; userCardId: number; foil: boolean }[]
     pity: { before: number; after: number }
     packs?: Record<string, number>
   }
-  error?: { message?: string }
+  error?: { code?: string; message?: string }
 }
 
 interface CardRow {
@@ -98,6 +101,7 @@ export function DeskPage() {
     username: string
     publicId: number | null
     avatarUrl: string | null
+    essence: number
     hero: ApiUserCard | null
   } | null>(null)
   const [packState, setPackState] = useState<{
@@ -136,6 +140,7 @@ export function DeskPage() {
             username: d.data.username,
             publicId: d.data.publicId ?? null,
             avatarUrl: d.data.avatarUrl ?? null,
+            essence: Number(d.data.essence ?? 0),
             hero: d.data.hero ?? null,
           })
         else setUser(null)
@@ -214,20 +219,40 @@ export function DeskPage() {
     itemsRef.current = items
   }, [items])
 
+  useEffect(() => {
+    const ids = items.flatMap((item) =>
+      item.kind === "card" && typeof item.card?.userCardId === "number"
+        ? [item.card.userCardId]
+        : [],
+    )
+    window.dispatchEvent(new CustomEvent(DESK_ITEMS_EVENT, { detail: ids }))
+  }, [items])
+
   const spawnCards = useCallback(
     (cards: CardData[], clientX?: number, clientY?: number) => {
       if (!cards.length) return
       const stage = stageRef.current
       if (!stage) return
+      const existing = new Set(
+        itemsRef.current.flatMap((item) =>
+          item.kind === "card" && typeof item.card?.userCardId === "number"
+            ? [item.card.userCardId]
+            : [],
+        ),
+      )
+      const fresh = cards.filter(
+        (card) => card.userCardId == null || !existing.has(card.userCardId),
+      )
+      if (fresh.length === 0) return
       const rect = stage.getBoundingClientRect()
       const size = ITEM_SIZE.card
       const originX = clientX == null ? rect.width * 0.12 : clientX - rect.left
       const originY = clientY == null ? rect.height * 0.32 : clientY - rect.top
       const step = 0.06
       const startX =
-        (originX - size.w / 2 - ((cards.length - 1) * step * rect.width) / 2) / rect.width
+        (originX - size.w / 2 - ((fresh.length - 1) * step * rect.width) / 2) / rect.width
       const topZ = Math.max(0, ...itemsRef.current.map((item) => item.z)) + 1
-      const next = cards.map((card, index) => {
+      const next = fresh.map((card, index) => {
         const x = Math.min(
           Math.max(startX + index * step, 0.02),
           0.98 - size.w / rect.width,
@@ -409,6 +434,7 @@ export function DeskPage() {
             detail: { userCardId: item.card.userCardId, slot: deckSlot },
           }),
         )
+        collect(item.id)
         showToast(`已放入卡组第 ${deckSlot + 1} 槽`)
         return
       }
@@ -455,7 +481,13 @@ export function DeskPage() {
         })
         const payload = (await res.json()) as OpenResponse
         if (!res.ok || !payload.ok || !payload.data) {
-          showToast(payload.error?.message ?? "开包失败")
+          if (payload.error?.code === "no_packs") {
+            consumePack(item.id)
+            refreshPacks()
+            showToast("背包里没有这个卡包，已从桌面移除")
+          } else {
+            showToast(payload.error?.message ?? "开包失败")
+          }
           return
         }
         if (payload.data.packs && user) {
@@ -478,6 +510,7 @@ export function DeskPage() {
               rarity: row.rarity,
               art: row.art ?? undefined,
               banner: row.banner ?? undefined,
+              foil: result.foil,
             }
           }),
         )
@@ -585,7 +618,8 @@ export function DeskPage() {
         className={`desk-stage ${deskDropActive ? "is-card-drop" : ""}`}
         style={{ "--desk-bg": DEFAULT_SKIN.background, "--desk-edge": DEFAULT_SKIN.edge } as CSSProperties}
         onDragOver={(event) => {
-          if (!Array.from(event.dataTransfer.types).includes(CARD_MIME)) return
+          const types = Array.from(event.dataTransfer.types)
+          if (!types.includes(CARD_MIME) && !types.includes(USER_CARD_MIME)) return
           event.preventDefault()
           event.dataTransfer.dropEffect = "copy"
           if (!deskDropActive) setDeskDropActive(true)
@@ -594,7 +628,8 @@ export function DeskPage() {
           if (event.target === event.currentTarget) setDeskDropActive(false)
         }}
         onDrop={(event) => {
-          const card = readCardDrag(event.nativeEvent)
+          const deckCard = readUserCardDrag(event.nativeEvent)
+          const card = deckCard?.card ?? readCardDrag(event.nativeEvent)
           if (!card) return
           event.preventDefault()
           setDeskDropActive(false)
@@ -700,6 +735,7 @@ export function DeskPage() {
           username={user?.username ?? null}
           publicId={user?.publicId ?? null}
           avatarUrl={user?.avatarUrl ?? null}
+          essence={user?.essence ?? 0}
           hero={user?.hero ?? null}
           onLogout={logout}
           onHeroClaimed={refreshUser}
@@ -802,8 +838,10 @@ function ItemView({ item, hero }: { item: DeskItem; hero: ApiUserCard | null }) 
           style={{ position: "absolute", inset: 0, "--pack-accent": meta.color } as CSSProperties}
         >
           <div className="desk-pack__strip" />
-          <img className="desk-pack__art" src="/brand/choke-icon.svg" alt="" draggable={false} />
+          <img className="desk-pack__art" src="/brand/choke-lockup-horizontal.svg" alt="" draggable={false} />
+          <div className="desk-pack__series">TRADING CARD</div>
           <div className="desk-pack__label">{meta.short}卡包</div>
+          <div className="desk-pack__count">5 CARDS / PACK</div>
         </div>
       )
     }

@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, type CSSProperties } from "react"
 
+import { CardFace } from "@/card/CardFace"
 import {
   ELEMENT_COLOR,
   ELEMENT_LABEL,
-  RARITY_LABEL,
 } from "@/card/data"
 import { fetchDeck, toFace, type ApiDeck } from "@/desk/api"
 
@@ -194,51 +194,63 @@ export function BattlePage() {
 
       <main className="battle-main">
         <aside className="battle-side battle-side--enemy">
-          <div className="battle-enemy">
-            <span className="battle-enemy__tag">ENEMY · {ELEMENT_LABEL[battle.enemy.element]}</span>
-            <b>{battle.enemy.name}</b>
-            <em>
-              {battle.enemy.hp.toLocaleString("en-US")} / {battle.enemy.hpMax.toLocaleString("en-US")}
-            </em>
-            <div className="battle-hp">
-              <div className="battle-hp__fill battle-hp__fill--enemy" style={{ width: `${enemyPct}%` }} />
-            </div>
-          </div>
-
-          <div className="battle-panel">
-            <div className="battle-panel__title">意图预告</div>
-            <div className="battle-intents">
-              {battle.enemy.intents.map((intent) => (
-                <div className="battle-intent" key={intent.id}>
-                  <span
-                    className="battle-intent__dot"
-                    style={{ background: ELEMENT_COLOR[intent.element] ?? "#8a9099" }}
-                  />
-                  <div>
-                    <b>{intent.label}</b>
-                    <em>
-                      {ELEMENT_LABEL[intent.element] ?? intent.element} · {enemyDamageTier(intent)}
-                    </em>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {battle.supports.length > 0 && (
-            <div className="battle-panel">
-              <div className="battle-panel__title">侧面支援</div>
-              <div className="battle-supports">
-                {battle.supports.map((support) => (
-                  <div className="battle-support" key={support.id}>
-                    <span style={{ background: ELEMENT_COLOR[support.element] ?? "#8a9099" }} />
-                    <b>{support.name}</b>
-                    <em>自动攻击 50%</em>
-                  </div>
-                ))}
+          <div className="battle-enemy-stage">
+            <div className="battle-enemy">
+              <span className="battle-enemy__tag">ENEMY · {ELEMENT_LABEL[battle.enemy.element]}</span>
+              <div
+                className="battle-enemy-token"
+                style={{ "--enemy": ELEMENT_COLOR[battle.enemy.element] ?? "#ed5f9f" } as CSSProperties}
+                aria-hidden
+              >
+                <span>幽</span>
+                <i />
+              </div>
+              <b>{battle.enemy.name}</b>
+              <em>
+                {battle.enemy.hp.toLocaleString("en-US")} / {battle.enemy.hpMax.toLocaleString("en-US")}
+              </em>
+              <div className="battle-hp battle-hp--enemy">
+                <div className="battle-hp__fill battle-hp__fill--enemy" style={{ width: `${enemyPct}%` }} />
               </div>
             </div>
-          )}
+
+            <div className="battle-enemy-side">
+              <div className="battle-panel">
+                <div className="battle-panel__title">意图预告</div>
+                <div className="battle-intents">
+                  {battle.enemy.intents.map((intent) => (
+                    <div className="battle-intent" key={intent.id}>
+                      <span
+                        className="battle-intent__dot"
+                        style={{ background: ELEMENT_COLOR[intent.element] ?? "#8a9099" }}
+                      />
+                      <div>
+                        <b>{intent.label}</b>
+                        <em>
+                          {ELEMENT_LABEL[intent.element] ?? intent.element} · {enemyDamageTier(intent)}
+                        </em>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {battle.supports.length > 0 && (
+                <div className="battle-panel">
+                  <div className="battle-panel__title">侧面支援</div>
+                  <div className="battle-supports">
+                    {battle.supports.map((support) => (
+                      <div className="battle-support" key={support.id}>
+                        <span style={{ background: ELEMENT_COLOR[support.element] ?? "#8a9099" }} />
+                        <b>{support.name}</b>
+                        <em>自动攻击 50%</em>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </aside>
 
         <section className="battle-center">
@@ -263,18 +275,12 @@ export function BattlePage() {
                   className={`battle-card ${card.acted ? "is-acted" : ""} ${card.down ? "is-down" : ""}`}
                   key={card.uid}
                 >
-                  <div className="battle-card__top">
+                  <div className="battle-card__badges">
                     <span>{card.subjob.label}</span>
-                    <em>{RARITY_LABEL[card.rarity]}</em>
+                    {card.face.foil && <em>✦ FLASH</em>}
                   </div>
-                  <div
-                    className="battle-card__art"
-                    style={card.art ? { backgroundImage: `url(${card.art})` } : undefined}
-                  >
-                    <span className="battle-card__lv">Lv.{card.level}</span>
-                  </div>
-                  <div className="battle-card__name" title={card.name}>
-                    {card.name}
+                  <div className="battle-card__face">
+                    <CardFace card={card.face} />
                   </div>
                   <div className="battle-card__hp">
                     <div className="battle-hp">

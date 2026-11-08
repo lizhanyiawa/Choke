@@ -16,6 +16,7 @@ export interface CardData {
   art?: string
   /** 个人主页 banner */
   banner?: string
+  foil?: boolean
   isHero?: boolean
 }
 

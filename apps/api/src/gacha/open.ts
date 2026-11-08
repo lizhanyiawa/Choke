@@ -2,7 +2,7 @@ import { and, eq, notLike } from "drizzle-orm"
 
 import { db } from "../db/client"
 import { cards, packOpenings, pity, userCards } from "../db/schema"
-import { PITY_RARITY, PITY_THRESHOLD, mulberry32, rollRarity, type PoolId } from "./pools"
+import { PITY_RARITY, PITY_THRESHOLD, FOIL_RATE, mulberry32, rollRarity, type PoolId } from "./pools"
 
 const RANK: Record<string, number> = {
   C: 0,
@@ -35,6 +35,8 @@ export interface DrawnCard {
   fromPity: boolean
   /** user_cards 实例 id，用于把这张卡直接拖进卡组 */
   userCardId: number
+  /** 闪卡实例属性 */
+  foil: boolean
 }
 
 export async function openPack(userId: string, pool: PoolId, count = 5) {
@@ -74,12 +76,13 @@ export async function openPack(userId: string, pool: PoolId, count = 5) {
         throw new Error(`卡池里没有 ${rarity} 档的卡，先导入卡定义`)
       }
       const cardId = ids[Math.floor(random() * ids.length)]!
+      const foil = random() < FOIL_RATE[pool]
 
       const [inserted] = await tx
         .insert(userCards)
-        .values({ userId, cardId })
+        .values({ userId, cardId, foil })
         .returning({ id: userCards.id })
-      results.push({ cardId, rarity, fromPity, userCardId: inserted!.id })
+      results.push({ cardId, rarity, fromPity, userCardId: inserted!.id, foil })
     }
 
     await tx

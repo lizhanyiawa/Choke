@@ -145,6 +145,7 @@ export async function authRoutes(app: FastifyInstance) {
           level: userCards.level,
           constellation: userCards.constellation,
           exp: userCards.exp,
+          foil: userCards.foil,
         })
         .from(userCards)
         .innerJoin(cards, eq(cards.id, userCards.cardId))
@@ -164,6 +165,7 @@ export async function authRoutes(app: FastifyInstance) {
         profileUrl: user.osuId == null ? null : `https://osu.ppy.sh/users/${user.osuId}`,
         onboarded: user.onboarded,
         heroBonus: user.heroBonus,
+        essence: user.essence,
         hero,
       },
     }

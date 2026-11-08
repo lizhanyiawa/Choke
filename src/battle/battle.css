@@ -691,3 +691,183 @@
     gap: 10px;
   }
 }
+
+/* ===== 战斗界面：卡面化 + 敌人舞台 ===== */
+.battle-main {
+  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-rows: minmax(330px, 44vh) auto;
+  grid-template-areas:
+    "enemy log"
+    "center log";
+  align-content: stretch;
+}
+
+.battle-side--enemy {
+  grid-area: enemy;
+  overflow: visible;
+}
+
+.battle-center {
+  grid-area: center;
+}
+
+.battle-side--log {
+  grid-area: log;
+}
+
+.battle-enemy-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(230px, 0.65fr);
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+}
+
+.battle-enemy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  text-align: center;
+}
+
+.battle-enemy > b {
+  font-size: 30px;
+}
+
+.battle-enemy > em {
+  color: #aeb8c8;
+}
+
+.battle-enemy .battle-hp {
+  width: min(360px, 80%);
+  height: 11px;
+}
+
+.battle-enemy-token {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(116px, 12vw, 180px);
+  aspect-ratio: 1;
+  margin: 4px 0 2px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 28%, rgb(255 255 255 / 0.32), transparent 28%),
+    radial-gradient(circle at 50% 55%, var(--enemy, #ed5f9f), #111d35 68%);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--enemy, #ed5f9f) 55%, transparent),
+    0 0 46px color-mix(in srgb, var(--enemy, #ed5f9f) 45%, transparent),
+    inset 0 -18px 34px rgb(0 0 0 / 0.36);
+  animation: battle-enemy-float 4.2s ease-in-out infinite;
+}
+
+.battle-enemy-token span {
+  position: relative;
+  z-index: 2;
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: clamp(34px, 4vw, 54px);
+  color: #fff;
+  text-shadow: 0 4px 18px rgb(0 0 0 / 0.55);
+}
+
+.battle-enemy-token i {
+  position: absolute;
+  inset: 14%;
+  border: 2px dashed color-mix(in srgb, var(--enemy, #ed5f9f) 55%, #ffffff);
+  border-radius: 50%;
+  opacity: 0.7;
+  animation: battle-enemy-spin 14s linear infinite;
+}
+
+.battle-enemy-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@keyframes battle-enemy-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes battle-enemy-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 卡面化的战斗卡 */
+.battle-card__badges {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 14px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  color: #3cbadb;
+}
+
+.battle-card__badges em {
+  font-style: normal;
+  color: #ff9ac6;
+  letter-spacing: 0.06em;
+}
+
+.battle-card__face {
+  width: 100%;
+}
+
+.battle-card__face .cf {
+  width: 100%;
+}
+
+.battle-card__face .cf a {
+  pointer-events: none;
+}
+
+@media (max-width: 1100px) {
+  .battle-main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "enemy"
+      "center"
+      "log";
+    overflow-y: auto;
+  }
+  .battle-enemy-stage {
+    grid-template-columns: minmax(0, 1fr) 260px;
+  }
+  .battle-side--log {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 760px) {
+  .battle-main {
+    padding: 10px;
+  }
+  .battle-enemy-stage {
+    grid-template-columns: 1fr;
+  }
+  .battle-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .battle-enemy {
+    min-height: 300px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-enemy-token,
+  .battle-enemy-token i {
+    animation: none;
+  }
+}

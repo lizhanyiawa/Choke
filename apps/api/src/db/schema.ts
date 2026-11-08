@@ -52,6 +52,8 @@ export const users = pgTable("users", {
   onboarded: boolean("onboarded").notNull().default(false),
   /** 由 /me/osu 算出的个人加成（basis point），0–2000 */
   heroBonus: integer("hero_bonus").notNull().default(0),
+  /** 分解/市场用精华 */
+  essence: integer("essence").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
@@ -65,6 +67,8 @@ export const userCards = pgTable(
     constellation: integer("constellation").notNull().default(0),
     /** 当前等级内累计的经验；升级时扣除 */
     exp: integer("exp").notNull().default(0),
+    /** 闪卡：实例属性，任何卡都可能出 */
+    foil: boolean("foil").notNull().default(false),
     mods: jsonb("mods").notNull().default(sql`'[]'::jsonb`),
     obtainedAt: timestamp("obtained_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -125,4 +129,17 @@ export const pity = pgTable(
     counter: integer("counter").notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.userId, table.pool] })],
+)
+
+export const marketListings = pgTable(
+  "market_listings",
+  {
+    id: serial("id").primaryKey(),
+    sellerId: text("seller_id").notNull(),
+    userCardId: integer("user_card_id").notNull().unique(),
+    price: integer("price").notNull(),
+    status: text("status").notNull().default("active"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("market_listings_status_idx").on(table.status)],
 )

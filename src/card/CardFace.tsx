@@ -38,7 +38,12 @@ export function CardFace({ card, mode = "collection", className }: Props) {
   const skills: (CardSkill | null)[] = [0, 1, 2].map((i) => card.skills[i] ?? null)
 
   return (
-    <div className={cn("cf", className)} data-rarity={card.rarity} data-mode={mode}>
+    <div
+      className={cn("cf", className)}
+      data-rarity={card.rarity}
+      data-mode={mode}
+      data-foil={card.foil ? "true" : undefined}
+    >
       <div className="cf__body">
         <div className="cf__frame">
           {/* 统一异形骨架 SVG（92 × 142 等比 cqw 坐标系，无拉伸变形） */}
@@ -334,6 +339,7 @@ export function CardFace({ card, mode = "collection", className }: Props) {
       </div>
 
       <div className="cf__sheen" aria-hidden />
+      {card.foil && <div className="cf__foil" aria-hidden />}
 
       <svg className="cf__defs" aria-hidden>
         <defs>

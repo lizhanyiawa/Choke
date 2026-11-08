@@ -10,6 +10,11 @@ import {
 } from "@/card/data"
 import { skillSeed, subjobFor } from "@/card/jobs"
 import {
+  FOIL_COST,
+  POLISH_COST,
+  POLISH_EXP,
+} from "@/card/economy"
+import {
   constellationCap,
   expToNext,
   isHeroCardId,
@@ -19,8 +24,11 @@ import {
 
 import {
   ascendCard,
+  enhanceCard,
   fetchFuel,
+  fetchMe,
   levelUpCard,
+  listMarketCard,
   meltCard,
   toFace,
   type ApiUserCard,
@@ -40,8 +48,23 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
   const [fuelOpen, setFuelOpen] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [essence, setEssence] = useState<number | null>(null)
+  const [price, setPrice] = useState("30")
 
   const face = useMemo(() => toFace(current), [current])
+
+  useEffect(() => {
+    if (readOnly || !userId) return
+    let cancelled = false
+    fetchMe()
+      .then((data) => {
+        if (!cancelled) setEssence(data.essence)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [readOnly, userId])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -86,6 +109,8 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
     try {
       const result = await action()
       setCurrent(result.card)
+      const maybeWallet = result as { essence?: number }
+      if (typeof maybeWallet.essence === "number") setEssence(maybeWallet.essence)
       setMessage(done(result))
       onChanged?.()
       fetchFuel(userId, result.card.userCardId)
@@ -113,8 +138,40 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
     return run(
       `melt-${source.userCardId}`,
       () => meltCard(userId, current.userCardId, source.userCardId),
-      (result) => `熔入 ${result.gained} EXP`,
+      (result) => `熔入 ${result.gained} EXP · +${result.essenceGained} 精华`,
     )
+  }
+
+  const enhance = (action: "foil" | "polish") => {
+    if (!userId) return
+    return run(
+      action,
+      () => enhanceCard(userId, current.userCardId, action),
+      (result) =>
+        action === "foil"
+          ? "已镀闪，卡面获得闪卡外观"
+          : `打磨完成 · +${result.gainedExp} EXP`,
+    )
+  }
+
+  const list = async () => {
+    if (!userId || busy !== null) return
+    const value = Number(price)
+    if (!Number.isInteger(value) || value <= 0) {
+      setMessage("价格必须是正整数")
+      return
+    }
+    setBusy("list")
+    setMessage(null)
+    try {
+      await listMarketCard(userId, current.userCardId, value)
+      setMessage(`已上架市场 · ${value} 精华`)
+      onChanged?.()
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "上架失败")
+    } finally {
+      setBusy(null)
+    }
   }
 
   return (
@@ -131,6 +188,7 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
         <div className="card-detail__info">
           <div className="card-detail__eyebrow">
             {RARITY_LABEL[current.rarity]} · {subjobFor(skillSeed(current.id), current.job).label}
+            {current.foil ? " · ✦ FLASH" : ""}
           </div>
           <h2 className="card-detail__name">{current.name}</h2>
 
@@ -208,6 +266,29 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
                   熔卡换经验
                 </button>
               </div>
+              <div className="card-detail__wallet">
+                <span>精华</span>
+                <b>{essence ?? "—"}</b>
+                <em>分解重复卡获得</em>
+              </div>
+              <div className="card-detail__actions card-detail__actions--essence">
+                <button
+                  type="button"
+                  className="card-detail__action"
+                  onClick={() => void enhance("foil")}
+                  disabled={current.foil || busy !== null || (essence ?? 0) < FOIL_COST}
+                >
+                  {current.foil ? "已是闪卡" : `精华镀闪 · ${FOIL_COST}`}
+                </button>
+                <button
+                  type="button"
+                  className="card-detail__action"
+                  onClick={() => void enhance("polish")}
+                  disabled={busy !== null || (essence ?? 0) < POLISH_COST}
+                >
+                  精华打磨 · +{POLISH_EXP} EXP
+                </button>
+              </div>
               {message && <p className="card-detail__message">{message}</p>}
             </div>
           )}
@@ -243,6 +324,30 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {!readOnly && !hero && (
+            <div className="card-detail__market">
+              <div className="card-detail__section-title">市场</div>
+              <div className="card-detail__market-row">
+                <input
+                  type="number"
+                  min={1}
+                  value={price}
+                  onChange={(event) => setPrice(event.target.value)}
+                  aria-label="上架价格"
+                />
+                <span>精华</span>
+                <button
+                  type="button"
+                  onClick={() => void list()}
+                  disabled={busy !== null}
+                >
+                  {busy === "list" ? "上架中…" : "上架市场"}
+                </button>
+              </div>
+              <p className="card-detail__note">上架后其他玩家可以购买；下架后继续留在卡册。</p>
             </div>
           )}
 

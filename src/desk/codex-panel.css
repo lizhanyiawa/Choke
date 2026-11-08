@@ -126,9 +126,10 @@
 }
 .codex-tier b {
   font-family: "Fredoka", "Outfit", sans-serif;
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1;
   color: #f4f4f6;
+  white-space: nowrap;
 }
 .codex-tier em {
   font-style: normal;
@@ -189,6 +190,33 @@
 .codex-owned {
   display: flex;
   gap: 6px;
+}
+.codex-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.codex-dim {
+  height: 30px;
+  padding: 0 14px;
+  border: 1.5px solid rgba(142, 169, 201, 0.24);
+  border-radius: 999px;
+  background: rgba(17, 29, 53, 0.55);
+  color: #8ea9c9;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.codex-dim:hover {
+  border-color: rgba(60, 186, 219, 0.55);
+  color: #f4f4f6;
+}
+.codex-dim.is-active {
+  border-color: #3cbadb;
+  background: rgba(60, 186, 219, 0.14);
+  color: #9fd9ea;
 }
 .codex-owned button {
   height: 30px;
@@ -274,6 +302,14 @@
   line-height: 1;
   color: rgba(142, 169, 201, 0.3);
   user-select: none;
+}
+.codex-slot--unknown.is-dimmed {
+  opacity: 0.38;
+  border-color: rgba(142, 169, 201, 0.12);
+  background: rgba(7, 10, 18, 0.45);
+}
+.codex-slot--unknown.is-dimmed .codex-unknown__mark {
+  color: rgba(142, 169, 201, 0.16);
 }
 .codex-skeleton {
   aspect-ratio: 2 / 3;

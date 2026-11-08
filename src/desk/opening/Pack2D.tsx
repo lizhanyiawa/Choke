@@ -85,8 +85,10 @@ export function Pack2D({ cards, onDone, onQuick, onCancel, onDropCard, label = "
                   opacity: 1 - progress * 0.35,
                 }}
               />
-              <img className="desk-pack__art" src="/brand/choke-icon.svg" alt="" draggable={false} />
+              <img className="desk-pack__art" src="/brand/choke-lockup-horizontal.svg" alt="" draggable={false} />
+              <div className="desk-pack__series">TRADING CARD</div>
               <div className="desk-pack__label">{label}</div>
+              <div className="desk-pack__count">5 CARDS / PACK</div>
             </div>
 
             <div

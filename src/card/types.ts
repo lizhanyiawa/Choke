@@ -63,6 +63,8 @@ export interface CardFaceData {
   globalRank?: number | null
   pp?: number | null
   isHero?: boolean
+  /** 闪卡：仅实例属性，不改变卡池稀有度 */
+  foil?: boolean
   /** 本体卡个人加成，单位 basis point：-2000 = -20%，2000 = +20% */
   heroBonus?: number
 }

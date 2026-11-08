@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
-import { battlePower } from "@/card/data"
+import { RARITY_LABEL, battlePower } from "@/card/data"
 
 import {
   fetchPackInventory,
@@ -173,7 +173,9 @@ export function BackpackPanel({
               key={pack.id}
             >
               <div className="backpack-pack__art" aria-hidden>
-                <img src="/brand/choke-icon.svg" alt="" />
+                <span className="backpack-pack__art-strip" style={{ background: pack.color }} />
+                <img src="/brand/choke-lockup-horizontal.svg" alt="" />
+                <span className="backpack-pack__art-series">TRADING CARD</span>
                 <em>×{count}</em>
               </div>
               <div className="backpack-pack__top">
@@ -228,7 +230,7 @@ export function BackpackPanel({
             <span>{result ? "神秘卡包已开启" : "你的本体卡"}</span>
             <b>{heroFace.name}</b>
             <em>
-              {heroFace.rarity} · BP {battlePower(heroFace).toLocaleString("en-US")}
+              {RARITY_LABEL[heroFace.rarity]} · BP {battlePower(heroFace).toLocaleString("en-US")}
             </em>
             <p>本体卡稀有度来自公开排行榜；osu! 数据只提供个人数值加成。</p>
           </div>

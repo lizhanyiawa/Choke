@@ -53,7 +53,7 @@ interface Pity {
 interface OpenResponse {
   ok: boolean
   data?: {
-    results: { cardId: string; rarity: Rarity; fromPity: boolean; userCardId: number }[]
+    results: { cardId: string; rarity: Rarity; fromPity: boolean; userCardId: number; foil: boolean }[]
     pity: Pity
     packs?: Record<string, number>
   }
@@ -168,7 +168,7 @@ export function GachaPanel({
           if (!detailRes.ok || !detail?.ok || !detail.data) {
             throw new Error(detail?.error?.message ?? "卡详情加载失败")
           }
-          return { ...toFace(detail.data), userCardId: item.userCardId }
+          return { ...toFace(detail.data), userCardId: item.userCardId, foil: item.foil }
         })
       )
 

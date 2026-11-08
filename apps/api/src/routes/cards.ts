@@ -292,6 +292,7 @@ export async function cardRoutes(app: FastifyInstance) {
         level: userCards.level,
         constellation: userCards.constellation,
         exp: userCards.exp,
+        foil: userCards.foil,
         obtainedAt: userCards.obtainedAt,
       })
       .from(userCards)

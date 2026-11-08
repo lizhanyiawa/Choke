@@ -18,6 +18,16 @@ export const POOL_NAMES: Record<PoolId, string> = {
   prism: "棱彩卡包",
 }
 
+/** 每个卡包的单抽闪卡概率。低概率，但任何稀有度都可能闪。 */
+export const FOIL_RATE: Record<PoolId, number> = {
+  normal: 0.03,
+  idle: 0.012,
+  golden: 0.05,
+  radiant: 0.08,
+  sky: 0.1,
+  prism: 0.15,
+}
+
 /** 每抽的保底阈值：连续 N 抽没出 L 及以上，第 N 抽强制 L */
 export const PITY_THRESHOLD = 60
 

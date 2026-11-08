@@ -13,6 +13,8 @@ export const DECK_ASSIGN_EVENT = "choke:deck-assign"
 export const PACKS_CHANGED_EVENT = "choke:packs-changed"
 /** 把卡片直接发到桌面（按钮快捷方式） */
 export const DESK_ADD_CARDS_EVENT = "choke:desk-add-cards"
+/** 桌面上的 user_card id 列表变化 */
+export const DESK_ITEMS_EVENT = "choke:desk-items"
 
 export function toDeskCard(card: CardFaceData, userCardId?: number): CardData {
   return {
@@ -23,6 +25,7 @@ export function toDeskCard(card: CardFaceData, userCardId?: number): CardData {
     rarity: card.rarity,
     art: card.art,
     banner: card.banner,
+    foil: card.foil,
   }
 }
 
@@ -45,11 +48,13 @@ export function readCardDrag(event: DragEvent): CardData | null {
 export interface DeckDragPayload {
   userCardId: number
   fromSlot?: number
+  /** 拖出卡组到桌面时携带卡面数据 */
+  card?: CardData
 }
 
 export function setUserCardDrag(event: DragEvent, payload: DeckDragPayload) {
   event.dataTransfer?.setData(USER_CARD_MIME, JSON.stringify(payload))
-  if (event.dataTransfer) event.dataTransfer.effectAllowed = "move"
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = "copyMove"
 }
 
 export function readUserCardDrag(event: DragEvent): DeckDragPayload | null {

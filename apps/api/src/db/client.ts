@@ -51,6 +51,7 @@ UPDATE users SET public_id = nextval('users_public_id_seq') WHERE public_id IS N
 CREATE UNIQUE INDEX IF NOT EXISTS users_public_id_idx ON users (public_id);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarded boolean NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS hero_bonus integer NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS essence integer NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS user_cards (
   id serial PRIMARY KEY,
@@ -63,6 +64,7 @@ CREATE TABLE IF NOT EXISTS user_cards (
   obtained_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE user_cards ADD COLUMN IF NOT EXISTS exp integer NOT NULL DEFAULT 0;
+ALTER TABLE user_cards ADD COLUMN IF NOT EXISTS foil boolean NOT NULL DEFAULT false;
 CREATE INDEX IF NOT EXISTS user_cards_user_idx ON user_cards (user_id);
 CREATE INDEX IF NOT EXISTS user_cards_card_idx ON user_cards (card_id);
 
@@ -105,6 +107,16 @@ CREATE TABLE IF NOT EXISTS pity (
   counter integer NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id, pool)
 );
+
+CREATE TABLE IF NOT EXISTS market_listings (
+  id serial PRIMARY KEY,
+  seller_id text NOT NULL,
+  user_card_id integer NOT NULL UNIQUE,
+  price integer NOT NULL,
+  status text NOT NULL DEFAULT 'active',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS market_listings_status_idx ON market_listings (status);
 `
 
 await client.exec(DDL)
