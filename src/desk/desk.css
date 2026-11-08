@@ -109,8 +109,7 @@
   cursor: grabbing;
 }
 .desk-item.is-ghosted {
-  opacity: 0;
-  animation: none;
+  visibility: hidden;
 }
 .desk-drag-ghost {
   position: fixed;
@@ -385,10 +384,10 @@
   transform: translateX(30px);
 }
 .command-panel--rail {
-  width: 190px;
+  width: 236px;
 }
 .command-panel--open {
-  width: min(70vw, 1440px);
+  width: min(80vw, 1600px);
   min-width: 640px;
 }
 
@@ -461,31 +460,36 @@
 .command-rail__list {
   flex: 1 1 auto;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   padding: 14px 12px;
   overflow-y: auto;
+  align-content: start;
 }
 .command-rail__btn {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 11px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 6px;
   width: 100%;
-  padding: 14px 12px;
+  aspect-ratio: 1;
+  padding: 9px;
   border: 2px solid rgba(60, 186, 219, 0.22);
   border-radius: 18px;
   background: #1b2d57;
   color: #e9e9ef;
   text-align: left;
   cursor: pointer;
+  box-sizing: border-box;
   transition: background 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
 }
 .command-rail__btn:hover {
   background: #25406f;
   border-color: rgba(60, 186, 219, 0.55);
-  transform: translateX(-2px);
+  transform: translateY(-2px);
 }
 .command-rail__btn.is-selected {
   background: #2b4a7d;
@@ -496,16 +500,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
-  border-radius: 13px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 11px;
   background: rgba(60, 186, 219, 0.12);
   color: #3cbadb;
 }
 .command-rail__glyph svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 .command-rail__text {
   display: flex;
@@ -515,7 +519,7 @@
 }
 .command-rail__text b {
   font-family: "Fredoka", "Outfit", sans-serif;
-  font-size: 19px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1;
 }
@@ -591,7 +595,7 @@
   pointer-events: none;
 }
 .command-drawer__nav {
-  flex: 0 0 156px;
+  flex: 0 0 200px;
   display: flex;
   flex-direction: column;
   gap: 7px;
@@ -622,21 +626,25 @@
 }
 .command-drawer__navlist {
   flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
   min-height: 0;
   overflow-y: auto;
+  align-content: start;
 }
 .command-drawer__navbtn {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 6px;
   width: 100%;
-  padding: 8px 8px;
-  border: 1.5px solid transparent;
-  border-radius: 9px;
-  background: transparent;
+  aspect-ratio: 1;
+  padding: 9px;
+  border: 1.5px solid rgba(60, 186, 219, 0.12);
+  border-radius: 13px;
+  background: rgba(27, 45, 87, 0.66);
   color: #9aa8bd;
   text-align: left;
   cursor: pointer;
@@ -654,13 +662,13 @@
 .command-drawer__navglyph {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
-  flex: 0 0 20px;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
 }
 .command-drawer__navglyph svg {
-  width: 18px;
-  height: 18px;
+  width: 23px;
+  height: 23px;
 }
 .command-drawer__navtext {
   display: flex;
@@ -669,7 +677,7 @@
   min-width: 0;
 }
 .command-drawer__navtext b {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.1;
   white-space: nowrap;
 }
@@ -2113,18 +2121,28 @@
 
 @media (max-width: 760px) {
   .command-drawer__nav {
-    flex-basis: 56px;
+    flex-basis: 136px;
     padding: 8px 6px;
   }
   .command-drawer__navbtn {
-    justify-content: center;
-    padding: 8px 4px;
-  }
-  .command-drawer__navtext {
-    display: none;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 10px;
   }
   .command-drawer__navglyph {
-    width: 100%;
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+  }
+  .command-drawer__navglyph svg {
+    width: 18px;
+    height: 18px;
+  }
+  .command-drawer__navtext b {
+    font-size: 10px;
+  }
+  .command-drawer__navtext em {
+    display: none;
   }
 }
 
