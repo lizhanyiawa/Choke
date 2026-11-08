@@ -195,7 +195,7 @@ export function CommandPanel({
             </header>
 
             <div className="command-drawer__body">
-              {panel === "codex" && <CodexPanel />}
+              {panel === "codex" && <CodexPanel userId={userId} />}
               {panel === "album" && <AlbumPanel userId={userId} />}
               {panel === "deck" && <DeckPanel userId={userId} />}
               {panel === "backpack" && (

@@ -352,6 +352,39 @@
   background: #040407;
 }
 
+/* 立绘加载完成前的占位，避免插画窗全黑 */
+.cf__art-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 42%, rgb(60 186 219 / 0.24), transparent 62%),
+    linear-gradient(158deg, #101a2f 0%, #070a12 55%, #101a2f 100%);
+}
+
+.cf__art-placeholder span {
+  font-family: var(--font-heading), var(--font-sans);
+  font-size: 15cqw;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: rgb(159 217 234 / 0.32);
+  animation: cf-art-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes cf-art-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+}
+
 /* 玩家主页 banner 作为立绘背景铺满 */
 .cf__art-banner {
   position: absolute;

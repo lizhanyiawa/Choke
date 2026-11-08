@@ -1,4 +1,4 @@
-import { useId, type CSSProperties } from "react"
+import { useId, useState, type CSSProperties } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -31,6 +31,7 @@ interface Props {
 export function CardFace({ card, mode = "collection", className }: Props) {
   const rawId = useId().replace(/:/g, "")
   const prismId = `star-prism-${rawId}`
+  const [artReady, setArtReady] = useState(!(card.banner || card.art))
 
   const stars = starStates(card)
   const bp = battlePower(card)
@@ -165,6 +166,11 @@ export function CardFace({ card, mode = "collection", className }: Props) {
               3. 若无数据进行预览，底色保持纯净暗色，不渲染任何音符/判定圈占位符
             */}
             <div className="cf__art-screen">
+              {!artReady && (
+                <div className="cf__art-placeholder" aria-hidden>
+                  <span>o!</span>
+                </div>
+              )}
               {card.banner ? (
                 <img
                   className="cf__art-banner"
@@ -175,6 +181,8 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                   decoding="async"
                   fetchPriority="low"
                   referrerPolicy="no-referrer"
+                  onLoad={() => setArtReady(true)}
+                  onError={() => setArtReady(true)}
                 />
               ) : (
                 card.art && (
@@ -187,6 +195,8 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                     decoding="async"
                     fetchPriority="low"
                     referrerPolicy="no-referrer"
+                    onLoad={() => setArtReady(true)}
+                    onError={() => setArtReady(true)}
                   />
                 )
               )}
@@ -199,6 +209,8 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                   loading="lazy"
                   decoding="async"
                   referrerPolicy="no-referrer"
+                  onLoad={() => setArtReady(true)}
+                  onError={() => setArtReady(true)}
                 />
               )}
               <div className="cf__art-vignette" aria-hidden />
