@@ -28,12 +28,13 @@ import {
 
 interface Props {
   card: ApiUserCard
-  userId: string
+  userId: string | null
+  readOnly?: boolean
   onClose: () => void
-  onChanged: () => void
+  onChanged?: () => void
 }
 
-export function CardDetail({ card, userId, onClose, onChanged }: Props) {
+export function CardDetail({ card, userId, readOnly = false, onClose, onChanged }: Props) {
   const [current, setCurrent] = useState(card)
   const [fuel, setFuel] = useState<ApiUserCard[]>([])
   const [fuelOpen, setFuelOpen] = useState(false)
@@ -51,6 +52,7 @@ export function CardDetail({ card, userId, onClose, onChanged }: Props) {
   }, [onClose])
 
   useEffect(() => {
+    if (readOnly || !userId) return
     let cancelled = false
     fetchFuel(userId, card.userCardId, undefined)
       .then((data) => {
@@ -60,7 +62,7 @@ export function CardDetail({ card, userId, onClose, onChanged }: Props) {
     return () => {
       cancelled = true
     }
-  }, [userId, card.userCardId])
+  }, [readOnly, userId, card.userCardId])
 
   const hero = isHeroCardId(current.id)
   const cap = levelCap(hero)
@@ -78,13 +80,14 @@ export function CardDetail({ card, userId, onClose, onChanged }: Props) {
     action: () => Promise<T>,
     done: (result: T) => string,
   ) {
+    if (!userId) return
     setBusy(label)
     setMessage(null)
     try {
       const result = await action()
       setCurrent(result.card)
       setMessage(done(result))
-      onChanged()
+      onChanged?.()
       fetchFuel(userId, result.card.userCardId)
         .then((data) => setFuel(data.rows))
         .catch(() => {})
@@ -95,18 +98,24 @@ export function CardDetail({ card, userId, onClose, onChanged }: Props) {
     }
   }
 
-  const levelUp = () =>
-    run("level", () => levelUpCard(userId, current.userCardId), (result) => `升级成功，消耗 ${result.spent} EXP`)
+  const levelUp = () => {
+    if (!userId) return
+    return run("level", () => levelUpCard(userId, current.userCardId), (result) => `升级成功，消耗 ${result.spent} EXP`)
+  }
 
-  const ascend = () =>
-    run("ascend", () => ascendCard(userId, current.userCardId), () => "命座 +1")
+  const ascend = () => {
+    if (!userId) return
+    return run("ascend", () => ascendCard(userId, current.userCardId), () => "命座 +1")
+  }
 
-  const melt = (source: ApiUserCard) =>
-    run(
+  const melt = (source: ApiUserCard) => {
+    if (!userId) return
+    return run(
       `melt-${source.userCardId}`,
       () => meltCard(userId, current.userCardId, source.userCardId),
       (result) => `熔入 ${result.gained} EXP`,
     )
+  }
 
   return (
     <div className="card-detail" role="dialog" aria-modal="true" aria-label={current.name} onClick={onClose}>
@@ -126,63 +135,84 @@ export function CardDetail({ card, userId, onClose, onChanged }: Props) {
           <h2 className="card-detail__name">{current.name}</h2>
 
           <div className="card-detail__stats">
-            <div>
-              <span>等级</span>
-              <b>
-                Lv.{current.level} / {cap}
-              </b>
-            </div>
-            <div>
-              <span>命座</span>
-              <b>
-                {current.constellation} / {conCap}
-              </b>
-            </div>
-            <div>
-              <span>战力</span>
-              <b>{bp.toLocaleString("en-US")}</b>
-            </div>
+            {readOnly ? (
+              <>
+                <div>
+                  <span>品质</span>
+                  <b>{RARITY_LABEL[current.rarity]}</b>
+                </div>
+                <div>
+                  <span>战力</span>
+                  <b>{bp.toLocaleString("en-US")}</b>
+                </div>
+                <div>
+                  <span>图鉴编号</span>
+                  <b>{formatNo(current.no, current.total).replace("/", " / ")}</b>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <span>等级</span>
+                  <b>
+                    Lv.{current.level} / {cap}
+                  </b>
+                </div>
+                <div>
+                  <span>命座</span>
+                  <b>
+                    {current.constellation} / {conCap}
+                  </b>
+                </div>
+                <div>
+                  <span>战力</span>
+                  <b>{bp.toLocaleString("en-US")}</b>
+                </div>
+              </>
+            )}
           </div>
 
-          <div className="card-detail__level">
-            <div className="card-detail__level-head">
-              <span>{maxed ? "MAX LEVEL" : `EXP ${current.exp} / ${need}`}</span>
-              <em>{maxed ? "已满级" : `${Math.round(expPct)}%`}</em>
+          {!readOnly && (
+            <div className="card-detail__level">
+              <div className="card-detail__level-head">
+                <span>{maxed ? "MAX LEVEL" : `EXP ${current.exp} / ${need}`}</span>
+                <em>{maxed ? "已满级" : `${Math.round(expPct)}%`}</em>
+              </div>
+              <div className="card-detail__exp">
+                <div style={{ width: `${expPct}%` }} />
+              </div>
+              <div className="card-detail__actions">
+                <button
+                  type="button"
+                  className="card-detail__action card-detail__action--primary"
+                  onClick={() => void levelUp()}
+                  disabled={!canLevel || busy !== null}
+                >
+                  {busy === "level" ? "升级中…" : maxed ? "已满级" : `升级 · ${need} EXP`}
+                </button>
+                <button
+                  type="button"
+                  className="card-detail__action"
+                  onClick={() => void ascend()}
+                  disabled={!canAscend || busy !== null}
+                  title={sameCardFuel > 0 ? `消耗 1 张同名卡（剩余 ${sameCardFuel}）` : "没有同名卡"}
+                >
+                  {busy === "ascend" ? "升命中…" : `升命座 ${current.constellation}/${conCap}`}
+                </button>
+                <button
+                  type="button"
+                  className="card-detail__action"
+                  onClick={() => setFuelOpen((open) => !open)}
+                  disabled={maxed || busy !== null}
+                >
+                  熔卡换经验
+                </button>
+              </div>
+              {message && <p className="card-detail__message">{message}</p>}
             </div>
-            <div className="card-detail__exp">
-              <div style={{ width: `${expPct}%` }} />
-            </div>
-            <div className="card-detail__actions">
-              <button
-                type="button"
-                className="card-detail__action card-detail__action--primary"
-                onClick={() => void levelUp()}
-                disabled={!canLevel || busy !== null}
-              >
-                {busy === "level" ? "升级中…" : maxed ? "已满级" : `升级 · ${need} EXP`}
-              </button>
-              <button
-                type="button"
-                className="card-detail__action"
-                onClick={() => void ascend()}
-                disabled={!canAscend || busy !== null}
-                title={sameCardFuel > 0 ? `消耗 1 张同名卡（剩余 ${sameCardFuel}）` : "没有同名卡"}
-              >
-                {busy === "ascend" ? "升命中…" : `升命座 ${current.constellation}/${conCap}`}
-              </button>
-              <button
-                type="button"
-                className="card-detail__action"
-                onClick={() => setFuelOpen((open) => !open)}
-                disabled={maxed || busy !== null}
-              >
-                熔卡换经验
-              </button>
-            </div>
-            {message && <p className="card-detail__message">{message}</p>}
-          </div>
+          )}
 
-          {fuelOpen && !maxed && (
+          {!readOnly && fuelOpen && !maxed && (
             <div className="card-detail__fuel">
               <div className="card-detail__section-title">
                 可熔重复卡 · 同名卡 {sameCardFuel} 张
@@ -244,7 +274,9 @@ export function CardDetail({ card, userId, onClose, onChanged }: Props) {
           </div>
 
           <p className="card-detail__note">
-            当前原型：升级只消耗经验，经验来自熔入重复卡；进阶材料、金币和阀门后续接入。
+            {readOnly
+              ? "图鉴数据 · 基础数值（Lv.1 / 0 命座），实际养成的卡面以卡册为准。"
+              : "当前原型：升级只消耗经验，经验来自熔入重复卡；进阶材料、金币和阀门后续接入。"}
           </p>
 
           {current.profileUrl && (

@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, getTableColumns, ilike, sql } from "drizzle-orm"
+import { and, asc, count, desc, eq, getTableColumns, ilike, notLike, sql } from "drizzle-orm"
 import type { FastifyInstance } from "fastify"
 import { z } from "zod"
 
@@ -31,10 +31,10 @@ export async function cardRoutes(app: FastifyInstance) {
       })
       .parse(request.query)
 
-    const filters = []
+    const filters = [notLike(cards.id, "hero-%")]
     if (query.rarity) filters.push(eq(cards.rarity, query.rarity))
     if (query.q) filters.push(ilike(cards.name, `%${query.q}%`))
-    const where = filters.length > 0 ? and(...filters) : undefined
+    const where = and(...filters)
 
     const orderBy =
       query.sort === "rarity"
@@ -57,6 +57,23 @@ export async function cardRoutes(app: FastifyInstance) {
       .where(where)
 
     return { ok: true, data: { rows, total: Number(total), limit: query.limit, offset: query.offset } }
+  })
+
+  app.get("/cards/stats", async () => {
+    const rows = await db
+      .select({ rarity: cards.rarity, value: count() })
+      .from(cards)
+      .where(notLike(cards.id, "hero-%"))
+      .groupBy(cards.rarity)
+
+    const byRarity: Record<string, number> = {}
+    let total = 0
+    for (const row of rows) {
+      const value = Number(row.value)
+      byRarity[row.rarity] = value
+      total += value
+    }
+    return { ok: true, data: { total, byRarity } }
   })
 
   app.get("/cards/:id", async (request, reply) => {

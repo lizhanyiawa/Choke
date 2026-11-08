@@ -6,10 +6,11 @@ import { faceFromDef } from "@/card/def"
 import { AlbumPanel } from "./AlbumPanel"
 import type { ApiUserCard } from "./api"
 import { BattlePanel } from "./BattlePanel"
+import { CodexPanel } from "./CodexPanel"
 import { DeckPanel } from "./DeckPanel"
 import { GachaPanel } from "./GachaPanel"
 
-export type PanelId = "album" | "deck" | "battle" | "packs" | "mainline" | "market" | "account"
+export type PanelId = "codex" | "album" | "deck" | "battle" | "packs" | "mainline" | "market" | "account"
 
 interface Entry {
   id: PanelId
@@ -18,6 +19,7 @@ interface Entry {
 }
 
 const ENTRIES: Entry[] = [
+  { id: "codex", label: "图鉴", sub: "CODEX" },
   { id: "album", label: "卡册", sub: "COLLECTION" },
   { id: "deck", label: "卡组", sub: "DECK" },
   { id: "battle", label: "战斗", sub: "BATTLE" },
@@ -189,6 +191,7 @@ export function CommandPanel({
             </header>
 
             <div className="command-drawer__body">
+              {panel === "codex" && <CodexPanel />}
               {panel === "album" && <AlbumPanel userId={userId} />}
               {panel === "deck" && <DeckPanel userId={userId} />}
               {panel === "battle" && <BattlePanel userId={userId} onOpenDeck={() => openPanel("deck")} />}
@@ -216,6 +219,13 @@ function PanelGlyph({ id }: { id: PanelId }) {
   } as const
 
   switch (id) {
+    case "codex":
+      return (
+        <svg viewBox="0 0 24 24">
+          <path d="M5 4.5h6.5A2.5 2.5 0 0 1 14 7v13H7.5A2.5 2.5 0 0 1 5 17.5z" {...line} />
+          <path d="M14 7a2.5 2.5 0 0 1 2.5-2.5H19v13h-2.5A2.5 2.5 0 0 0 14 20M8 8.5h3M8 12h3" {...line} />
+        </svg>
+      )
     case "album":
       return (
         <svg viewBox="0 0 24 24">
