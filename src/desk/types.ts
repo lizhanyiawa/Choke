@@ -7,6 +7,8 @@ export type PackPool = "normal" | "idle" | "quest" | "radiant" | "sky" | "prism"
 export interface CardData {
   /** 服务端卡牌 id；桌面本地原型卡没有 */
   cardId?: string
+  /** user_cards 实例 id；有它才能直接拖进卡组 */
+  userCardId?: number
   name: string
   mapper: string
   rarity: Rarity

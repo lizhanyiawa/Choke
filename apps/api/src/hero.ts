@@ -1,6 +1,7 @@
 import { JOB_ORDER, hashOf, skillsFor } from "../../../src/card/data"
 import type { Rarity } from "../../../src/card/types"
 import { heroIndex, heroStatsFromOsu } from "../../../src/pool/hero"
+import { fanCap, lowerRarity, rankCap } from "../../../src/pool/score"
 
 import type { OsuMe } from "./auth/osu"
 
@@ -26,7 +27,11 @@ export function heroCardDef(
   const seed = `${me.id}|${me.username}`
   const job = JOB_ORDER[hashOf(seed) % JOB_ORDER.length]
   const pp = pool?.pp ?? (me.statistics?.pp == null ? null : String(me.statistics.pp))
-  const rarity = (pool?.rarity as Rarity | undefined) ?? "C"
+  const poolRarity = (pool?.rarity as Rarity | undefined) ?? "C"
+  const rankLimited = rankCap(pool?.globalRank)
+  const fanLimited = fanCap(me.follower_count)
+  const cappedByRank = rankLimited ? lowerRarity(poolRarity, rankLimited) : poolRarity
+  const rarity = fanLimited ? lowerRarity(cappedByRank, fanLimited) : cappedByRank
 
   return {
     id: `hero-${me.id}`,

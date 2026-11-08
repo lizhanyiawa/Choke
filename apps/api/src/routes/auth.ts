@@ -157,8 +157,11 @@ export async function authRoutes(app: FastifyInstance) {
       ok: true,
       data: {
         id: user.id,
+        publicId: user.publicId,
         username: user.username,
         osuId: user.osuId,
+        avatarUrl: user.osuId == null ? null : `https://a.ppy.sh/${user.osuId}`,
+        profileUrl: user.osuId == null ? null : `https://osu.ppy.sh/users/${user.osuId}`,
         onboarded: user.onboarded,
         heroBonus: user.heroBonus,
         hero,

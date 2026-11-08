@@ -238,3 +238,25 @@ export function ppCap(
   if (countryRank <= PP_CAP.maxCountryRank && pp <= PP_CAP.maxPp) return PP_CAP.rarity
   return null
 }
+
+/**
+ * 世界排名 5000 之后最多 Epic。
+ * 公开榜单数据里没有稳定的粉丝数时，这是防止“纯排名”把冷门高排名玩家抬得过高。
+ */
+export const RANK_CAP = { maxRank: 5000, rarity: "E" as Rarity }
+
+export function rankCap(globalRank: number | null | undefined): Rarity | null {
+  if (globalRank == null) return null
+  return globalRank > RANK_CAP.maxRank ? RANK_CAP.rarity : null
+}
+
+/**
+ * 粉丝数少于 500 的玩家最高 Epic。
+ * 好友/粉丝数未知时返回 null，不做额外惩罚。
+ */
+export const FAN_CAP = { minFollowers: 500, rarity: "E" as Rarity }
+
+export function fanCap(followers: number | null | undefined): Rarity | null {
+  if (followers == null) return null
+  return followers < FAN_CAP.minFollowers ? FAN_CAP.rarity : null
+}

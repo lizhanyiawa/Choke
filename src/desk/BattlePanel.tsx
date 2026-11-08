@@ -40,10 +40,10 @@ export function BattlePanel({
   const cards = deck.slots.flatMap((slot) => (slot.card ? [slot.card] : []))
   const totalBp = cards.reduce((sum, card) => sum + battlePower(toFace(card)), 0)
 
-  if (cards.length < 7) {
+  if (cards.length === 0) {
     return (
       <div className="album-panel__empty">
-        <p>卡组还差 {7 - cards.length} 张</p>
+        <p>卡组里还没有卡</p>
         <button type="button" className="command-link" onClick={onOpenDeck}>
           去卡组
         </button>
@@ -57,8 +57,8 @@ export function BattlePanel({
         <span className="battle-intro__tag">PVE · PROTOTYPE</span>
         <b>练习对手 · 谱面幽灵</b>
         <p>
-          进入独立战斗界面：7 张卡、2 AP 起始、Combo、防御档位、敌方意图预告，
-          以及按 14 子职业分池的技能。
+          进入独立战斗界面：当前 {cards.length} 张卡、2 AP 起始、Combo、防御档位、敌方意图预告，
+          以及按 14 子职业分池的技能。卡组不满 7 张也可以出战。
         </p>
         <div className="battle-intro__stats">
           <div>

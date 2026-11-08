@@ -7,7 +7,7 @@ import { db } from "../db/client"
 import { cards, userCards, users } from "../db/schema"
 import { openPack } from "../gacha/open"
 import { POOL_NAMES, POOL_WEIGHTS, type PoolId } from "../gacha/pools"
-import { consumePack, getPackCounts, type PackPoolId } from "../packs/inventory"
+import { addPacks, consumePack, getPackCounts, type PackPoolId } from "../packs/inventory"
 
 const poolIds = Object.keys(POOL_WEIGHTS) as [PoolId, ...PoolId[]]
 
@@ -164,9 +164,9 @@ export async function packRoutes(app: FastifyInstance) {
       })
     }
 
-    const counts = await getPackCounts(userId)
     const pool = params.data.pool as PackPoolId
-    if ((counts[pool] ?? 0) <= 0) {
+    const consumed = await consumePack(userId, pool)
+    if (!consumed) {
       return reply.code(400).send({
         ok: false,
         error: { code: "no_packs", message: "背包里没有这个卡包" },
@@ -175,12 +175,13 @@ export async function packRoutes(app: FastifyInstance) {
 
     try {
       const result = await openPack(userId, params.data.pool, body.data.count ?? 5)
-      await consumePack(userId, pool)
       return {
         ok: true,
         data: { ...result, packs: await getPackCounts(userId) },
       }
     } catch (error) {
+      // 开包失败时把预扣的卡包还回去
+      await addPacks(userId, { [pool]: 1 })
       request.log.error(error)
       return reply.code(500).send({
         ok: false,

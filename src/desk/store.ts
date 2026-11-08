@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from "react"
+import { useCallback, useEffect, useReducer } from "react"
 import type { CardData, DeskItem, DeskState } from "./types"
 
 const KEY = "choke.desk.v2"
@@ -73,15 +73,23 @@ export function useDesk() {
     }
   }, [state])
 
-  return {
-    items: state.items,
-    move: (id: string, x: number, y: number) => dispatch({ type: "move", id, x, y }),
-    front: (id: string) => dispatch({ type: "front", id }),
-    spawn: (items: DeskItem[]) => dispatch({ type: "spawn", items }),
-    consumePack: (id: string) => dispatch({ type: "consumePack", id }),
-    collect: (id: string) => dispatch({ type: "collect", id }),
-    reset: () => dispatch({ type: "reset" }),
-  }
+  const move = useCallback(
+    (id: string, x: number, y: number) => dispatch({ type: "move", id, x, y }),
+    [],
+  )
+  const front = useCallback((id: string) => dispatch({ type: "front", id }), [])
+  const spawn = useCallback(
+    (items: DeskItem[]) => dispatch({ type: "spawn", items }),
+    [],
+  )
+  const consumePack = useCallback(
+    (id: string) => dispatch({ type: "consumePack", id }),
+    [],
+  )
+  const collect = useCallback((id: string) => dispatch({ type: "collect", id }), [])
+  const reset = useCallback(() => dispatch({ type: "reset" }), [])
+
+  return { items: state.items, move, front, spawn, consumePack, collect, reset }
 }
 
 export function cardsToItems(cards: CardData[], originX: number, originY: number): DeskItem[] {

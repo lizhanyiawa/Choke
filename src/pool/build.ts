@@ -10,7 +10,7 @@ import {
   RARITY_ORDER,
   sharesFromSeed,
 } from "./rarity"
-import { capRarity, jitterOf, lowerRarity, ppCap, scoreOf, type ScoreParts } from "./score"
+import { capRarity, fanCap, jitterOf, lowerRarity, ppCap, rankCap, scoreOf, type ScoreParts } from "./score"
 import type { GradeCounts, MutualifyRow, PoolCard, PoolShares } from "./types"
 
 export const POOL_SEED = 20261106
@@ -161,8 +161,12 @@ export function buildPool(raw: unknown, options: BuildOptions = {}): BuildResult
     const capped = capRarity(rolled, row.signal)
     const floor = countryFloor(row.countryRank, row.countrySize, floors)
     const lifted = floor ? higherRarity(capped, floor) : capped
-    const hardCap = ppCap(row.pp, row.countryRank)
-    const rarity = hardCap ? lowerRarity(lifted, hardCap) : lifted
+    const harderCap = ppCap(row.pp, row.countryRank)
+    const rankLimited = rankCap(row.globalRank)
+    const fanLimited = fanCap(row.followerCount)
+    const ppLimited = harderCap ? lowerRarity(lifted, harderCap) : lifted
+    const rankLimitedRarity = rankLimited ? lowerRarity(ppLimited, rankLimited) : ppLimited
+    const rarity = fanLimited ? lowerRarity(rankLimitedRarity, fanLimited) : rankLimitedRarity
     assigned[rarity] += 1
     return {
       osuId: row.osuId,

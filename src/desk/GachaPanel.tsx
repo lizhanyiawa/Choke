@@ -5,11 +5,12 @@ import { faceFromDef } from "@/card/def"
 import type { CardFaceData, CardSkill, Job, Rarity } from "@/card/types"
 
 import { fetchPackInventory } from "./api"
+import { DESK_ADD_CARDS_EVENT, PACKS_CHANGED_EVENT, setCardDrag, toDeskCard } from "./drag"
 import "./gacha-panel.css"
 
 const API = "/api"
 
-type PoolId = "normal" | "idle" | "golden" | "radiant" | "sky" | "prism"
+export type PoolId = "normal" | "idle" | "golden" | "radiant" | "sky" | "prism"
 
 interface Pool {
   id: PoolId
@@ -52,7 +53,7 @@ interface Pity {
 interface OpenResponse {
   ok: boolean
   data?: {
-    results: { cardId: string; rarity: Rarity; fromPity: boolean }[]
+    results: { cardId: string; rarity: Rarity; fromPity: boolean; userCardId: number }[]
     pity: Pity
     packs?: Record<string, number>
   }
@@ -85,9 +86,15 @@ function toFace(row: ApiCard): CardFaceData {
   })
 }
 
-export function GachaPanel({ userId }: { userId: string | null }) {
-  const [pool, setPool] = useState<PoolId>("normal")
-  const [cards, setCards] = useState<CardFaceData[]>([])
+export function GachaPanel({
+  userId,
+  initialPool = "normal",
+}: {
+  userId: string | null
+  initialPool?: PoolId
+}) {
+  const [pool, setPool] = useState<PoolId>(initialPool)
+  const [cards, setCards] = useState<(CardFaceData & { userCardId: number })[]>([])
   const [pity, setPity] = useState<Pity | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -144,6 +151,7 @@ export function GachaPanel({ userId }: { userId: string | null }) {
       const result = payload.data
       setPity(result.pity)
       if (result.packs) setPacks({ userId: userId!, data: result.packs })
+      window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
 
       const faces = await Promise.all(
         result.results.map(async (item) => {
@@ -160,7 +168,7 @@ export function GachaPanel({ userId }: { userId: string | null }) {
           if (!detailRes.ok || !detail?.ok || !detail.data) {
             throw new Error(detail?.error?.message ?? "卡详情加载失败")
           }
-          return toFace(detail.data)
+          return { ...toFace(detail.data), userCardId: item.userCardId }
         })
       )
 
@@ -173,6 +181,13 @@ export function GachaPanel({ userId }: { userId: string | null }) {
   }
 
   const emptySlots = Array.from({ length: 5 }, (_, index) => index)
+
+  const sendAllToDesk = () => {
+    if (!cards.length) return
+    const payload = cards.map((card) => toDeskCard(card, card.userCardId))
+    window.dispatchEvent(new CustomEvent(DESK_ADD_CARDS_EVENT, { detail: payload }))
+    setCards([])
+  }
 
   return (
     <div className="gacha-panel">
@@ -271,6 +286,15 @@ export function GachaPanel({ userId }: { userId: string | null }) {
         )}
       </div>
 
+      {cards.length > 0 && (
+        <div className="gacha-panel__result-bar">
+          <span>把卡面拖到左侧桌面，或</span>
+          <button type="button" onClick={sendAllToDesk}>
+            全部发到桌面
+          </button>
+        </div>
+      )}
+
       <div
         className="gacha-panel__results"
         aria-busy={loading}
@@ -292,8 +316,27 @@ export function GachaPanel({ userId }: { userId: string | null }) {
             ))
           : cards.length > 0
             ? cards.map((card, index) => (
-                <div className="gacha-panel__slot" key={`${card.id}-${index}`}>
+                <div
+                  className="gacha-panel__slot is-draggable"
+                  key={`${card.id}-${index}`}
+                  draggable
+                  onDragStart={(event) => {
+                    setCardDrag(
+                      event.nativeEvent,
+                      toDeskCard(card, card.userCardId),
+                    )
+                  }}
+                  onDragEnd={(event) => {
+                    if (event.dataTransfer.dropEffect === "copy") {
+                      setCards((current) =>
+                        current.filter((item) => item.userCardId !== card.userCardId),
+                      )
+                    }
+                  }}
+                  title="拖到桌面"
+                >
                   <CardFace card={card} />
+                  <span className="gacha-panel__drag-hint">拖到桌面</span>
                 </div>
               ))
             : emptySlots.map((index) => (

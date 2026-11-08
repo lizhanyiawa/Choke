@@ -9,7 +9,7 @@ import { BackpackPanel } from "./BackpackPanel"
 import { BattlePanel } from "./BattlePanel"
 import { CodexPanel } from "./CodexPanel"
 import { DeckPanel } from "./DeckPanel"
-import { GachaPanel } from "./GachaPanel"
+import { GachaPanel, type PoolId } from "./GachaPanel"
 
 export type PanelId = "codex" | "album" | "deck" | "backpack" | "battle" | "packs" | "mainline" | "market" | "account"
 
@@ -41,6 +41,8 @@ export interface PanelRequest {
 interface Props {
   userId: string | null
   username: string | null
+  publicId?: number | null
+  avatarUrl?: string | null
   hero?: ApiUserCard | null
   /** 桌面物件双击时直接进入的子界面（配合 key 重新挂载） */
   initialStage?: Stage
@@ -53,6 +55,8 @@ interface Props {
 export function CommandPanel({
   userId,
   username,
+  publicId = null,
+  avatarUrl = null,
   hero,
   initialStage = "closed",
   initialPanel = "album",
@@ -62,6 +66,7 @@ export function CommandPanel({
   const [stage, setStage] = useState<Stage>(initialStage)
   const [selected, setSelected] = useState<PanelId>(initialPanel)
   const [panel, setPanel] = useState<PanelId>(initialPanel)
+  const [gachaPool, setGachaPool] = useState<PoolId>("normal")
   const [leaving, setLeaving] = useState(false)
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -201,18 +206,23 @@ export function CommandPanel({
               {panel === "backpack" && (
                 <BackpackPanel
                   userId={userId}
-                  onOpenGacha={() => openPanel("packs")}
+                  onOpenGacha={(pool) => {
+                    setGachaPool(pool as PoolId)
+                    openPanel("packs")
+                  }}
                   onHeroClaimed={onHeroClaimed}
                 />
               )}
               {panel === "battle" && <BattlePanel userId={userId} onOpenDeck={() => openPanel("deck")} />}
-              {panel === "packs" && <GachaPanel userId={userId} />}
+              {panel === "packs" && <GachaPanel userId={userId} initialPool={gachaPool} />}
               {panel === "mainline" && <MainlinePanel />}
               {panel === "market" && <MarketPanel />}
               {panel === "account" && (
                 <AccountPanel
                   userId={userId}
                   username={username}
+                  publicId={publicId}
+                  avatarUrl={avatarUrl}
                   hero={hero}
                   onLogout={onLogout}
                   onOpenBackpack={() => openPanel("backpack")}
@@ -337,16 +347,22 @@ function MarketPanel() {
 function AccountPanel({
   userId,
   username,
+  publicId,
+  avatarUrl,
   hero,
   onLogout,
   onOpenBackpack,
 }: {
   userId: string | null
   username: string | null
+  publicId?: number | null
+  avatarUrl?: string | null
   hero?: ApiUserCard | null
   onLogout?: () => void
   onOpenBackpack?: () => void
 }) {
+  const [avatarError, setAvatarError] = useState(false)
+
   if (!username) {
     return (
       <div className="command-section">
@@ -362,13 +378,40 @@ function AccountPanel({
   return (
     <div className="command-section">
       <div className="command-account">
-        <div className="command-account__avatar" aria-hidden>
-          {username.slice(0, 1).toUpperCase()}
+        <div className="command-account__avatar">
+          {avatarUrl && !avatarError ? (
+            <img
+              src={avatarUrl}
+              alt=""
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              onError={() => setAvatarError(true)}
+            />
+          ) : (
+            username.slice(0, 1).toUpperCase()
+          )}
         </div>
         <div className="command-account__text">
           <b>{username}</b>
-          <em>{userId}</em>
+          <em>
+            {publicId != null ? `CHOKE ID #${String(publicId).padStart(6, "0")}` : userId}
+          </em>
         </div>
+      </div>
+
+      <div className="command-account__meta">
+        {userId?.startsWith("osu-") ? (
+          <a
+            className="command-account__link"
+            href={`https://osu.ppy.sh/users/${userId.replace("osu-", "")}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            osu! 主页
+          </a>
+        ) : (
+          <span className="command-account__link">演示账号</span>
+        )}
       </div>
 
       {hero ? (

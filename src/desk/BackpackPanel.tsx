@@ -10,6 +10,7 @@ import {
   type ApiUserCard,
   type PackInventory,
 } from "./api"
+import { PACKS_CHANGED_EVENT } from "./drag"
 import "./backpack-panel.css"
 
 interface PackMeta {
@@ -17,17 +18,24 @@ interface PackMeta {
   label: string
   note: string
   color: string
+  pool?: string
   mystery?: boolean
 }
 
 const PACKS: PackMeta[] = [
-  { id: "mystery", label: "神秘卡包", note: "只有 1 张卡：你的本体卡", color: "#ed5f9f", mystery: true },
-  { id: "normal", label: "普通卡包", note: "日常主力 · 5 张", color: "#e5484d" },
-  { id: "idle", label: "挂机卡包", note: "低稀有度 · 5 张", color: "#3cbadb" },
-  { id: "golden", label: "黄金卡包", note: "任务产出 · 5 张", color: "#ffc24b" },
-  { id: "radiant", label: "璀璨卡包", note: "周常奖励 · 5 张", color: "#b98cff" },
-  { id: "sky", label: "天穹卡包", note: "月常奖励 · 5 张", color: "#21e985" },
-  { id: "prism", label: "棱彩卡包", note: "赛季牌面 · 5 张", color: "#f4f4f6" },
+  {
+    id: "mystery",
+    label: "神秘卡包",
+    note: "只有 1 张卡：你的本体卡",
+    color: "#ed5f9f",
+    mystery: true,
+  },
+  { id: "normal", label: "普通卡包", note: "日常主力 · 每包 5 张", color: "#e5484d", pool: "normal" },
+  { id: "idle", label: "挂机卡包", note: "低稀有度 · 每包 5 张", color: "#3cbadb", pool: "idle" },
+  { id: "golden", label: "黄金卡包", note: "任务产出 · 每包 5 张", color: "#ffc24b", pool: "golden" },
+  { id: "radiant", label: "璀璨卡包", note: "周常奖励 · 每包 5 张", color: "#b98cff", pool: "radiant" },
+  { id: "sky", label: "天穹卡包", note: "月常奖励 · 每包 5 张", color: "#21e985", pool: "sky" },
+  { id: "prism", label: "棱彩卡包", note: "赛季牌面 · 每包 5 张", color: "#f4f4f6", pool: "prism" },
 ]
 
 const QUESTIONS = [
@@ -51,7 +59,7 @@ export function BackpackPanel({
   onHeroClaimed,
 }: {
   userId: string | null
-  onOpenGacha: () => void
+  onOpenGacha: (pool: string) => void
   onHeroClaimed?: () => void
 }) {
   const [inventory, setInventory] = useState<PackInventory | null>(null)
@@ -88,6 +96,8 @@ export function BackpackPanel({
 
   const counts = inventory?.packs ?? {}
   const heroClaimed = inventory?.heroClaimed ?? !!hero
+  const totalPacks = Object.values(counts).reduce((sum, value) => sum + (value ?? 0), 0)
+  const mysteryCount = counts.mystery ?? 0
   const heroFace = useMemo(() => (hero ? toFace(hero) : result ? toFace(result) : null), [hero, result])
 
   async function submitAnswers() {
@@ -104,6 +114,7 @@ export function BackpackPanel({
           : current,
       )
       setQuestionStep(null)
+      window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
       onHeroClaimed?.()
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "开启神秘卡包失败")
@@ -126,9 +137,24 @@ export function BackpackPanel({
       <div className="backpack-head">
         <div>
           <span>BACKPACK · PACKS</span>
-          <b>背包</b>
+          <b>卡包库存</b>
         </div>
         <p>卡包在开包时消耗；神秘卡包只出你的本体卡。</p>
+      </div>
+
+      <div className="backpack-summary">
+        <div>
+          <span>卡包总数</span>
+          <b>{totalPacks}</b>
+        </div>
+        <div>
+          <span>神秘卡包</span>
+          <b>{mysteryCount}</b>
+        </div>
+        <div>
+          <span>本体卡</span>
+          <b>{heroClaimed ? "已获得" : "待开启"}</b>
+        </div>
       </div>
 
       {error && <div className="backpack-error">{error}</div>}
@@ -142,14 +168,17 @@ export function BackpackPanel({
             : count <= 0
 
           return (
-            <div
+            <article
               className={`backpack-pack ${isMystery ? "is-mystery" : ""} ${count <= 0 ? "is-empty" : ""}`}
               key={pack.id}
             >
+              <div className="backpack-pack__art" aria-hidden>
+                <img src="/brand/choke-icon.svg" alt="" />
+                <em>×{count}</em>
+              </div>
               <div className="backpack-pack__top">
                 <span className="backpack-pack__dot" style={{ background: pack.color }} aria-hidden />
                 <b>{pack.label}</b>
-                <em>×{count}</em>
               </div>
               <p>{pack.note}</p>
               <div className="backpack-pack__foot">
@@ -171,21 +200,21 @@ export function BackpackPanel({
                       }}
                       disabled={disabled}
                     >
-                      开启神秘卡包
+                      {count > 0 ? "开启神秘卡包" : "没有神秘卡包"}
                     </button>
                   )
                 ) : (
                   <button
                     type="button"
                     className="backpack-pack__open"
-                    onClick={onOpenGacha}
+                    onClick={() => onOpenGacha(pack.pool ?? "normal")}
                     disabled={disabled}
                   >
-                    {count > 0 ? "去抽卡" : "没有卡包"}
+                    {count > 0 ? `去抽${pack.label.replace("卡包", "")}` : "没有卡包"}
                   </button>
                 )}
               </div>
-            </div>
+            </article>
           )
         })}
       </div>
@@ -210,10 +239,17 @@ export function BackpackPanel({
         <div className="backpack-modal" role="dialog" aria-modal="true" aria-label="神秘卡包问卷">
           <div className="backpack-modal__panel">
             <div className="backpack-modal__head">
-              <span>MYSTERY PACK · {questionStep + 1} / {QUESTIONS.length}</span>
+              <span>
+                MYSTERY PACK · {questionStep + 1} / {QUESTIONS.length}
+              </span>
               <button type="button" onClick={() => setQuestionStep(null)} aria-label="关闭">
                 ×
               </button>
+            </div>
+            <div className="backpack-modal__progress" aria-hidden>
+              {QUESTIONS.map((item, index) => (
+                <span key={item.title} className={index <= questionStep ? "is-on" : ""} />
+              ))}
             </div>
             <h3>{QUESTIONS[questionStep]?.title}</h3>
             <div className="backpack-modal__options">
@@ -236,7 +272,9 @@ export function BackpackPanel({
               <button
                 type="button"
                 className="backpack-modal__ghost"
-                onClick={() => setQuestionStep((step) => (step === null ? null : Math.max(0, step - 1)))}
+                onClick={() =>
+                  setQuestionStep((step) => (step === null ? null : Math.max(0, step - 1)))
+                }
                 disabled={questionStep === 0 || opening}
               >
                 上一步

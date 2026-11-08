@@ -295,6 +295,58 @@
   align-items: start;
 }
 
+.gacha-panel__result-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: -4px;
+  color: #8ea9c9;
+  font-size: 11px;
+}
+
+.gacha-panel__result-bar button {
+  height: 28px;
+  padding: 0 11px;
+  border: 1.5px solid rgba(60, 186, 219, 0.45);
+  border-radius: 999px;
+  background: rgba(60, 186, 219, 0.08);
+  color: #9fd9ea;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.gacha-panel__result-bar button:hover {
+  background: #3cbadb;
+  border-color: #3cbadb;
+  color: #0b0d10;
+}
+
+.gacha-panel__slot.is-draggable {
+  cursor: grab;
+}
+
+.gacha-panel__slot.is-draggable:active {
+  cursor: grabbing;
+}
+
+.gacha-panel__drag-hint {
+  display: block;
+  margin-top: 6px;
+  color: #7f8da3;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.14s ease;
+}
+
+.gacha-panel__slot.is-draggable:hover .gacha-panel__drag-hint {
+  opacity: 1;
+}
+
 .gacha-panel__slot {
   min-width: 0;
 }

@@ -44,6 +44,10 @@ export const users = pgTable("users", {
   id: text("id").primaryKey(),
   username: text("username").notNull(),
   osuId: bigint("osu_id", { mode: "number" }).unique(),
+  /** 对外展示的 Choke! 数字 ID，与 osu! id 解耦 */
+  publicId: integer("public_id")
+    .notNull()
+    .default(sql`nextval('users_public_id_seq')`),
   /** 是否完成新手引导；引导完成后才激活本体卡个人加成 */
   onboarded: boolean("onboarded").notNull().default(false),
   /** 由 /me/osu 算出的个人加成（basis point），0–2000 */

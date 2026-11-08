@@ -42,17 +42,44 @@
   color: #ff9ac6;
   font-size: 11px;
 }
+.backpack-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.backpack-summary > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 13px;
+  border: 1.5px solid rgba(60, 186, 219, 0.2);
+  border-radius: 11px;
+  background: rgba(17, 29, 53, 0.55);
+}
+.backpack-summary span {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #8ea9c9;
+}
+.backpack-summary b {
+  font-family: "Fredoka", "Outfit", sans-serif;
+  font-size: 22px;
+  line-height: 1;
+  color: #f4f4f6;
+}
 .backpack-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 12px;
 }
 .backpack-pack {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  min-height: 148px;
-  padding: 14px;
+  min-height: 0;
+  padding: 13px;
   border: 2px solid #14244a;
   border-radius: 14px;
   background: rgba(17, 29, 53, 0.8);
@@ -65,6 +92,36 @@
 }
 .backpack-pack.is-empty {
   opacity: 0.55;
+}
+.backpack-pack__art {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 72px;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(60, 186, 219, 0.16), transparent 65%),
+    rgba(11, 13, 16, 0.35);
+  overflow: hidden;
+}
+.backpack-pack.is-mystery .backpack-pack__art {
+  background:
+    radial-gradient(circle at 50% 40%, rgba(237, 95, 159, 0.28), transparent 65%),
+    rgba(11, 13, 16, 0.35);
+}
+.backpack-pack__art img {
+  width: 42px;
+  opacity: 0.9;
+}
+.backpack-pack__art em {
+  position: absolute;
+  right: 10px;
+  bottom: 7px;
+  font-style: normal;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  color: #f4f4f6;
 }
 .backpack-pack__top {
   display: flex;
@@ -229,6 +286,20 @@
   font-family: "Fredoka", "Outfit", sans-serif;
   font-size: 24px;
   line-height: 1.2;
+}
+.backpack-modal__progress {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.backpack-modal__progress span {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(60, 186, 219, 0.16);
+}
+.backpack-modal__progress span.is-on {
+  background: linear-gradient(90deg, #ed5f9f, #3cbadb);
 }
 .backpack-modal__options {
   display: flex;

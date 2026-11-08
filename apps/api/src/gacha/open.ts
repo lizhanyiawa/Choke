@@ -33,6 +33,8 @@ export interface DrawnCard {
   cardId: string
   rarity: string
   fromPity: boolean
+  /** user_cards 实例 id，用于把这张卡直接拖进卡组 */
+  userCardId: number
 }
 
 export async function openPack(userId: string, pool: PoolId, count = 5) {
@@ -73,8 +75,11 @@ export async function openPack(userId: string, pool: PoolId, count = 5) {
       }
       const cardId = ids[Math.floor(random() * ids.length)]!
 
-      results.push({ cardId, rarity, fromPity })
-      await tx.insert(userCards).values({ userId, cardId })
+      const [inserted] = await tx
+        .insert(userCards)
+        .values({ userId, cardId })
+        .returning({ id: userCards.id })
+      results.push({ cardId, rarity, fromPity, userCardId: inserted!.id })
     }
 
     await tx

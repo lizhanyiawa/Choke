@@ -46,6 +46,7 @@ export interface OsuMe {
   username: string
   avatar_url: string
   country_code: string
+  follower_count?: number
   cover?: { url?: string | null } | null
   ranked_beatmapset_count?: number
   user_achievements?: readonly unknown[]

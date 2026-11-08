@@ -77,13 +77,13 @@ export function BattlePage() {
 
   const cards = deck.slots.flatMap((slot) => (slot.card ? [slot.card] : []))
 
-  if (cards.length < 7) {
+  if (cards.length === 0) {
     return (
       <div className="battle-page battle-page--center">
         <div className="battle-gate">
           <span>CHOKE! · BATTLE</span>
-          <h1>卡组还差 {7 - cards.length} 张</h1>
-          <p>先回桌面把 7 个槽位填满。</p>
+          <h1>卡组里还没有卡</h1>
+          <p>回桌面，把卡拖进卡组；至少 1 张就能出战。</p>
           <a href="/">回桌面</a>
         </div>
       </div>
@@ -110,7 +110,7 @@ export function BattlePage() {
         <div className="battle-gate">
           <span>PVE · PROTOTYPE</span>
           <h1>练习对手 · 谱面幽灵</h1>
-          <p>7 张主队卡、AP 2 起始、Combo、防御档位和敌方意图预告。</p>
+          <p>当前 {cards.length} 张主队卡、AP 2 起始、Combo、防御档位和敌方意图预告。</p>
           <div className="battle-gate__stats">
             <div>
               <span>卡组</span>

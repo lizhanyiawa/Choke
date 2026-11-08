@@ -4,6 +4,14 @@ import { CardFace } from "@/card/CardFace"
 import { cardFromDesk } from "./cardFace"
 import { CommandPanel, type PanelId, type PanelRequest } from "./CommandPanel"
 import { toFace, type ApiUserCard } from "./api"
+import {
+  CARD_MIME,
+  DESK_ADD_CARDS_EVENT,
+  DECK_ASSIGN_EVENT,
+  DECK_HOVER_EVENT,
+  PACKS_CHANGED_EVENT,
+  readCardDrag,
+} from "./drag"
 import { POOL_META, POOL_ORDER } from "./rarity"
 import { DEFAULT_SKIN } from "./skins"
 import { SidePanel } from "./SidePanel"
@@ -29,7 +37,11 @@ const SERVER_POOL: Record<PackPool, string> = {
 
 interface OpenResponse {
   ok: boolean
-  data?: { results: { cardId: string }[]; pity: { before: number; after: number } }
+  data?: {
+    results: { cardId: string; userCardId: number }[]
+    pity: { before: number; after: number }
+    packs?: Record<string, number>
+  }
   error?: { message?: string }
 }
 
@@ -81,8 +93,21 @@ export function DeskPage() {
   const [quickTargets, setQuickTargets] = useState<Record<string, { left: number; top: number }> | null>(null)
   const [albumPulse, setAlbumPulse] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
-  const [user, setUser] = useState<{ id: string; username: string; hero: ApiUserCard | null } | null>(null)
+  const [user, setUser] = useState<{
+    id: string
+    username: string
+    publicId: number | null
+    avatarUrl: string | null
+    hero: ApiUserCard | null
+  } | null>(null)
+  const [packState, setPackState] = useState<{
+    userId: string
+    data: Record<string, number>
+  } | null>(null)
   const [panelRequest, setPanelRequest] = useState<PanelRequest | null>(null)
+  const [panelEpoch, setPanelEpoch] = useState(0)
+  const [deskClosed, setDeskClosed] = useState(false)
+  const [deskDropActive, setDeskDropActive] = useState(false)
   const dropRef = useRef<string | null>(null)
   const collectTimer = useRef<number | null>(null)
   const quickTimer = useRef<number | null>(null)
@@ -105,7 +130,14 @@ export function DeskPage() {
     fetch("/auth/me", { credentials: "include" })
       .then((r) => r.json())
       .then((d) => {
-        if (d.ok) setUser({ id: d.data.id, username: d.data.username, hero: d.data.hero ?? null })
+        if (d.ok)
+          setUser({
+            id: d.data.id,
+            username: d.data.username,
+            publicId: d.data.publicId ?? null,
+            avatarUrl: d.data.avatarUrl ?? null,
+            hero: d.data.hero ?? null,
+          })
         else setUser(null)
       })
       .catch(() => {})
@@ -115,6 +147,26 @@ export function DeskPage() {
     refreshUser()
   }, [refreshUser])
 
+  const refreshPacks = useCallback(() => {
+    if (!user) return
+    fetch(`/api/users/${user.id}/packs`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok) setPackState({ userId: user.id, data: d.data.packs })
+      })
+      .catch(() => {})
+  }, [user])
+
+  useEffect(() => {
+    refreshPacks()
+  }, [refreshPacks])
+
+  useEffect(() => {
+    const handler = () => refreshPacks()
+    window.addEventListener(PACKS_CHANGED_EVENT, handler)
+    return () => window.removeEventListener(PACKS_CHANGED_EVENT, handler)
+  }, [refreshPacks])
+
   const logout = () => {
     fetch("/auth/logout", { method: "POST", credentials: "include" })
       .catch(() => {})
@@ -122,7 +174,13 @@ export function DeskPage() {
   }
 
   const requestPanel = (id: PanelId) => {
+    setDeskClosed(false)
     setPanelRequest((prev) => ({ id, n: (prev?.n ?? 0) + 1 }))
+  }
+
+  const closeDrawer = () => {
+    setDeskClosed(true)
+    setPanelEpoch((value) => value + 1)
   }
 
   useEffect(() => {
@@ -145,11 +203,63 @@ export function DeskPage() {
     }
   }, [])
 
-  const showToast = (text: string) => {
+  const showToast = useCallback((text: string) => {
     setToast(text)
     if (toastTimer.current) window.clearTimeout(toastTimer.current)
     toastTimer.current = window.setTimeout(() => setToast(null), 1600)
-  }
+  }, [])
+
+  const itemsRef = useRef(items)
+  useEffect(() => {
+    itemsRef.current = items
+  }, [items])
+
+  const spawnCards = useCallback(
+    (cards: CardData[], clientX?: number, clientY?: number) => {
+      if (!cards.length) return
+      const stage = stageRef.current
+      if (!stage) return
+      const rect = stage.getBoundingClientRect()
+      const size = ITEM_SIZE.card
+      const originX = clientX == null ? rect.width * 0.12 : clientX - rect.left
+      const originY = clientY == null ? rect.height * 0.32 : clientY - rect.top
+      const step = 0.06
+      const startX =
+        (originX - size.w / 2 - ((cards.length - 1) * step * rect.width) / 2) / rect.width
+      const topZ = Math.max(0, ...itemsRef.current.map((item) => item.z)) + 1
+      const next = cards.map((card, index) => {
+        const x = Math.min(
+          Math.max(startX + index * step, 0.02),
+          0.98 - size.w / rect.width,
+        )
+        const y = Math.min(
+          Math.max((originY - size.h / 2) / rect.height + (index % 2) * 0.012, 0.02),
+          0.98 - size.h / rect.height,
+        )
+        return {
+          id: newId("card"),
+          kind: "card" as const,
+          x,
+          y,
+          z: topZ + index,
+          card,
+        }
+      })
+      spawn(next)
+    },
+    [spawn],
+  )
+
+  useEffect(() => {
+    const onAddCards = (event: Event) => {
+      const cards = (event as CustomEvent<CardData[]>).detail
+      if (!Array.isArray(cards) || cards.length === 0) return
+      spawnCards(cards)
+      showToast(`已发到桌面 ×${cards.length}`)
+    }
+    window.addEventListener(DESK_ADD_CARDS_EVENT, onAddCards)
+    return () => window.removeEventListener(DESK_ADD_CARDS_EVENT, onAddCards)
+  }, [spawnCards, showToast])
 
   const collectCard = (item: DeskItem, album: DeskItem) => {
     const stage = stageRef.current
@@ -198,6 +308,19 @@ export function DeskPage() {
 
   const spawnPack = () => {
     const meta = POOL_META[pool]
+    if (!user) {
+      showToast("请先用 osu! 登录")
+      return
+    }
+    const serverPool = SERVER_POOL[pool]
+    const owned = packState && packState.userId === user.id ? (packState.data[serverPool] ?? 0) : 0
+    const onDesk = items.filter(
+      (item) => item.kind === "pack" && (item.pool ?? "normal") === pool,
+    ).length
+    if (owned - onDesk <= 0) {
+      showToast(`背包里没有${meta.label}`)
+      return
+    }
     const topZ = Math.max(0, ...items.map((it) => it.z)) + 1
     const packCount = items.filter((it) => it.kind === "pack").length
     const offset = ((packCount % 3) - 1) * 0.045
@@ -232,6 +355,8 @@ export function DeskPage() {
         }
       : null
     let moved = false
+    let deckSlot: number | null = null
+    const canAssign = item.kind === "card" && item.card?.userCardId != null
     front(item.id)
     setDragId(item.id)
 
@@ -243,6 +368,19 @@ export function DeskPage() {
       const nx = Math.min(Math.max(originX + dx, 0), rect.width - size.w)
       const ny = Math.min(Math.max(originY + dy, 0), rect.height - size.h)
       move(item.id, nx / rect.width, ny / rect.height)
+
+      if (canAssign) {
+        const slotEl = document
+          .elementsFromPoint(ev.clientX, ev.clientY)
+          .map((el) => el.closest<HTMLElement>("[data-slot]"))
+          .find((el): el is HTMLElement => !!el)
+        const parsed = slotEl ? Number(slotEl.dataset.slot) : Number.NaN
+        const next = Number.isInteger(parsed) ? parsed : null
+        if (next !== deckSlot) {
+          deckSlot = next
+          window.dispatchEvent(new CustomEvent(DECK_HOVER_EVENT, { detail: next }))
+        }
+      }
 
       if (item.kind === "card" && !item.card?.isHero && albumHit) {
         const hit =
@@ -261,9 +399,19 @@ export function DeskPage() {
       window.removeEventListener("pointermove", onMove)
       window.removeEventListener("pointerup", onUp)
       setDragId(null)
+      window.dispatchEvent(new CustomEvent(DECK_HOVER_EVENT, { detail: null }))
       const dropId = dropRef.current
       dropRef.current = null
       setDropTarget(null)
+      if (deckSlot != null && item.card?.userCardId != null) {
+        window.dispatchEvent(
+          new CustomEvent(DECK_ASSIGN_EVENT, {
+            detail: { userCardId: item.card.userCardId, slot: deckSlot },
+          }),
+        )
+        showToast(`已放入卡组第 ${deckSlot + 1} 槽`)
+        return
+      }
       if (dropId && album && item.kind === "card" && !item.card?.isHero) {
         collectCard(item, album)
         return
@@ -310,6 +458,9 @@ export function DeskPage() {
           showToast(payload.error?.message ?? "开包失败")
           return
         }
+        if (payload.data.packs && user) {
+          setPackState({ userId: user.id, data: payload.data.packs })
+        }
 
         const cards: CardData[] = await Promise.all(
           payload.data.results.map(async (result) => {
@@ -321,6 +472,7 @@ export function DeskPage() {
             const row = detail.data
             return {
               cardId: row.id,
+              userCardId: result.userCardId,
               name: row.name,
               mapper: row.name,
               rarity: row.rarity,
@@ -353,6 +505,21 @@ export function DeskPage() {
     setOpening(null)
   }
 
+  const dropOpeningCard = (card: CardData) => {
+    if (!opening) return
+    const left = opening.cards.filter(
+      (item) => !(item.cardId === card.cardId && item.userCardId === card.userCardId),
+    )
+    spawnCards([card])
+    showToast(`${card.name} · 已放到桌面`)
+    if (left.length === 0) {
+      consumePack(opening.pack.id)
+      setOpening(null)
+      return
+    }
+    setOpening({ ...opening, cards: left })
+  }
+
   const quickFinishOpening = () => {
     if (!opening) return
     consumePack(opening.pack.id)
@@ -364,6 +531,14 @@ export function DeskPage() {
 
   const cardPx = useMemo(() => stageSize, [stageSize])
   const visibleItems = items.filter((item) => !(item.card?.isHero && !user?.hero))
+  const poolPacks =
+    packState && packState.userId === user?.id
+      ? (packState.data[SERVER_POOL[pool]] ?? 0)
+      : 0
+  const spawnedPacks = items.filter(
+    (item) => item.kind === "pack" && (item.pool ?? "normal") === pool,
+  ).length
+  const drawAvailable = !!user && poolPacks - spawnedPacks > 0
   const queryPanel = new URLSearchParams(window.location.search).get("panel") as PanelId | null
   const requestedPanel =
     queryPanel && (["codex", "album", "deck", "backpack", "battle", "packs", "mainline", "market", "account"] as PanelId[]).includes(queryPanel)
@@ -407,8 +582,29 @@ export function DeskPage() {
 
       <main
         ref={stageRef}
-        className="desk-stage"
+        className={`desk-stage ${deskDropActive ? "is-card-drop" : ""}`}
         style={{ "--desk-bg": DEFAULT_SKIN.background, "--desk-edge": DEFAULT_SKIN.edge } as CSSProperties}
+        onDragOver={(event) => {
+          if (!Array.from(event.dataTransfer.types).includes(CARD_MIME)) return
+          event.preventDefault()
+          event.dataTransfer.dropEffect = "copy"
+          if (!deskDropActive) setDeskDropActive(true)
+        }}
+        onDragLeave={(event) => {
+          if (event.target === event.currentTarget) setDeskDropActive(false)
+        }}
+        onDrop={(event) => {
+          const card = readCardDrag(event.nativeEvent)
+          if (!card) return
+          event.preventDefault()
+          setDeskDropActive(false)
+          spawnCards([card], event.clientX, event.clientY)
+          showToast(`${card.name} · 已放到桌面`)
+        }}
+        onDoubleClick={(event) => {
+          if ((event.target as HTMLElement).closest(".desk-item, .command-panel, .command-tab")) return
+          closeDrawer()
+        }}
       >
         {visibleItems.map((item, index) => {
           const size = ITEM_SIZE[item.kind]
@@ -487,14 +683,23 @@ export function DeskPage() {
             )
           })()}
 
+        {deskDropActive && (
+          <div className="desk-card-drop" aria-hidden>
+            <span>松开</span>
+            <b>放到桌面</b>
+          </div>
+        )}
+
         <SidePanel side="left" title="Choke!" rows={[]} />
 
         <CommandPanel
-          key={panelRequest?.n ?? 0}
-          initialStage={panelRequest || requestedPanel ? "open" : "closed"}
+          key={`${panelRequest?.n ?? 0}-${panelEpoch}`}
+          initialStage={deskClosed ? "closed" : panelRequest || requestedPanel ? "open" : "closed"}
           initialPanel={panelRequest?.id ?? requestedPanel ?? "album"}
           userId={user?.id ?? null}
           username={user?.username ?? null}
+          publicId={user?.publicId ?? null}
+          avatarUrl={user?.avatarUrl ?? null}
           hero={user?.hero ?? null}
           onLogout={logout}
           onHeroClaimed={refreshUser}
@@ -513,6 +718,8 @@ export function DeskPage() {
             type="button"
             className="desk-draw__button"
             onClick={spawnPack}
+            disabled={!drawAvailable}
+            title={drawAvailable ? "从背包发一张卡包到桌面" : "背包里没有这个卡包"}
             aria-label={`发一张${POOL_META[pool].label}的卡包到桌面`}
           >
             <span className="desk-draw__shine" aria-hidden />
@@ -556,6 +763,7 @@ export function DeskPage() {
               onDone={finishOpening}
               onQuick={quickFinishOpening}
               onCancel={() => setOpening(null)}
+              onDropCard={dropOpeningCard}
             />
           </div>
         ))}

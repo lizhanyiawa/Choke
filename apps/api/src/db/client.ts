@@ -39,10 +39,16 @@ CREATE TABLE IF NOT EXISTS users (
   id text PRIMARY KEY,
   username text NOT NULL,
   osu_id bigint UNIQUE,
+  public_id integer,
   onboarded boolean NOT NULL DEFAULT false,
   hero_bonus integer NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE SEQUENCE IF NOT EXISTS users_public_id_seq;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS public_id integer;
+ALTER TABLE users ALTER COLUMN public_id SET DEFAULT nextval('users_public_id_seq');
+UPDATE users SET public_id = nextval('users_public_id_seq') WHERE public_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS users_public_id_idx ON users (public_id);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarded boolean NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS hero_bonus integer NOT NULL DEFAULT 0;
 
