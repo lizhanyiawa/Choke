@@ -7,7 +7,7 @@
 打开 https://osu.ppy.sh/home/account/edit#new-oauth-application ，注册一个应用。
 
 - Application Name：随便，比如 `Choke Pool Sync`
-- Callback URL：留空即可，client credentials 用不到
+- Callback URL：如果这个应用也要用于游戏登录，必须精确填写 `http://localhost:3100/auth/osu/callback`，不能留空；仅做数据同步（client credentials）时回调不参与流程，但建议和登录应用保持一致
 
 拿到 Client ID 和 Client Secret。
 

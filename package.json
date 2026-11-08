@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "pnpm --filter @choke/api run dev",
+    "import:sample": "pnpm --filter @choke/api exec tsx scripts/import-cards.ts samples/sample-cards.json",
+    "import:cards": "pnpm --filter @choke/api exec tsx scripts/import-cards.ts data/choke-cards.json --replace",
+    "build:cards": "pnpm --filter @choke/api exec tsx ../../scripts/build-cards.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
