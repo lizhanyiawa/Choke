@@ -151,6 +151,11 @@
 .desk-item.is-lifted {
   visibility: hidden;
 }
+/* 收进抽屉：空壳留在层里（免得拖回来时重播落桌动画），看不见也点不到 */
+.desk-item.is-stowed {
+  visibility: hidden;
+  pointer-events: none;
+}
 .desk-item.is-collecting {
   pointer-events: none;
   animation: none;

@@ -40,6 +40,8 @@ export interface DeskItem {
   card?: CardData
   /** kind === "object" 时是哪件物件 */
   object?: DeskObjectId
+  /** 物件收进了桌沿的抽屉：桌面上不画它，x/y 留着收起前的位置。旧存档没有这个字段 = 在桌上 */
+  stowed?: boolean
 }
 
 export interface DeskState {
