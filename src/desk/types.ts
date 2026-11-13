@@ -1,6 +1,8 @@
+import type { DeskObjectId } from "./objects"
+
 export type Rarity = "C" | "UC" | "R" | "E" | "L" | "Radiant" | "Prismatic"
 
-export type ItemKind = "album" | "pack" | "card" | "market"
+export type ItemKind = "pack" | "card" | "object"
 
 export type PackPool = "normal" | "idle" | "quest" | "radiant" | "sky" | "prism"
 
@@ -32,6 +34,8 @@ export interface DeskItem {
   /** 从背包拿到桌面时的一次性 token；旧存档可能没有 */
   token?: string
   card?: CardData
+  /** kind === "object" 时是哪件物件 */
+  object?: DeskObjectId
 }
 
 export interface DeskState {

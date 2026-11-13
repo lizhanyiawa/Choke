@@ -1,28 +1,62 @@
 import { useCallback, useEffect, useReducer } from "react"
+
+import { OBJECT_META, OBJECT_ORDER, type DeskObjectId } from "./objects"
 import type { CardData, DeskItem, DeskState } from "./types"
 
 const KEY = "choke.desk.v2"
 
-export const ITEM_SIZE: Record<DeskItem["kind"], { w: number; h: number }> = {
-  album: { w: 150, h: 200 },
-  pack: { w: 170, h: 240 },
-  card: { w: 168, h: 252 },
-  market: { w: 150, h: 150 },
+const CARD_SIZE = { w: 168, h: 252 }
+const PACK_SIZE = { w: 170, h: 240 }
+
+export const ITEM_SIZE = { card: CARD_SIZE, pack: PACK_SIZE }
+
+export function sizeOf(item: DeskItem): { w: number; h: number } {
+  if (item.kind === "object" && item.object) return OBJECT_META[item.object]
+  return item.kind === "pack" ? PACK_SIZE : CARD_SIZE
 }
 
-const DEFAULT_ITEMS: DeskItem[] = [
-  { id: "hero", kind: "card", x: 0.4, y: 0.06, z: 1, card: { name: "你的本体卡", mapper: "No.1", rarity: "Prismatic", isHero: true } },
-  { id: "album", kind: "album", x: 0.25, y: 0.46, z: 2 },
-  { id: "market", kind: "market", x: 0.6, y: 0.58, z: 5 },
-]
+function objectItem(id: DeskObjectId, z: number): DeskItem {
+  const meta = OBJECT_META[id]
+  return { id: `obj-${id}`, kind: "object", object: id, x: meta.x, y: meta.y, z }
+}
+
+function defaultItems(): DeskItem[] {
+  return [
+    ...OBJECT_ORDER.map((id, index) => objectItem(id, index + 1)),
+    {
+      id: "hero",
+      kind: "card",
+      x: 0.4,
+      y: 0.06,
+      z: OBJECT_ORDER.length + 1,
+      card: { name: "你的本体卡", mapper: "No.1", rarity: "Prismatic", isHero: true },
+    },
+  ]
+}
 
 type Action =
   | { type: "move"; id: string; x: number; y: number }
   | { type: "front"; id: string }
   | { type: "spawn"; items: DeskItem[] }
-  | { type: "consumePack"; id: string }
-  | { type: "collect"; id: string }
+  | { type: "remove"; id: string }
   | { type: "reset" }
+
+/** 旧存档里的卡册 / 市场方块换成新物件；缺的物件补到默认位置 */
+function migrate(items: DeskItem[]): DeskItem[] {
+  const kept = items.flatMap((item): DeskItem[] => {
+    if (!item || typeof item.kind !== "string") return []
+    const legacy = item.kind as string
+    if (legacy === "album" || legacy === "market") return []
+    if (item.kind === "object") return item.object && item.object in OBJECT_META ? [item] : []
+    return item.kind === "card" || item.kind === "pack" ? [item] : []
+  })
+  if (kept.length === 0) return defaultItems()
+  const present = new Set(kept.flatMap((item) => (item.object ? [item.object] : [])))
+  const missing = OBJECT_ORDER.filter((id) => !present.has(id)).map((id, index) =>
+    objectItem(id, index + 1 - OBJECT_ORDER.length),
+  )
+  return [...missing, ...kept]
+}
 
 function initial(): DeskState {
   try {
@@ -30,18 +64,13 @@ function initial(): DeskState {
     if (raw) {
       const parsed = JSON.parse(raw) as DeskState
       if (parsed.version === 2 && Array.isArray(parsed.items)) {
-        return {
-          version: 2,
-          items: parsed.items.filter(
-            (item) => item && typeof item.kind === "string" && item.kind in ITEM_SIZE,
-          ),
-        }
+        return { version: 2, items: migrate(parsed.items) }
       }
     }
   } catch {
     // 忽略损坏的存档，回退到默认布局
   }
-  return { version: 2, items: DEFAULT_ITEMS }
+  return { version: 2, items: defaultItems() }
 }
 
 function reducer(state: DeskState, action: Action): DeskState {
@@ -54,12 +83,10 @@ function reducer(state: DeskState, action: Action): DeskState {
     }
     case "spawn":
       return { ...state, items: [...state.items, ...action.items] }
-    case "consumePack":
-      return { ...state, items: state.items.filter((it) => it.id !== action.id) }
-    case "collect":
+    case "remove":
       return { ...state, items: state.items.filter((it) => it.id !== action.id) }
     case "reset":
-      return { version: 2, items: DEFAULT_ITEMS }
+      return { version: 2, items: defaultItems() }
   }
 }
 
@@ -87,14 +114,11 @@ export function useDesk() {
     (items: DeskItem[]) => dispatch({ type: "spawn", items }),
     [],
   )
-  const consumePack = useCallback(
-    (id: string) => dispatch({ type: "consumePack", id }),
-    [],
-  )
-  const collect = useCallback((id: string) => dispatch({ type: "collect", id }), [])
+  /** 卡包用掉 / 卡收进卡册 / 卡放进卡组，都是把它从桌面拿走 */
+  const remove = useCallback((id: string) => dispatch({ type: "remove", id }), [])
   const reset = useCallback(() => dispatch({ type: "reset" }), [])
 
-  return { items: state.items, move, front, spawn, consumePack, collect, reset }
+  return { items: state.items, move, front, spawn, remove, reset }
 }
 
 export function cardsToItems(cards: CardData[], originX: number, originY: number): DeskItem[] {

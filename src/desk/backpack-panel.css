@@ -18,7 +18,7 @@
   justify-content: center;
   border: 3px dashed #21e985;
   border-radius: 14px;
-  background: rgba(11, 15, 23, 0.82);
+  background: rgba(28, 18, 22, 0.82);
   color: #7cf7bb;
   font-family: "Fredoka", "Outfit", sans-serif;
   font-size: 20px;
@@ -40,7 +40,7 @@
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 8px;
   letter-spacing: 0.24em;
-  color: #3cbadb;
+  color: #ff66aa;
 }
 .backpack-head b {
   font-family: "Fredoka", "Outfit", sans-serif;
@@ -57,9 +57,9 @@
 }
 .backpack-error {
   padding: 8px 10px;
-  border: 1px solid rgba(237, 95, 159, 0.4);
+  border: 1px solid rgba(255, 102, 170, 0.4);
   border-radius: 8px;
-  background: rgba(237, 95, 159, 0.1);
+  background: rgba(255, 102, 170, 0.1);
   color: #ff9ac6;
   font-size: 11px;
 }
@@ -74,9 +74,9 @@
   justify-content: space-between;
   gap: 8px;
   padding: 10px 13px;
-  border: 1.5px solid rgba(60, 186, 219, 0.2);
+  border: 1.5px solid rgba(255, 102, 170, 0.2);
   border-radius: 11px;
-  background: rgba(17, 29, 53, 0.55);
+  background: rgba(37, 29, 33, 0.55);
 }
 .backpack-summary span {
   font-family: "JetBrains Mono", Consolas, monospace;
@@ -101,15 +101,15 @@
   gap: 9px;
   min-height: 0;
   padding: 13px;
-  border: 2px solid #14244a;
+  border: 2px solid #3a2c33;
   border-radius: 14px;
-  background: rgba(17, 29, 53, 0.8);
+  background: rgba(37, 29, 33, 0.8);
 }
 .backpack-pack.is-mystery {
   background:
-    radial-gradient(ellipse 90% 120% at 15% 0%, rgba(237, 95, 159, 0.18), transparent 65%),
-    rgba(17, 29, 53, 0.85);
-  border-color: rgba(237, 95, 159, 0.45);
+    radial-gradient(ellipse 90% 120% at 15% 0%, rgba(255, 102, 170, 0.18), transparent 65%),
+    rgba(37, 29, 33, 0.85);
+  border-color: rgba(255, 102, 170, 0.45);
 }
 .backpack-pack.is-empty {
   opacity: 0.55;
@@ -122,13 +122,13 @@
   height: 84px;
   border-radius: 10px;
   background:
-    radial-gradient(circle at 50% 38%, rgba(60, 186, 219, 0.16), transparent 65%),
+    radial-gradient(circle at 50% 38%, rgba(255, 102, 170, 0.16), transparent 65%),
     linear-gradient(155deg, rgba(27, 45, 87, 0.8), rgba(7, 10, 18, 0.72));
   overflow: hidden;
 }
 .backpack-pack.is-mystery .backpack-pack__art {
   background:
-    radial-gradient(circle at 50% 38%, rgba(237, 95, 159, 0.28), transparent 65%),
+    radial-gradient(circle at 50% 38%, rgba(255, 102, 170, 0.28), transparent 65%),
     linear-gradient(155deg, rgba(43, 23, 48, 0.8), rgba(7, 10, 18, 0.72));
 }
 .backpack-pack__art-strip {
@@ -201,10 +201,10 @@
   justify-content: center;
   height: 34px;
   padding: 0 13px;
-  border: 2px solid #3cbadb;
+  border: 2px solid #ff66aa;
   border-radius: 9px;
-  background: #3cbadb;
-  color: #0b0d10;
+  background: #ff66aa;
+  color: #1c1216;
   font: inherit;
   font-size: 11px;
   font-weight: 700;
@@ -234,9 +234,9 @@
   align-items: center;
   gap: 18px;
   padding: 16px;
-  border: 2px solid #14244a;
+  border: 2px solid #3a2c33;
   border-radius: 16px;
-  background: rgba(17, 29, 53, 0.8);
+  background: rgba(37, 29, 33, 0.8);
 }
 .backpack-hero__face {
   width: 180px;
@@ -255,7 +255,7 @@
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 8px;
   letter-spacing: 0.22em;
-  color: #3cbadb;
+  color: #ff66aa;
 }
 .backpack-hero__text b {
   font-family: "Fredoka", "Outfit", sans-serif;
@@ -291,12 +291,12 @@
 .backpack-modal__panel {
   width: min(520px, 100%);
   padding: 20px;
-  border: 3px solid #14244a;
+  border: 3px solid #3a2c33;
   border-radius: 18px;
   background:
-    radial-gradient(ellipse 80% 120% at 15% 0%, rgba(237, 95, 159, 0.16), transparent 65%),
-    #111d35;
-  box-shadow: 10px 10px 0 #05070b;
+    radial-gradient(ellipse 80% 120% at 15% 0%, rgba(255, 102, 170, 0.16), transparent 65%),
+    #251d21;
+  box-shadow: 10px 10px 0 #0d0809;
 }
 .backpack-modal__head {
   display: flex;
@@ -312,7 +312,7 @@
   width: 28px;
   height: 28px;
   padding: 0;
-  border: 2px solid rgba(237, 95, 159, 0.45);
+  border: 2px solid rgba(255, 102, 170, 0.45);
   border-radius: 50%;
   background: transparent;
   color: #ff9ac6;
@@ -335,10 +335,10 @@
   flex: 1;
   height: 4px;
   border-radius: 999px;
-  background: rgba(60, 186, 219, 0.16);
+  background: rgba(255, 102, 170, 0.16);
 }
 .backpack-modal__progress span.is-on {
-  background: linear-gradient(90deg, #ed5f9f, #3cbadb);
+  background: linear-gradient(90deg, #ed5f9f, #ff66aa);
 }
 .backpack-modal__options {
   display: flex;
@@ -347,7 +347,7 @@
 }
 .backpack-modal__options button {
   padding: 11px 13px;
-  border: 1.5px solid rgba(60, 186, 219, 0.24);
+  border: 1.5px solid rgba(255, 102, 170, 0.24);
   border-radius: 10px;
   background: rgba(27, 45, 87, 0.65);
   color: #dbe3ee;
@@ -357,11 +357,11 @@
   cursor: pointer;
 }
 .backpack-modal__options button:hover {
-  border-color: rgba(60, 186, 219, 0.6);
+  border-color: rgba(255, 102, 170, 0.6);
 }
 .backpack-modal__options button.is-selected {
-  border-color: #3cbadb;
-  background: rgba(60, 186, 219, 0.14);
+  border-color: #ff66aa;
+  background: rgba(255, 102, 170, 0.14);
   color: #f4f4f6;
 }
 .backpack-modal__actions {
@@ -380,15 +380,15 @@
   cursor: pointer;
 }
 .backpack-modal__ghost {
-  border: 2px solid rgba(60, 186, 219, 0.35);
+  border: 2px solid rgba(255, 102, 170, 0.35);
   background: transparent;
-  color: #9fd9ea;
+  color: #ffb3d4;
 }
 .backpack-modal__next {
   margin-left: auto;
-  border: 2px solid #3cbadb;
-  background: #3cbadb;
-  color: #0b0d10;
+  border: 2px solid #ff66aa;
+  background: #ff66aa;
+  color: #1c1216;
 }
 .backpack-modal__ghost:disabled,
 .backpack-modal__next:disabled {

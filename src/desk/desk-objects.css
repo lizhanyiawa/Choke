@@ -1,0 +1,898 @@
+/* =========================================================
+   桌上的实物。梅子色本体 + 一个亮材质件（纸白 / 金属 / 实色块）+ 一个颜色。
+   光从左上来：顶边一道受光线，底边一道暗线。
+   粉色是品牌线，其余颜色取卡池色；发牌按钮保留原来的手绘贴图。
+   拿起来时影子由 .desk-ghost 接管。
+   ========================================================= */
+
+.obj {
+  /* 本体 */
+  --o-stock: #2e2328;
+  --o-stock-hi: #3d2e35;
+  --o-deep: #170f12;
+  /* 字 */
+  --o-ink: #f2e9ed;
+  --o-ink-dim: #a8979e;
+  /* 纸 */
+  --o-paper: #efe4e9;
+  --o-paper-lo: #cdbfc6;
+  --o-paper-ink: #2c2227;
+  --o-paper-dim: #8a7a81;
+  /* 线、强调、金属 */
+  --o-line: rgb(255 228 240 / 0.26);
+  --o-osu: #ff66aa;
+  --o-metal: linear-gradient(135deg, #eceef1, #7d828a 50%, #cfd2d7);
+  /* 本体切边：顶上受光、一圈细线、底下暗边 */
+  --o-edge: inset 0 1px 0 rgb(255 255 255 / 0.13), inset 0 0 0 1px rgb(255 228 240 / 0.08),
+    inset 0 -2px 0 rgb(0 0 0 / 0.28);
+  position: absolute;
+  inset: 0;
+  color: var(--o-ink);
+  font-family: "Outfit Variable", "Outfit", sans-serif;
+  filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.7)) drop-shadow(0 10px 16px rgb(0 0 0 / 0.5));
+  transition: scale 0.16s ease, filter 0.16s ease;
+}
+
+/* 有东西悬在上面：物件微微抬起，周围亮一圈 osu! 粉 */
+.obj.is-dropping {
+  scale: 1.05;
+  filter: drop-shadow(0 0 1px rgb(255 102 170 / 0.95)) drop-shadow(0 0 14px rgb(255 102 170 / 0.45))
+    drop-shadow(6px 12px 12px rgb(0 0 0 / 0.45));
+}
+
+.obj b,
+.obj em,
+.obj span {
+  display: block;
+  font-style: normal;
+  line-height: 1;
+}
+
+/* 物件上的小字：间距拉开的英文副标题 */
+.obj em {
+  color: var(--o-ink-dim);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+}
+
+/* 梅子色本体共用的底 */
+.obj-book__cover,
+.obj-binder__cover,
+.obj-box,
+.obj-tray,
+.obj-mat,
+.obj-stand__front {
+  background: linear-gradient(180deg, var(--o-stock-hi), var(--o-stock) 70%);
+}
+
+/* ---------- 图鉴：精装书，粉色双线 ---------- */
+.obj-book__pages {
+  position: absolute;
+  inset: 6px 0 0 6px;
+  border-radius: 3px 6px 6px 3px;
+  background: repeating-linear-gradient(0deg, #d9cdd2 0 1px, #8f7f86 1px 2px);
+}
+.obj-book__cover {
+  position: absolute;
+  inset: 0 6px 6px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 4px 8px 8px 4px;
+  box-shadow: var(--o-edge);
+}
+/* 书脊 */
+.obj-book__cover::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  border-radius: 4px 0 0 4px;
+  background: linear-gradient(90deg, rgb(0 0 0 / 0.5), rgb(255 255 255 / 0.05));
+}
+.obj-book__band {
+  position: absolute;
+  inset: 10px 10px 10px 18px;
+  border: 1px solid var(--o-osu);
+  border-radius: 2px;
+  opacity: 0.7;
+  box-shadow: 0 0 0 3px var(--o-stock), 0 0 0 4px rgb(255 102 170 / 0.45);
+}
+.obj-book__cover b {
+  position: relative;
+  padding-left: 8px;
+  background: linear-gradient(160deg, #ffb3d4, #ff66aa 55%, #ff8cc0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+.obj-book__cover em {
+  position: relative;
+  padding-left: 8px;
+  color: var(--o-osu);
+}
+
+/* ---------- 卡册：三孔活页夹，纸贴纸，右缘露出三片索引标签 ---------- */
+.obj-binder {
+  position: absolute;
+  inset: 0;
+}
+/* 索引标签：夹在封面后面，从右缘探出 8px */
+.obj-binder__tabs {
+  position: absolute;
+  right: 0;
+  top: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.obj-binder__tabs i {
+  width: 16px;
+  height: 30px;
+  border-radius: 0 4px 4px 0;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), inset 0 -2px 0 rgb(0 0 0 / 0.18);
+}
+.obj-binder__tabs i:nth-child(1) {
+  background: #ffc24b;
+}
+.obj-binder__tabs i:nth-child(2) {
+  background: #3cbadb;
+}
+.obj-binder__tabs i:nth-child(3) {
+  background: #b98cff;
+}
+.obj-binder__cover {
+  position: absolute;
+  inset: 0 8px 0 0;
+  border-radius: 6px 12px 12px 6px;
+  box-shadow: var(--o-edge);
+}
+/* 缝线 */
+.obj-binder__cover::after {
+  content: "";
+  position: absolute;
+  inset: 7px 7px 7px 34px;
+  border: 1px dashed rgb(255 228 240 / 0.3);
+  border-radius: 7px;
+  pointer-events: none;
+}
+.obj-binder__spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 6px 0 0 6px;
+  background: linear-gradient(90deg, rgb(0 0 0 / 0.5), rgb(0 0 0 / 0.15) 70%, rgb(255 255 255 / 0.05));
+}
+.obj-binder__spine i {
+  width: 16px;
+  height: 24px;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  background: var(--o-metal) border-box;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+/* 贴在封面上的纸贴纸 */
+.obj-binder__label {
+  position: absolute;
+  left: 46px;
+  right: 18px;
+  top: 30%;
+  padding: 14px 6px 11px;
+  border-radius: 3px;
+  background: var(--o-paper);
+  color: var(--o-paper-ink);
+  text-align: center;
+  rotate: -2deg;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.5), 0 3px 6px rgb(0 0 0 / 0.3);
+}
+.obj-binder__label b {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-indent: 0.12em;
+}
+.obj-binder__label em {
+  margin-top: 7px;
+  color: var(--o-paper-dim);
+  text-indent: 0.32em;
+}
+
+/* ---------- 关于：粉胶带贴住的纸便签，右下折角 ---------- */
+.obj-note {
+  position: absolute;
+  inset: 0;
+}
+.obj-note__paper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 14px;
+  border-radius: 4px;
+  background: var(--o-paper);
+  color: var(--o-paper-ink);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%);
+}
+/* 折角 */
+.obj-note__paper::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 22px;
+  height: 22px;
+  border-top-left-radius: 3px;
+  background: linear-gradient(135deg, var(--o-paper-lo) 0 50%, transparent 50%);
+}
+.obj-note__tape {
+  position: absolute;
+  left: 30%;
+  top: -8px;
+  width: 40%;
+  height: 18px;
+  background: rgb(255 102 170 / 0.8);
+  rotate: -4deg;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+}
+/* 标题下一道粉色荧光笔 */
+.obj-note__paper b {
+  padding: 0 3px 1px 1px;
+  background: linear-gradient(180deg, transparent 60%, rgb(255 102 170 / 0.38) 60% 94%, transparent 94%);
+  font-size: 26px;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+.obj-note__paper b i {
+  color: #e8408c;
+}
+.obj-note__paper span {
+  color: var(--o-paper-dim);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* ---------- 账号：粉挂绳工作证，粉头带压着证件照 ---------- */
+.obj-badge__strap {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 14px;
+  height: 34px;
+  translate: -50% 0;
+  background: linear-gradient(90deg, #d9488a, var(--o-osu) 30% 70%, #d9488a);
+}
+.obj-badge__clip {
+  position: absolute;
+  left: 50%;
+  top: 26px;
+  width: 28px;
+  height: 14px;
+  translate: -50% 0;
+  border-radius: 4px;
+  background: var(--o-metal);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3);
+}
+.obj-badge__card {
+  position: absolute;
+  inset: 38px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, var(--o-osu) 0 42px, transparent 42px),
+    linear-gradient(180deg, var(--o-stock-hi), var(--o-stock));
+  box-shadow: var(--o-edge);
+}
+/* 打孔 */
+.obj-badge__card::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 20px;
+  height: 4px;
+  translate: -50% 0;
+  border-radius: 3px;
+  background: #3a1526;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.25);
+}
+.obj-badge__card em {
+  margin-top: 17px;
+  color: var(--o-paper-ink);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-indent: 0.28em;
+}
+.obj-badge__photo {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  margin-top: 5px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--o-deep);
+  color: var(--o-ink-dim);
+  font-size: 22px;
+  font-weight: 800;
+  box-shadow: 0 0 0 3px var(--o-paper), 0 3px 5px 2px rgb(0 0 0 / 0.3);
+}
+.obj-badge__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.obj-badge__card b {
+  box-sizing: border-box;
+  max-width: 100%;
+  margin-top: 11px;
+  padding: 0 8px;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 条码 */
+.obj-badge__code {
+  width: 64px;
+  height: 12px;
+  margin-top: 9px;
+  opacity: 0.6;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--o-ink-dim) 0 2px,
+    transparent 2px 3px,
+    var(--o-ink-dim) 3px 4px,
+    transparent 4px 7px
+  );
+}
+
+/* ---------- 市场：三条横板的板条箱，挂一张大纸价签 ---------- */
+/* 箱体：深色是板缝里的暗处 */
+.obj-crate__front {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-radius: 5px;
+  background: var(--o-deep);
+}
+/* 横板 */
+.obj-crate__front i {
+  flex: 1;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--o-stock-hi), var(--o-stock));
+  box-shadow: var(--o-edge);
+}
+/* 两根竖档，上面三颗钉 */
+.obj-crate__front::before,
+.obj-crate__front::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  border-radius: 3px;
+  background:
+    radial-gradient(circle at 50% 15%, var(--o-deep) 0 1.5px, transparent 2px),
+    radial-gradient(circle at 50% 50%, var(--o-deep) 0 1.5px, transparent 2px),
+    radial-gradient(circle at 50% 85%, var(--o-deep) 0 1.5px, transparent 2px),
+    linear-gradient(180deg, #4a3941, #35282e);
+  box-shadow: var(--o-edge), 1px 0 2px rgb(0 0 0 / 0.4);
+}
+.obj-crate__front::before {
+  left: 14px;
+}
+.obj-crate__front::after {
+  right: 14px;
+}
+/* 价签：纸白，底边一道黄 */
+.obj-tag {
+  box-sizing: border-box;
+  position: absolute;
+  right: -12px;
+  top: -16px;
+  width: 64px;
+  height: 86px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding-top: 30px;
+  rotate: 10deg;
+  background:
+    linear-gradient(0deg, #ffc24b 0 9px, transparent 9px),
+    var(--o-paper);
+  color: var(--o-paper-ink);
+  clip-path: polygon(50% 0, 100% 16%, 100% 100%, 0 100%, 0 16%);
+}
+.obj-tag i {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: #1c1216;
+}
+.obj-tag b {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-indent: 0.06em;
+}
+.obj-tag em {
+  color: var(--o-paper-dim);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+/* ---------- 背包：梯形翻盖的卡盒，金属搭扣，纸贴纸 ---------- */
+.obj-box {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  box-shadow: var(--o-edge);
+}
+/* 盒口：平时被翻盖正好盖住，翻盖掀起时露出来 */
+.obj-box::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 46%;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, #120b0e, var(--o-deep));
+  clip-path: polygon(0 0, 100% 0, 100% 60%, 62% 100%, 38% 100%, 0 60%);
+}
+/* 翻盖：外层只负责投影（clip-path 会裁掉自己的阴影），形状画在 ::before 上 */
+.obj-box__lid {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 46%;
+  filter: drop-shadow(0 2px 0 rgb(0 0 0 / 0.45));
+  transform-origin: 50% 0;
+  /* 扣回去：略微过冲 */
+  transition: transform 0.28s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.obj-box__lid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 6px 6px 0 0;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.14) 0 1px, transparent 1px),
+    linear-gradient(180deg, #4a3941, #3a2c33);
+  clip-path: polygon(0 0, 100% 0, 100% 60%, 62% 100%, 38% 100%, 0 60%);
+}
+/* 搭扣 */
+.obj-box__clasp {
+  position: absolute;
+  left: 50%;
+  top: calc(46% - 12px);
+  width: 26px;
+  height: 20px;
+  translate: -50% 0;
+  border-radius: 4px;
+  background: var(--o-metal);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.35), 0 2px 2px rgb(0 0 0 / 0.5);
+  transition: transform 0.28s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.obj-box__clasp::after {
+  content: "";
+  position: absolute;
+  inset: 7px 6px;
+  border-radius: 2px;
+  background: #2a2024;
+}
+/* 贴纸：纸白，左侧一道青 */
+.obj-box__label {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  padding: 8px 10px 7px;
+  border-left: 5px solid #3cbadb;
+  border-radius: 2px;
+  background: var(--o-paper);
+  color: var(--o-paper-ink);
+  rotate: -3deg;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.5), 0 3px 6px rgb(0 0 0 / 0.3);
+}
+.obj-box__label b {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+.obj-box__label em {
+  margin-top: 5px;
+  color: var(--o-paper-dim);
+  font-size: 6px;
+  letter-spacing: 0.22em;
+}
+/* 卡包飞过来：翻盖先掀起（往上缩）、搭扣跟着上移，一直开着等它落进去；落地时去掉类名，按上面的过渡扣回 */
+.desk-item.is-opening .obj-box__lid {
+  transform: scaleY(0.7);
+  transition: transform 0.12s ease-out;
+}
+.desk-item.is-opening .obj-box__clasp {
+  transform: translateY(-19px);
+  transition: transform 0.12s ease-out;
+}
+
+/* ---------- 抽卡：展示盒里立着三包真卡包，前面板是粉线框 + 粉标题 ---------- */
+/* 背板：盒子的内壁，比前面板暗一档 */
+.obj-stand__back {
+  position: absolute;
+  inset: 0 6px 30px;
+  border-radius: 8px 8px 3px 3px;
+  background: linear-gradient(180deg, #33262c, #221a1e);
+  box-shadow: var(--o-edge);
+}
+.obj-stand__row {
+  position: absolute;
+  left: 8px;
+  top: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+/* 迷你卡包：直接用 PackArt，这里只给尺寸和一点影子 */
+.obj-stand__pack {
+  position: relative;
+  flex: 0 0 auto;
+  width: 50px;
+  height: 71px;
+  filter: drop-shadow(1px 2px 2px rgb(0 0 0 / 0.5));
+}
+.obj-stand__pack:nth-child(1) {
+  rotate: -3deg;
+}
+.obj-stand__pack:nth-child(2) {
+  margin-top: -4px;
+}
+.obj-stand__pack:nth-child(3) {
+  rotate: 3deg;
+}
+/* 前面板：挡住卡包下缘 */
+.obj-stand__front {
+  position: absolute;
+  inset: auto 0 0;
+  height: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 6px;
+  box-shadow: var(--o-edge), 0 -3px 5px rgb(0 0 0 / 0.4);
+}
+.obj-stand__front::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid var(--o-osu);
+  border-radius: 3px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.obj-stand__front b {
+  position: relative;
+  background: linear-gradient(160deg, #ffb3d4, #ff66aa 55%, #ff8cc0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-indent: 0.14em;
+}
+.obj-stand__front em {
+  position: relative;
+  color: var(--o-osu);
+  text-indent: 0.32em;
+}
+
+/* ---------- 卡组：七格卡槽，每格探出一张卡，标题竖排在左 ---------- */
+.obj-tray {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 16px 12px 16px 46px;
+  border-radius: 10px;
+  box-shadow: var(--o-edge);
+}
+.obj-tray__slot {
+  --c: #ffc24b;
+  --peek: 12px;
+  position: relative;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 86px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--o-deep);
+  box-shadow: inset 2px 3px 4px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 228 240 / 0.14);
+}
+/* 槽里的卡：顶边一道颜色 */
+.obj-tray__slot::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: var(--peek);
+  bottom: 0;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(180deg, var(--c) 0 4px, #4a3941 4px, #33272c);
+  box-shadow: 0 -1px 2px rgb(0 0 0 / 0.5);
+}
+/* 队长位 */
+.obj-tray__slot:nth-child(1) {
+  --c: #ff66aa;
+  --peek: 8px;
+  box-shadow: inset 2px 3px 4px rgb(0 0 0 / 0.7), 0 0 0 1.5px var(--o-osu);
+}
+.obj-tray__slot:nth-child(2) {
+  --c: #ffc24b;
+  --peek: 16px;
+}
+.obj-tray__slot:nth-child(3) {
+  --c: #3cbadb;
+  --peek: 11px;
+}
+.obj-tray__slot:nth-child(4) {
+  --c: #b98cff;
+  --peek: 18px;
+}
+.obj-tray__slot:nth-child(5) {
+  --c: #21e985;
+  --peek: 13px;
+}
+.obj-tray__slot:nth-child(6) {
+  --c: #3cbadb;
+  --peek: 20px;
+}
+.obj-tray__slot:nth-child(7) {
+  --c: #ffc24b;
+  --peek: 15px;
+}
+.obj-tray__label {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  translate: 0 -50%;
+  writing-mode: vertical-rl;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+}
+
+/* ---------- 战斗：迷你对战垫，粉对蓝，中间一枚 VS ---------- */
+.obj-mat {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 14px 14px 34px;
+  border-radius: 14px;
+  box-shadow: var(--o-edge);
+}
+/* 缝线 */
+.obj-mat::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px dashed rgb(255 228 240 / 0.3);
+  border-radius: 10px;
+  pointer-events: none;
+}
+.obj-mat__zone {
+  --z: 255 102 170;
+  --tilt: -8deg;
+  position: relative;
+  border-radius: 6px;
+  background: rgb(var(--z) / 0.1);
+  box-shadow: inset 0 0 0 1.5px rgb(var(--z) / 0.7);
+}
+.obj-mat__zone:nth-child(2) {
+  --z: 108 196 255;
+  --tilt: 8deg;
+}
+/* 出牌区里各躺一张实色小卡 */
+.obj-mat__zone::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30px;
+  height: 42px;
+  translate: -50% -50%;
+  rotate: var(--tilt);
+  border-radius: 4px;
+  background: linear-gradient(160deg, rgb(var(--z)), rgb(var(--z) / 0.7));
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.35), 0 2px 4px rgb(0 0 0 / 0.4);
+}
+/* VS 徽章：选择器必须是 .obj-mat span，才能盖过全局的 display:block */
+.obj-mat span {
+  position: absolute;
+  left: 50%;
+  top: 64px;
+  width: 34px;
+  height: 34px;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--o-paper);
+  color: var(--o-paper-ink);
+  font-size: 13px;
+  font-weight: 900;
+  font-style: italic;
+  box-shadow: 0 0 0 3px var(--o-stock), 0 2px 4px rgb(0 0 0 / 0.5);
+}
+.obj-mat b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 11px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em;
+  text-align: center;
+}
+
+/* ---------- 发牌按钮 ---------- */
+.obj-deal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.obj-deal__button {
+  width: 104px;
+  height: 104px;
+  background: url("./tex/button-rest.png") center / contain no-repeat;
+}
+.obj-deal__button.is-pressing {
+  background-image: url("./tex/button-press.png");
+  background-size: 1000% 100%;
+  background-position: 0 0;
+  animation: deal-press 0.34s steps(10, jump-none) both;
+}
+@keyframes deal-press {
+  to {
+    background-position: 100% 0;
+  }
+}
+/* 卡池下拉框：梅子色小框，左边卡池色点，右边下拉箭头；点开向下展开菜单 */
+.obj-pick {
+  position: relative;
+  margin-top: 2px;
+}
+.obj-pick__box,
+.obj-pick__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  color: var(--o-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.obj-pick__box {
+  height: 26px;
+  padding: 0 8px 0 9px;
+  border-radius: 7px;
+  background: var(--o-stock);
+  box-shadow: var(--o-edge);
+  transition: background 0.14s ease;
+}
+.obj-pick__box:hover,
+.obj-pick.is-open .obj-pick__box {
+  background: var(--o-stock-hi);
+}
+.obj-pick__box:focus-visible,
+.obj-pick__item:focus-visible {
+  outline: 2px solid var(--o-osu);
+  outline-offset: 2px;
+}
+.obj-deal.is-empty .obj-pick__box > span {
+  color: var(--o-ink-dim);
+}
+.obj-pick__dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25);
+}
+/* 下拉箭头：两条边画的小 V，打开时翻过来 */
+.obj-pick__arrow {
+  width: 5px;
+  height: 5px;
+  margin: -3px 0 0 2px;
+  border-right: 1.5px solid var(--o-ink-dim);
+  border-bottom: 1.5px solid var(--o-ink-dim);
+  rotate: 45deg;
+  transition: rotate 0.14s ease, margin 0.14s ease;
+}
+.obj-pick.is-open .obj-pick__arrow {
+  margin-top: 3px;
+  rotate: 225deg;
+}
+.obj-pick__menu {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 6px);
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border-radius: 9px;
+  background: var(--o-stock);
+  box-shadow: var(--o-edge), 0 8px 18px rgb(0 0 0 / 0.5);
+}
+.obj-pick__item {
+  height: 24px;
+  padding: 0 12px 0 8px;
+  border-radius: 5px;
+  background: transparent;
+}
+.obj-pick__item:hover {
+  background: var(--o-stock-hi);
+}
+.obj-pick__item[aria-checked="true"] {
+  background: rgb(255 102 170 / 0.16);
+  color: #ffb3d4;
+}
+/* 菜单打开时把整个按钮抬到最上层，免得被旁边的物件盖住 */
+.desk-item:has(.obj-pick.is-open) {
+  z-index: 100000 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obj {
+    transition: none;
+  }
+}

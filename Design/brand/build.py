@@ -315,6 +315,8 @@ light = []
 for segs, fill in lock_paths:
     light.append((segs, LIGHT if fill.upper() == INK else fill))
 write("choke-lockup-light.svg", emit_svg(light, lock_box, "Choke"))
+light_h = [(segs, LIGHT if fill.upper() == INK else fill) for segs, fill in h_icon_paths + h_word_paths]
+write("choke-lockup-horizontal-light.svg", emit_svg(light_h, (0, 0, horiz_w, h_icon_h), "Choke"))
 
 # all-white, for one-color surfaces
 white = [(segs, "#FFFFFF") for segs, _ in lock_paths]

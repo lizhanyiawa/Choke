@@ -2,7 +2,7 @@ import type { CardFaceData } from "@/card/types"
 
 import type { CardData } from "./types"
 
-/** 抽屉/开包结果 → 桌面 */
+/** 翻开的面板/开包结果 → 桌面 */
 export const CARD_MIME = "application/x-choke-card"
 /** 桌面/卡册/卡组之间移动 user_card 实例 */
 export const USER_CARD_MIME = "application/x-choke-usercard"

@@ -9,11 +9,11 @@
   align-items: center;
   gap: 20px;
   padding: 18px;
-  border: 2px solid #14244a;
+  border: 2px solid #3a2c33;
   border-radius: 16px;
   background:
-    radial-gradient(ellipse 70% 120% at 10% 0%, rgba(60, 186, 219, 0.16), transparent 60%),
-    #1b2d57;
+    radial-gradient(ellipse 70% 120% at 10% 0%, rgba(255, 102, 170, 0.16), transparent 60%),
+    #34272d;
 }
 
 .about-hero img {
@@ -34,7 +34,7 @@
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 8px;
   letter-spacing: 0.24em;
-  color: #3cbadb;
+  color: #ff66aa;
 }
 
 .about-hero b {
@@ -62,9 +62,9 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px 12px;
-  border: 1.5px solid rgba(60, 186, 219, 0.2);
+  border: 1.5px solid rgba(255, 102, 170, 0.2);
   border-radius: 10px;
-  background: rgba(17, 29, 53, 0.55);
+  background: rgba(37, 29, 33, 0.55);
 }
 
 .about-meta span {
@@ -83,7 +83,7 @@
   flex-direction: column;
   gap: 12px;
   padding-top: 10px;
-  border-top: 1px solid rgba(60, 186, 219, 0.18);
+  border-top: 1px solid rgba(255, 102, 170, 0.18);
 }
 
 .about-tools__head {
@@ -103,7 +103,7 @@
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 8px;
   letter-spacing: 0.22em;
-  color: #3cbadb;
+  color: #ff66aa;
 }
 
 .about-tools__head b {
@@ -142,17 +142,17 @@
   gap: 3px;
   min-width: 0;
   padding: 12px 34px 12px 13px;
-  border: 1.5px solid rgba(60, 186, 219, 0.22);
+  border: 1.5px solid rgba(255, 102, 170, 0.22);
   border-radius: 11px;
-  background: rgba(17, 29, 53, 0.58);
+  background: rgba(37, 29, 33, 0.58);
   color: #e9e9ef;
   text-decoration: none;
   transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
 }
 
 .about-link:hover {
-  border-color: #3cbadb;
-  background: rgba(60, 186, 219, 0.1);
+  border-color: #ff66aa;
+  background: rgba(255, 102, 170, 0.1);
   transform: translateY(-1px);
 }
 
@@ -160,7 +160,7 @@
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 7px;
   letter-spacing: 0.18em;
-  color: #3cbadb;
+  color: #ff66aa;
 }
 
 .about-link > b {
@@ -181,7 +181,7 @@
   top: 50%;
   transform: translateY(-50%);
   font-style: normal;
-  color: #9fd9ea;
+  color: #ffb3d4;
   font-size: 20px;
   line-height: 1;
 }
