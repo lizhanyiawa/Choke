@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, type CSSProperties } from "react"
 
 import { CardFace } from "@/card/CardFace"
 import { faceFromDef } from "@/card/def"
 import type { CardFaceData, CardSkill, Job, Rarity } from "@/card/types"
 
 import { fetchPackInventory } from "./api"
+import { Pages } from "./BookPages"
 import { DESK_ADD_CARDS_EVENT, PACKS_CHANGED_EVENT, setCardDrag, toDeskCard } from "./drag"
+import { PackArt } from "./opening/PackArt"
+import { POOL_META, RARITY_COLOR } from "./rarity"
+import type { PackPool } from "./types"
 import "./gacha-panel.css"
 
 const API = "/api"
@@ -16,16 +20,17 @@ interface Pool {
   id: PoolId
   name: string
   note: string
-  color: string
+  /** 卡包图和概率表用的桌面卡池（服务端的 golden 在桌面叫 quest） */
+  art: PackPool
 }
 
 const POOLS: Pool[] = [
-  { id: "normal", name: "普通", note: "日常主力", color: "#e5484d" },
-  { id: "idle", name: "挂机", note: "低成本", color: "#3cbadb" },
-  { id: "golden", name: "黄金", note: "任务产出", color: "#ffc24b" },
-  { id: "radiant", name: "璀璨", note: "周常奖励", color: "#b98cff" },
-  { id: "sky", name: "天穹", note: "月常奖励", color: "#21e985" },
-  { id: "prism", name: "棱彩", note: "赛季牌面", color: "#f4f4f6" },
+  { id: "normal", name: "普通", note: "日常主力", art: "normal" },
+  { id: "idle", name: "挂机", note: "低成本", art: "idle" },
+  { id: "golden", name: "黄金", note: "任务产出", art: "quest" },
+  { id: "radiant", name: "璀璨", note: "周常奖励", art: "radiant" },
+  { id: "sky", name: "天穹", note: "月常奖励", art: "sky" },
+  { id: "prism", name: "棱彩", note: "赛季牌面", art: "prism" },
 ]
 
 interface ApiCard {
@@ -116,6 +121,7 @@ export function GachaPanel({
   const current = POOLS.find((item) => item.id === pool) ?? POOLS[0]
   const pityPercent = pity ? Math.min(100, (pity.after / 60) * 100) : 0
   const currentPacks = packs && packs.userId === userId ? packs.data : null
+  const odds = POOL_META[current.art].weights.filter(([, weight]) => weight > 0)
   const packCount = currentPacks?.[pool] ?? 0
 
   function selectPool(id: PoolId) {
@@ -180,8 +186,6 @@ export function GachaPanel({
     }
   }
 
-  const emptySlots = Array.from({ length: 5 }, (_, index) => index)
-
   const sendAllToDesk = () => {
     if (!cards.length) return
     const payload = cards.map((card) => toDeskCard(card, card.userCardId))
@@ -189,172 +193,150 @@ export function GachaPanel({
     setCards([])
   }
 
+  const openButton = (
+    <button
+      type="button"
+      className="bk-btn bk-btn--main bk-btn--block"
+      disabled={loading || !userId || packCount <= 0}
+      onClick={openPack}
+    >
+      {loading ? "开启中…" : packCount > 0 ? "开 5 张" : "没有卡包"}
+    </button>
+  )
+
   return (
-    <div className="gacha-panel">
-      <header className="gacha-panel__head">
-        <div>
-          <span className="gacha-panel__eyebrow">
-            PACK OPENING · SERVER RNG
-          </span>
-          <p className="gacha-panel__lead">
-            六池任选，一次 5 张。60 抽未出 L 及以上时强制保底。
-          </p>
-        </div>
-        <span className="gacha-panel__stamp">5 / PACK</span>
-      </header>
-
-      <div className="gacha-panel__pools" role="group" aria-label="卡池选择">
-        {POOLS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className="gacha-panel__pool"
-            data-active={pool === item.id || undefined}
-            aria-pressed={pool === item.id}
-            disabled={loading}
-            onClick={() => selectPool(item.id)}
-          >
-            <span
-              className="gacha-panel__pool-dot"
-              style={{ background: item.color }}
-              aria-hidden
-            />
-            <span className="gacha-panel__pool-text">
-              <b className="gacha-panel__pool-name">{item.name}</b>
-              <small className="gacha-panel__pool-note">{item.note}</small>
-            </span>
-            <em className="gacha-panel__pool-count">×{currentPacks?.[item.id] ?? 0}</em>
-          </button>
-        ))}
-      </div>
-
-      {!userId && (
-        <div className="gacha-panel__login">
-          <div>
-            <b className="gacha-panel__login-title">登录后开包</b>
-            <p className="gacha-panel__login-note">
-              抽到的卡和保底进度会直接写入你的账号。
-            </p>
-          </div>
-          <a className="gacha-panel__login-link" href="/auth/osu">
-            用 osu! 登录
-          </a>
-        </div>
-      )}
-
-      <div className="gacha-panel__bar">
-        <div className="gacha-panel__current">
-          <span className="gacha-panel__label">CURRENT POOL</span>
-          <b className="gacha-panel__current-name">{current.name}</b>
-        </div>
-
-        <div className="gacha-panel__pity">
-          <div className="gacha-panel__pity-top">
-            <span className="gacha-panel__label">保底进度</span>
-            <b className="gacha-panel__pity-value">
-              {pity ? `${pity.after} / 60` : "— / 60"}
-            </b>
-          </div>
-          <div
-            className="gacha-panel__pity-track"
-            role="progressbar"
-            aria-label="保底进度"
-            aria-valuemin={0}
-            aria-valuemax={60}
-            aria-valuenow={pity?.after ?? 0}
-          >
-            <span
-              className="gacha-panel__pity-fill"
-              style={{ width: `${pityPercent}%` }}
-            />
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="gacha-panel__open"
-          disabled={loading || !userId || packCount <= 0}
-          onClick={openPack}
-        >
-          {loading ? "开启中…" : packCount > 0 ? "开 5 张" : "没有卡包"}
-        </button>
-
-        {error && (
-          <p className="gacha-panel__error" role="alert">
-            {error}
-          </p>
-        )}
-      </div>
-
-      {cards.length > 0 && (
-        <div className="gacha-panel__result-bar">
-          <span>把卡面拖到左侧桌面，或</span>
-          <button type="button" onClick={sendAllToDesk}>
-            全部发到桌面
-          </button>
-        </div>
-      )}
-
-      <div
-        className="gacha-panel__results"
-        aria-busy={loading}
-        aria-live="polite"
-      >
-        {loading
-          ? emptySlots.map((index) => (
-              <div
-                className="gacha-panel__slot"
-                data-loading
-                key={`loading-${index}`}
+    <Pages
+      left={
+        <>
+          <div className="bk-list" role="group" aria-label="卡池选择">
+            {POOLS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`bk-row gacha-pool ${pool === item.id ? "is-on" : ""}`}
+                aria-pressed={pool === item.id}
+                disabled={loading}
+                onClick={() => selectPool(item.id)}
               >
-                <div className="gacha-panel__placeholder" aria-hidden>
-                  <span className="gacha-panel__skeleton-line" />
-                  <span className="gacha-panel__skeleton-line" />
-                  <span className="gacha-panel__skeleton-line" />
-                </div>
-              </div>
-            ))
-          : cards.length > 0
-            ? cards.map((card, index) => (
-                <div
-                  className="gacha-panel__slot is-draggable"
-                  key={`${card.id}-${index}`}
-                  draggable
-                  onDragStart={(event) => {
-                    setCardDrag(
-                      event.nativeEvent,
-                      toDeskCard(card, card.userCardId),
-                    )
-                  }}
-                  onDragEnd={(event) => {
-                    if (event.dataTransfer.dropEffect === "copy") {
-                      setCards((current) =>
-                        current.filter((item) => item.userCardId !== card.userCardId),
-                      )
-                    }
-                  }}
-                  title="拖到桌面"
-                >
-                  <CardFace card={card} />
-                  <span className="gacha-panel__drag-hint">拖到桌面</span>
-                </div>
-              ))
-            : emptySlots.map((index) => (
-                <div
-                  className="gacha-panel__slot"
-                  data-empty
-                  key={`empty-${index}`}
-                >
-                  <div className="gacha-panel__placeholder" aria-hidden>
-                    <span className="gacha-panel__question">?</span>
-                  </div>
-                </div>
-              ))}
-      </div>
+                <span className="gacha-pool__art" aria-hidden>
+                  <PackArt pool={item.art} />
+                </span>
+                <span className="gacha-pool__text">
+                  <b>{item.name}</b>
+                  <small>{item.note}</small>
+                </span>
+                <em className="bk-num">×{currentPacks?.[item.id] ?? 0}</em>
+              </button>
+            ))}
+          </div>
 
-      {!loading && cards.length === 0 && !pity && (
-        <p className="gacha-panel__prompt">选一个卡池开始</p>
-      )}
-    </div>
+          <div className="bk-box gacha-pity">
+            <div className="gacha-pity__top">
+              <span className="bk-label">保底进度</span>
+              <b className="bk-num">{pity ? `${pity.after} / 60` : "— / 60"}</b>
+            </div>
+            <div
+              className="bk-bar"
+              style={{ "--p": pityPercent } as CSSProperties}
+              role="progressbar"
+              aria-label="保底进度"
+              aria-valuemin={0}
+              aria-valuemax={60}
+              aria-valuenow={pity?.after ?? 0}
+            >
+              <i />
+            </div>
+            <p className="bk-note">60 抽未出 L 及以上时强制保底。</p>
+          </div>
+        </>
+      }
+      right={
+        !userId ? (
+          <div className="bk-empty">
+            <b>登录后开包</b>
+            <span>抽到的卡和保底进度会直接写入你的账号。</span>
+            <a className="bk-btn bk-btn--main" href="/auth/osu">
+              用 osu! 登录
+            </a>
+          </div>
+        ) : loading || cards.length > 0 ? (
+          <>
+            <div className="bk-cards gacha-results" aria-busy={loading} aria-live="polite">
+              {loading
+                ? Array.from({ length: 5 }, (_, index) => (
+                    <div className="bk-slot gacha-results__loading" key={index} aria-hidden>
+                      …
+                    </div>
+                  ))
+                : cards.map((card, index) => (
+                    <div
+                      className="gacha-results__card"
+                      key={`${card.id}-${index}`}
+                      draggable
+                      onDragStart={(event) => {
+                        setCardDrag(event.nativeEvent, toDeskCard(card, card.userCardId))
+                      }}
+                      onDragEnd={(event) => {
+                        if (event.dataTransfer.dropEffect === "copy") {
+                          setCards((current) =>
+                            current.filter((item) => item.userCardId !== card.userCardId),
+                          )
+                        }
+                      }}
+                      title="拖到桌面"
+                    >
+                      <CardFace card={card} />
+                    </div>
+                  ))}
+            </div>
+            {error && (
+              <p className="bk-note bk-error" role="alert">
+                {error}
+              </p>
+            )}
+            {cards.length > 0 && <p className="bk-note gacha-hint">把卡拖到桌面，或一次全部发过去。</p>}
+            <div className="gacha-actions">
+              <button
+                type="button"
+                className="bk-btn"
+                disabled={cards.length === 0}
+                onClick={sendAllToDesk}
+              >
+                全部发到桌面
+              </button>
+              {openButton}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="gacha-current">
+              <span className="gacha-current__art" aria-hidden>
+                <PackArt pool={current.art} />
+              </span>
+              <div className="gacha-current__text">
+                <span className="bk-label">{current.note}</span>
+                <b className="gacha-current__name">{current.name}卡池</b>
+                <p className="bk-note">一次开 5 张 · 库存 ×{packCount}</p>
+              </div>
+            </div>
+            <div className="gacha-odds" aria-label="概率">
+              {odds.map(([rarity, weight]) => (
+                <span key={rarity} style={{ "--c": RARITY_COLOR[rarity] } as CSSProperties}>
+                  <i aria-hidden />
+                  {rarity}
+                  <b className="bk-num">{weight}%</b>
+                </span>
+              ))}
+            </div>
+            {error && (
+              <p className="bk-note bk-error" role="alert">
+                {error}
+              </p>
+            )}
+            {openButton}
+          </>
+        )
+      }
+    />
   )
 }

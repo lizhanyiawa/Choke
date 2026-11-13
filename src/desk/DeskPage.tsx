@@ -3,7 +3,7 @@ import { CardFace } from "@/card/CardFace"
 
 import { cardFromDesk } from "./cardFace"
 import { DeskObject, type DealButtonState } from "./DeskObject"
-import { DeskSheet, PANEL_IDS, type DeskSheetHandle, type PanelId } from "./DeskSheet"
+import { DeskBook, PANEL_IDS, type DeskBookHandle, type PanelId } from "./DeskBook"
 import { DragGhost } from "./DragGhost"
 import { toFace, type ApiUserCard } from "./api"
 import {
@@ -142,11 +142,11 @@ export function DeskPage() {
     userId: string
     data: Record<string, number>
   } | null>(null)
-  const [sheet, setSheet] = useState<{ panel: PanelId; origin: { x: number; y: number } | null } | null>(() => {
+  const [book, setBook] = useState<{ panel: PanelId; origin: { x: number; y: number } | null } | null>(() => {
     const query = new URLSearchParams(window.location.search).get("panel") as PanelId | null
     return query && PANEL_IDS.includes(query) ? { panel: query, origin: null } : null
   })
-  const sheetRef = useRef<DeskSheetHandle>(null)
+  const bookRef = useRef<DeskBookHandle>(null)
   const [deskDropActive, setDeskDropActive] = useState(false)
   const collectTimer = useRef<number | null>(null)
   const quickTimer = useRef<number | null>(null)
@@ -718,11 +718,11 @@ export function DeskPage() {
     window.addEventListener("pointercancel", onUp)
   }
 
-  const openSheet = (panel: PanelId, item: DeskItem) => {
+  const openBook = (panel: PanelId, item: DeskItem) => {
     const stage = stageRef.current
     const size = sizeOf(item)
     const rect = stage?.getBoundingClientRect()
-    setSheet({
+    setBook({
       panel,
       origin: rect
         ? { x: rect.left + item.x * rect.width + size.w / 2, y: rect.top + item.y * rect.height + size.h / 2 }
@@ -733,7 +733,7 @@ export function DeskPage() {
   const onTap = async (item: DeskItem) => {
     if (item.kind === "object" && item.object) {
       if (item.object === "button") setPressing(true)
-      else openSheet(item.object, item)
+      else openBook(item.object, item)
       return
     }
 
@@ -934,8 +934,8 @@ export function DeskPage() {
           showToast(`${card.name} · 已放到桌面`)
         }}
         onDoubleClick={(event) => {
-          if ((event.target as HTMLElement).closest(".desk-item, .sheet")) return
-          sheetRef.current?.close()
+          if ((event.target as HTMLElement).closest(".desk-item, .book")) return
+          bookRef.current?.close()
         }}
       >
         <div className="desk-layer">
@@ -996,11 +996,11 @@ export function DeskPage() {
           </div>
         )}
 
-        {sheet && (
-          <DeskSheet
-            ref={sheetRef}
-            panel={sheet.panel}
-            origin={sheet.origin}
+        {book && (
+          <DeskBook
+            ref={bookRef}
+            panel={book.panel}
+            origin={book.origin}
             userId={user?.id ?? null}
             username={user?.username ?? null}
             publicId={user?.publicId ?? null}
@@ -1008,8 +1008,8 @@ export function DeskPage() {
             essence={user?.essence ?? 0}
             coins={user?.coins ?? 0}
             hero={user?.hero ?? null}
-            onSelect={(panel) => setSheet((prev) => ({ panel, origin: prev?.origin ?? null }))}
-            onClose={() => setSheet(null)}
+            onSelect={(panel) => setBook((prev) => ({ panel, origin: prev?.origin ?? null }))}
+            onClose={() => setBook(null)}
             onLogout={logout}
             onHeroClaimed={refreshUser}
           />

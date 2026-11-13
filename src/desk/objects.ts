@@ -1,4 +1,4 @@
-import type { PanelId } from "./DeskSheet"
+import type { PanelId } from "./DeskBook"
 
 /** 桌上的固定物件：九个面板入口 + 发牌按钮 */
 export type DeskObjectId = PanelId | "button"
