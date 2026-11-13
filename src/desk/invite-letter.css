@@ -1,0 +1,555 @@
+/* =========================================================
+   邀请函：桌上一只纸信封 + 拆开后的信纸。
+   纸色、粉胶带、荧光笔沿用便签（desk-objects.css 的 .obj-note），光从左上来。
+   ========================================================= */
+
+.invite-env {
+  --i-paper: #efe4e9;
+  --i-paper-hi: #f7f0f3;
+  --i-paper-lo: #d9cbd2;
+  --i-ink: #2c2227;
+  --i-dim: #8a7a81;
+  position: absolute;
+  /* 压在桌面物件层上面、翻开的书（z-index 10）下面 */
+  z-index: 5;
+  touch-action: none;
+  cursor: grab;
+  outline: none;
+}
+.invite-env:focus-visible .invite-env__body {
+  outline: 2px solid #ff66aa;
+  outline-offset: 4px;
+}
+/* 拿在手里时浮到书上面 */
+.invite-env.is-dragging {
+  z-index: 40;
+  cursor: grabbing;
+}
+
+/* 从桌面底边弹上来：先快后慢 */
+.invite-env.is-rising {
+  animation: invite-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--rise-delay, 0ms) backwards;
+}
+@keyframes invite-rise {
+  from {
+    translate: 0 var(--rise, 100vh);
+    rotate: 8deg;
+  }
+  to {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+
+.invite-env__body {
+  position: absolute;
+  inset: 0;
+  rotate: -4deg;
+  filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.7)) drop-shadow(0 10px 16px rgb(0 0 0 / 0.5));
+  transition: scale 0.16s ease, filter 0.16s ease, opacity 0.16s ease;
+}
+.invite-env:hover .invite-env__body {
+  scale: 1.03;
+}
+.invite-env.is-dragging .invite-env__body {
+  scale: 1.06;
+  filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.5)) drop-shadow(14px 24px 18px rgb(0 0 0 / 0.42));
+}
+/* 再往外拖一点、松手就扔出去了 */
+.invite-env.is-escaping .invite-env__body {
+  opacity: 0.55;
+}
+
+/* 还没拆：隔一会儿轻轻晃一下 */
+.invite-env:not(.is-open):not(.is-dragging) .invite-env__body {
+  animation: invite-nudge 4.2s ease-in-out 2.4s infinite;
+}
+@keyframes invite-nudge {
+  0%,
+  14%,
+  100% {
+    rotate: -4deg;
+  }
+  4% {
+    rotate: -7deg;
+  }
+  8% {
+    rotate: -1.5deg;
+  }
+  11% {
+    rotate: -5deg;
+  }
+}
+
+.invite-env__body > i {
+  position: absolute;
+  display: block;
+}
+.invite-env__back {
+  inset: 0;
+  border-radius: 4px;
+  background: var(--i-paper-lo);
+}
+/* 拆开后露出来的一截信纸 */
+.invite-env__letter {
+  left: 12px;
+  right: 12px;
+  top: -30px;
+  height: 80px;
+  border-radius: 3px;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 13px, rgb(44 34 39 / 0.1) 13px 14px) 0 22px / 100% 100% no-repeat,
+    var(--i-paper-hi);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6);
+}
+.invite-env__letter b {
+  display: block;
+  padding: 8px 10px 0;
+  color: #e8408c;
+  font-size: 8px;
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: 0.3em;
+}
+/* 前面的口袋：两侧斜折痕 */
+.invite-env__pocket {
+  inset: 0;
+  border-radius: 4px;
+  background:
+    linear-gradient(to top right, transparent calc(50% - 0.5px), rgb(44 34 39 / 0.12) 50%, transparent calc(50% + 0.5px)) left bottom / 50% 100% no-repeat,
+    linear-gradient(to top left, transparent calc(50% - 0.5px), rgb(44 34 39 / 0.12) 50%, transparent calc(50% + 0.5px)) right bottom / 50% 100% no-repeat,
+    var(--i-paper);
+  clip-path: polygon(0 0, 50% 56%, 100% 0, 100% 100%, 0 100%);
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.12);
+}
+.invite-env__flap {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 62%;
+  background: linear-gradient(180deg, var(--i-paper-hi), var(--i-paper));
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: 50% 0;
+}
+/* 拆开：翻盖朝上翻过去，压到信纸后面 */
+.invite-env.is-open .invite-env__flap {
+  z-index: -1;
+  scale: 1 -1;
+  background: linear-gradient(0deg, var(--i-paper-lo), #cdbdc5);
+}
+.invite-env.is-open .invite-env__back {
+  z-index: -2;
+}
+/* 粉色火漆 */
+.invite-env__seal {
+  left: 50%;
+  top: 62%;
+  width: 32px;
+  height: 32px;
+  translate: -50% -50%;
+  display: grid !important;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff9ac8, #ff66aa 45%, #c93a7c);
+  box-shadow: 0 0 0 3px rgb(201 58 124 / 0.35), 0 2px 3px rgb(0 0 0 / 0.35);
+  color: #3a1526;
+  font-size: 12px;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+}
+.invite-env__label {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--i-ink);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.invite-env__label em {
+  color: var(--i-dim);
+  font-size: 7px;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0.3em;
+}
+
+/* ===== 拆信 ===== */
+.invite-modal {
+  --i-paper: #efe4e9;
+  --i-paper-hi: #f7f0f3;
+  --i-paper-lo: #d9cbd2;
+  --i-ink: #2c2227;
+  --i-dim: #7c6c73;
+  position: fixed;
+  inset: 0;
+  /* 盖过翻开的书，让 toast（60）和开包层（80）还在上面 */
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(14 9 11 / 0.66);
+  animation: invite-fade 0.2s ease both;
+}
+@keyframes invite-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.invite-open {
+  position: relative;
+  width: min(460px, 100%);
+  max-height: 100%;
+  display: grid;
+}
+
+/* 大信封：只在拆的那一下出现 */
+.invite-open__env {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 380px;
+  height: 240px;
+  margin: -60px 0 0 -190px;
+  perspective: 900px;
+  pointer-events: none;
+  animation: invite-env-away 0.32s cubic-bezier(0.4, 0, 0.6, 1) 0.62s forwards;
+}
+.invite-open:not(.is-sealed) .invite-open__env {
+  animation-delay: 0.36s;
+}
+@keyframes invite-env-away {
+  to {
+    translate: 0 90px;
+    opacity: 0;
+  }
+}
+.invite-open__env > i {
+  position: absolute;
+  display: block;
+}
+.invite-open__back {
+  inset: 0;
+  z-index: 0;
+  border-radius: 6px;
+  background: var(--i-paper-lo);
+}
+.invite-open__peek {
+  left: 22px;
+  right: 22px;
+  top: 14px;
+  height: 200px;
+  z-index: 1;
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 17px, rgb(44 34 39 / 0.1) 17px 18px) 0 34px / 100% 100% no-repeat,
+    var(--i-paper-hi);
+  animation: invite-peek 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) 0.26s both;
+}
+.invite-open:not(.is-sealed) .invite-open__peek {
+  animation-delay: 0s;
+}
+@keyframes invite-peek {
+  to {
+    translate: 0 -120px;
+  }
+}
+.invite-open__pocket {
+  inset: 0;
+  z-index: 2;
+  border-radius: 6px;
+  background: var(--i-paper);
+  clip-path: polygon(0 0, 50% 56%, 100% 0, 100% 100%, 0 100%);
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.12);
+}
+.invite-open__flap {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 62%;
+  z-index: 3;
+  background: linear-gradient(180deg, var(--i-paper-hi), var(--i-paper));
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: 50% 0;
+  animation: invite-flap 0.32s ease-in-out both;
+}
+.invite-open:not(.is-sealed) .invite-open__flap {
+  animation-duration: 0s;
+}
+@keyframes invite-flap {
+  0% {
+    transform: rotateX(0deg);
+    z-index: 3;
+  }
+  50% {
+    z-index: 3;
+  }
+  51% {
+    z-index: 0;
+  }
+  100% {
+    transform: rotateX(180deg);
+    z-index: 0;
+    background: linear-gradient(0deg, var(--i-paper-lo), #cdbdc5);
+  }
+}
+.invite-open__seal {
+  left: 50%;
+  top: 62%;
+  z-index: 4;
+  width: 52px;
+  height: 52px;
+  translate: -50% -50%;
+  display: grid !important;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff9ac8, #ff66aa 45%, #c93a7c);
+  box-shadow: 0 0 0 4px rgb(201 58 124 / 0.35), 0 3px 5px rgb(0 0 0 / 0.35);
+  color: #3a1526;
+  font-size: 19px;
+  font-weight: 900;
+  font-style: italic;
+  animation: invite-seal 0.18s ease-in both;
+}
+.invite-open:not(.is-sealed) .invite-open__seal {
+  display: none !important;
+}
+@keyframes invite-seal {
+  to {
+    scale: 1.3;
+    opacity: 0;
+  }
+}
+
+/* 信纸 */
+.invite-paper {
+  position: relative;
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 36px 34px 22px;
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.5), transparent 120px),
+    var(--i-paper-hi);
+  color: var(--i-ink);
+  font-family: "Outfit Variable", "Outfit", sans-serif;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.6), 0 24px 60px rgb(0 0 0 / 0.55), inset 0 -3px 0 rgb(0 0 0 / 0.08);
+  user-select: text;
+  animation: invite-paper-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.6s backwards;
+}
+.invite-open:not(.is-sealed) .invite-paper {
+  animation-delay: 0.32s;
+}
+@keyframes invite-paper-in {
+  from {
+    opacity: 0;
+    translate: 0 70px;
+    scale: 0.66;
+  }
+}
+.invite-paper__tape {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 112px;
+  height: 18px;
+  translate: -50% -4px;
+  rotate: -3deg;
+  background: rgb(255 102 170 / 0.8);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+}
+.invite-paper__close {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--i-dim);
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.invite-paper__close:hover {
+  background: rgb(44 34 39 / 0.08);
+  color: var(--i-ink);
+}
+.invite-paper__eyebrow {
+  display: block;
+  color: #e8408c;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+}
+.invite-paper h2 {
+  margin: 10px 0 14px;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.25;
+  /* 标题压一道粉色荧光笔，和便签一致 */
+  background: linear-gradient(180deg, transparent 62%, rgb(255 102 170 / 0.32) 62% 92%, transparent 92%);
+  width: fit-content;
+  max-width: 100%;
+}
+.invite-paper p,
+.invite-paper li {
+  font-size: 14px;
+  line-height: 1.75;
+}
+.invite-paper p {
+  margin: 0 0 10px;
+}
+.invite-paper__hint {
+  color: var(--i-dim);
+}
+.invite-paper__stamp {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 2px solid #e8408c;
+  border-radius: 4px;
+  color: #e8408c;
+  font-size: 12px !important;
+  font-weight: 800;
+  rotate: -2deg;
+}
+.invite-paper__steps {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+.invite-paper__steps li + li {
+  margin-top: 6px;
+}
+.invite-paper__steps li::marker {
+  color: #e8408c;
+  font-weight: 800;
+}
+.invite-paper__facts,
+.invite-paper__gifts {
+  display: flex;
+  gap: 10px;
+  margin: 6px 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.invite-paper__facts li,
+.invite-paper__gifts li {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px dashed rgb(44 34 39 / 0.25);
+  border-radius: 6px;
+  line-height: 1.3;
+}
+.invite-paper__facts b,
+.invite-paper__gifts b {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+}
+.invite-paper__facts span,
+.invite-paper__gifts span {
+  color: var(--i-dim);
+  font-size: 12px;
+  font-weight: 700;
+}
+.invite-paper__gifts em {
+  display: block;
+  margin-top: 2px;
+  color: #e8408c;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+.invite-paper__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.invite-paper__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 10px;
+  background: #ff66aa;
+  color: #1c1216;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 2px 0 #b93a74;
+  cursor: pointer;
+  transition: background 0.14s ease, translate 0.08s ease;
+}
+.invite-paper__btn:hover {
+  background: #ff7db7;
+}
+.invite-paper__btn:active {
+  translate: 0 1px;
+}
+.invite-paper__btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.invite-paper__btn:focus-visible,
+.invite-paper__close:focus-visible {
+  outline: 2px solid #2c2227;
+  outline-offset: 2px;
+}
+.invite-paper__btn--ghost {
+  background: transparent;
+  color: var(--i-ink);
+  box-shadow: inset 0 0 0 1.5px rgb(44 34 39 / 0.3);
+}
+.invite-paper__btn--ghost:hover {
+  background: rgb(44 34 39 / 0.06);
+}
+.invite-paper__error {
+  color: #c4264f;
+  font-weight: 700;
+}
+.invite-paper__sign {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-top: 22px;
+  padding-top: 12px;
+  border-top: 1px dashed rgb(44 34 39 / 0.2);
+}
+.invite-paper__sign span {
+  font-size: 14px;
+  font-weight: 700;
+  font-style: italic;
+}
+.invite-paper__sign small {
+  color: var(--i-dim);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invite-env.is-rising,
+  .invite-env .invite-env__body,
+  .invite-modal,
+  .invite-paper {
+    animation: none !important;
+  }
+  .invite-env__body {
+    transition: none;
+  }
+  .invite-open__env {
+    display: none;
+  }
+}

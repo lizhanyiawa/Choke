@@ -13,6 +13,7 @@ import {
 } from "./api"
 import { Pages } from "./BookPages"
 import { PACKS_CHANGED_EVENT, BACKPACK_HOVER_EVENT } from "./drag"
+import { INVITE_OPEN_EVENT } from "./invite"
 import { PackArt } from "./opening/PackArt"
 import type { PackPool } from "./types"
 import "./backpack-panel.css"
@@ -241,9 +242,13 @@ export function BackpackPanel({
             heroClaimed ? (
               <span className="bk-tag backpack-done">本体卡已获得</span>
             ) : !onboarded ? (
-              <a className="bk-btn bk-btn--main bk-btn--block" href="/intro">
-                先完成引导
-              </a>
+              <button
+                type="button"
+                className="bk-btn bk-btn--main bk-btn--block"
+                onClick={() => window.dispatchEvent(new Event(INVITE_OPEN_EVENT))}
+              >
+                打开邀请函领新手礼包
+              </button>
             ) : (
               <button
                 type="button"

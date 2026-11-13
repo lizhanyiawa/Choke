@@ -115,7 +115,7 @@ export async function authRoutes(app: FastifyInstance) {
         maxAge: 60 * 60 * 24 * 30,
       })
 
-      return reply.redirect(`${WEB_BASE}${user.onboarded ? "/gacha" : "/intro"}`)
+      return reply.redirect(`${WEB_BASE}/`)
     } catch (error) {
       request.log.error(error)
       return reply.code(500).send({

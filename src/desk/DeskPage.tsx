@@ -17,6 +17,8 @@ import {
   CARD_POINTER_DROP_EVENT,
   type CardPointerDrop,
 } from "./drag"
+import { InviteLetter } from "./InviteLetter"
+import { INVITE_OPEN_EVENT } from "./invite"
 import { OBJECT_META, type DeskObjectId } from "./objects"
 import { POOL_META } from "./rarity"
 import { DEFAULT_SKIN } from "./skins"
@@ -81,6 +83,7 @@ interface DeskUser {
   essence: number
   coins: number
   hero: ApiUserCard | null
+  onboarded: boolean
 }
 
 /** 松手那一刻物件的位置和姿态，飞行动画从这里接手 */
@@ -151,6 +154,8 @@ export function DeskPage() {
   const [quickTargets, setQuickTargets] = useState<Record<string, { dx: number; dy: number; index: number }> | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [user, setUser] = useState<DeskUser | null>(null)
+  /** /auth/me 回来过一次（登没登录都算），邀请函等它再决定要不要弹 */
+  const [userReady, setUserReady] = useState(false)
   const [packState, setPackState] = useState<{
     userId: string
     data: Record<string, number>
@@ -182,10 +187,12 @@ export function DeskPage() {
             essence: Number(d.data.essence ?? 0),
             coins: Number(d.data.coins ?? 0),
             hero: d.data.hero ?? null,
+            onboarded: !!d.data.onboarded,
           })
         else setUser(null)
       })
       .catch(() => {})
+      .finally(() => setUserReady(true))
   }, [])
 
   useEffect(() => {
@@ -211,6 +218,18 @@ export function DeskPage() {
     window.addEventListener(PACKS_CHANGED_EVENT, handler)
     return () => window.removeEventListener(PACKS_CHANGED_EVENT, handler)
   }, [refreshPacks])
+
+  // 背包里点「打开邀请函」：先合上书，让信封从桌面底边弹上来时看得见
+  useEffect(() => {
+    const handler = () => bookRef.current?.close()
+    window.addEventListener(INVITE_OPEN_EVENT, handler)
+    return () => window.removeEventListener(INVITE_OPEN_EVENT, handler)
+  }, [])
+
+  const onInviteClaimed = useCallback(() => {
+    refreshUser()
+    window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
+  }, [refreshUser])
 
   const logout = () => {
     fetch("/auth/logout", { method: "POST", credentials: "include" })
@@ -1024,6 +1043,16 @@ export function DeskPage() {
             )
           })}
         </div>
+
+        <InviteLetter
+          user={user ? { username: user.username, onboarded: user.onboarded } : null}
+          ready={userReady}
+          stageSize={stageSize}
+          stageRef={stageRef}
+          onToast={showToast}
+          onClaimed={onInviteClaimed}
+          onOpenBackpack={() => setBook({ panel: "backpack", origin: null })}
+        />
 
         <div className="desk-card-drop" aria-hidden>
           <span>松开</span>

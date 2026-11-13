@@ -46,11 +46,11 @@ if errorlevel 1 (
   echo [Choke!] Web is already running.
 )
 
-start "" powershell -NoProfile -WindowStyle Hidden -Command "$ProgressPreference='SilentlyContinue'; $u = 'http://localhost:5173/gacha'; for ($i = 0; $i -lt 120; $i++) { try { $r = Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 1; if ($r.StatusCode -ge 200) { Start-Process $u; break } } catch {}; Start-Sleep -Milliseconds 500 }"
+start "" powershell -NoProfile -WindowStyle Hidden -Command "$ProgressPreference='SilentlyContinue'; $u = 'http://localhost:5173/'; for ($i = 0; $i -lt 120; $i++) { try { $r = Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 1; if ($r.StatusCode -ge 200) { Start-Process $u; break } } catch {}; Start-Sleep -Milliseconds 500 }"
 
 echo.
 echo [Choke!] API : http://localhost:3100/health
-echo [Choke!] Web : http://localhost:5173/gacha
+echo [Choke!] Web : http://localhost:5173/
 echo [Choke!] Close the "Choke! API" and "Choke! Web" windows to stop.
 echo.
 timeout /t 3 >nul
