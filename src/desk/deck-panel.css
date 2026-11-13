@@ -1,0 +1,227 @@
+/* 卡组：左页 7 个槽位，右页可放入的卡 */
+
+/* 槽里的卡拖到右页：右页盖一层提示，松开就移出卡组 */
+.deck-panel .book__page--right {
+  position: relative;
+}
+.deck-panel .book__page--right::after {
+  content: "松开 · 移出卡组";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  background: rgb(28 18 22 / 0.72);
+  color: var(--bk-osu-text);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  pointer-events: none;
+  visibility: hidden;
+}
+.deck-panel.is-return-target .book__page--right::after {
+  visibility: visible;
+}
+
+/* ----- 左页 ----- */
+.deck-summary {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+}
+.deck-summary small {
+  color: var(--bk-faint);
+  font-size: 14px;
+  font-weight: 700;
+}
+.deck-summary__saved {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 10px;
+  flex: 0 0 auto;
+  /* 选中 / 拖放高亮的描边在槽外 5px（outline-offset 3 + 宽 2），左页 .book__body 会滚动、会裁掉贴边的部分 */
+  padding: 5px;
+}
+.deck-slot {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  min-width: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.deck-slot .cf {
+  width: 100%;
+  pointer-events: none;
+}
+.deck-slot.bk-slot {
+  font-size: 30px;
+  transition: color 0.14s ease, background 0.14s ease;
+}
+.deck-slot.bk-slot:hover {
+  background: var(--bk-osu-soft);
+  color: var(--bk-osu-text);
+}
+.deck-slot.has-card {
+  cursor: grab;
+}
+.deck-slot.has-card:active {
+  cursor: grabbing;
+}
+/* 选中要换的槽、拖卡悬在上面的槽：同一道粉色框 */
+.deck-slot:focus-visible,
+.deck-slot.is-picked,
+.deck-slot.is-drop-target {
+  outline: 2px solid var(--bk-osu);
+  outline-offset: 3px;
+}
+.deck-slot.is-picked.bk-slot {
+  background: var(--bk-osu-soft);
+  color: var(--bk-osu-text);
+}
+.deck-slot.is-on-desk .cf {
+  opacity: 0.45;
+}
+.deck-slot__no {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  z-index: 3;
+  min-width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--bk-well);
+  color: var(--bk-ink);
+  font-family: var(--bk-mono);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+.deck-slot__remove {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 3;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bk-well);
+  color: var(--bk-ink);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.deck-slot__remove:hover {
+  background: var(--bk-bad);
+  color: var(--bk-well);
+}
+.deck-slot__remove:focus-visible {
+  outline: 2px solid var(--bk-osu);
+  outline-offset: 2px;
+}
+/* 槽位底部的状态条："在桌面" / "松开放入" */
+.deck-slot__flag {
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  z-index: 4;
+  padding: 3px 0;
+  border-radius: 4px;
+  background: var(--bk-osu);
+  color: var(--bk-well);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.deck-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* ----- 右页 ----- */
+.deck-target {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 28px;
+}
+.deck-filters {
+  display: flex;
+  gap: 8px;
+}
+.deck-filters .bk-input {
+  flex: 1 1 0;
+}
+/* 候选卡一页 4×3，占满右页剩下的高度不滚动；--w 由 FitArea 写入（px） */
+.deck-picks {
+  flex: 1 1 0;
+  min-height: 240px;
+  contain: size layout style;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.deck-picks__grid {
+  display: grid;
+  grid-template-columns: repeat(4, var(--w, 0px));
+  gap: 12px 10px;
+  align-content: start;
+}
+.deck-picks__loading {
+  position: absolute;
+  top: 0;
+}
+.deck-pick {
+  position: relative;
+  min-width: 0;
+  border-radius: 6px;
+  cursor: grab;
+}
+.deck-pick:active {
+  cursor: grabbing;
+}
+.deck-pick .cf {
+  width: 100%;
+  pointer-events: none;
+}
+.deck-pick:focus-visible {
+  outline: 2px solid var(--bk-osu);
+  outline-offset: 3px;
+}
+.deck-pick.is-used {
+  cursor: default;
+}
+.deck-pick.is-used .cf {
+  opacity: 0.4;
+}
+.deck-pick__used {
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 2;
+  padding: 3px 0;
+  border-radius: 4px;
+  background: var(--bk-well);
+  color: var(--bk-ink);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}

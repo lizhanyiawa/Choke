@@ -1,12 +1,13 @@
 import type { CardData, PackPool, Rarity } from "./types"
 
+/** 跟卡框线条一致：石墨 / 翡翠 / 钢蓝 / 紫 / 金 / 铂 / 镭射（单色场合用近白） */
 export const RARITY_COLOR: Record<Rarity, string> = {
-  C: "#8E97A6",
-  UC: "#3CBADB",
-  R: "#D9488A",
-  E: "#FFC24B",
-  L: "#B98CFF",
-  Radiant: "#21E985",
+  C: "#9A9AA0",
+  UC: "#5FA679",
+  R: "#5D8CC4",
+  E: "#9B74DA",
+  L: "#D8B24E",
+  Radiant: "#C3C9D2",
   Prismatic: "#F4F4F6",
 }
 

@@ -1,0 +1,43 @@
+/* 战斗：左页出战卡组，右页对手和开战 */
+.battle-stats {
+  display: flex;
+  gap: 28px;
+}
+.battle-stats small {
+  color: var(--bk-faint);
+  font-size: 14px;
+  font-weight: 700;
+}
+.battle-row__no {
+  flex: 0 0 18px;
+  color: var(--bk-faint);
+  font-size: 12px;
+}
+.battle-row__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.battle-edit {
+  align-self: flex-start;
+}
+.battle-enemy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+}
+.battle-enemy__name {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.battle-start {
+  flex: 0 0 auto;
+  height: 44px;
+  font-size: 15px;
+}

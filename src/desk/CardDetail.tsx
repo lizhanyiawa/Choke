@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react"
+import { createPortal } from "react-dom"
 
 import { CardFace } from "@/card/CardFace"
 import {
@@ -31,6 +32,8 @@ import {
   toFace,
   type ApiUserCard,
 } from "./api"
+import "./book.css"
+import "./card-detail.css"
 
 interface Props {
   card: ApiUserCard
@@ -173,9 +176,9 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
     }
   }
 
-  return (
+  return createPortal(
     <div className="card-detail" role="dialog" aria-modal="true" aria-label={current.name} onClick={onClose}>
-      <div className="card-detail__panel" onClick={(event) => event.stopPropagation()}>
+      <div className="card-detail__panel" data-light onClick={(event) => event.stopPropagation()}>
         <button type="button" className="card-detail__close" onClick={onClose} aria-label="关闭">
           ×
         </button>
@@ -194,34 +197,34 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
           <div className="card-detail__stats">
             {readOnly ? (
               <>
-                <div>
+                <div className="bk-stat">
                   <span>品质</span>
                   <b>{RARITY_LABEL[current.rarity]}</b>
                 </div>
-                <div>
+                <div className="bk-stat">
                   <span>战力</span>
                   <b>{bp.toLocaleString("en-US")}</b>
                 </div>
-                <div>
+                <div className="bk-stat">
                   <span>图鉴编号</span>
                   <b>{formatNo(current.no, current.total).replace("/", " / ")}</b>
                 </div>
               </>
             ) : (
               <>
-                <div>
+                <div className="bk-stat">
                   <span>等级</span>
                   <b>
                     Lv.{current.level} / {cap}
                   </b>
                 </div>
-                <div>
+                <div className="bk-stat">
                   <span>命座</span>
                   <b>
                     {current.constellation} / {conCap}
                   </b>
                 </div>
-                <div>
+                <div className="bk-stat">
                   <span>战力</span>
                   <b>{bp.toLocaleString("en-US")}</b>
                 </div>
@@ -230,18 +233,18 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
           </div>
 
           {!readOnly && (
-            <div className="card-detail__level">
+            <div className="bk-box card-detail__level">
               <div className="card-detail__level-head">
                 <span>{maxed ? "MAX LEVEL" : `EXP ${current.exp} / ${need}`}</span>
                 <em>{maxed ? "已满级" : `${Math.round(expPct)}%`}</em>
               </div>
-              <div className="card-detail__exp">
-                <div style={{ width: `${expPct}%` }} />
+              <div className="bk-bar card-detail__exp" style={{ "--p": expPct } as CSSProperties}>
+                <i />
               </div>
               <div className="card-detail__actions">
                 <button
                   type="button"
-                  className="card-detail__action card-detail__action--primary"
+                  className="bk-btn bk-btn--main"
                   onClick={() => void levelUp()}
                   disabled={!canLevel || busy !== null}
                 >
@@ -249,7 +252,7 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
                 </button>
                 <button
                   type="button"
-                  className="card-detail__action"
+                  className="bk-btn"
                   onClick={() => void ascend()}
                   disabled={!canAscend || busy !== null}
                   title={sameCardFuel > 0 ? `消耗 1 张同名卡（剩余 ${sameCardFuel}）` : "没有同名卡"}
@@ -258,7 +261,7 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
                 </button>
                 <button
                   type="button"
-                  className="card-detail__action"
+                  className="bk-btn"
                   onClick={() => setFuelOpen((open) => !open)}
                   disabled={maxed || busy !== null}
                 >
@@ -267,13 +270,13 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
               </div>
               <div className="card-detail__wallet">
                 <span>闪卡精华</span>
-                <b>{essence ?? "—"}</b>
+                <b className="bk-num">{essence ?? "—"}</b>
                 <em>只能用于给卡镀闪</em>
               </div>
-              <div className="card-detail__actions card-detail__actions--essence">
+              <div className="card-detail__actions">
                 <button
                   type="button"
-                  className="card-detail__action"
+                  className="bk-btn"
                   onClick={() => void enhance()}
                   disabled={current.foil || busy !== null || (essence ?? 0) < FOIL_COST}
                 >
@@ -286,11 +289,9 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
 
           {!readOnly && fuelOpen && !maxed && (
             <div className="card-detail__fuel">
-              <div className="card-detail__section-title">
-                可熔重复卡 · 同名卡 {sameCardFuel} 张
-              </div>
+              <div className="bk-label">可熔重复卡 · 同名卡 {sameCardFuel} 张</div>
               {fuel.length === 0 ? (
-                <p className="card-detail__note">没有重复卡。再抽到同一张卡后才能熔。</p>
+                <p className="bk-note">没有重复卡。再抽到同一张卡后才能熔。</p>
               ) : (
                 <div className="card-detail__fuel-grid">
                   {fuel.map((row) => (
@@ -320,9 +321,10 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
 
           {!readOnly && !hero && (
             <div className="card-detail__market">
-              <div className="card-detail__section-title">市场 · 金币 {coins ?? "—"}</div>
+              <div className="bk-label">市场 · 金币 {coins ?? "—"}</div>
               <div className="card-detail__market-row">
                 <input
+                  className="bk-input bk-num"
                   type="number"
                   min={1}
                   value={price}
@@ -332,13 +334,14 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
                 <span>金币</span>
                 <button
                   type="button"
+                  className="bk-btn"
                   onClick={() => void list()}
                   disabled={busy !== null}
                 >
                   {busy === "list" ? "上架中…" : "上架市场"}
                 </button>
               </div>
-              <p className="card-detail__note">上架后其他玩家可以购买；下架后继续留在卡册。</p>
+              <p className="bk-note">上架后其他玩家可以购买；下架后继续留在卡册。</p>
             </div>
           )}
 
@@ -352,7 +355,7 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
           </div>
 
           <div className="card-detail__skills">
-            <div className="card-detail__section-title">技能</div>
+            <div className="bk-label">技能</div>
             {face.skills.map((skill, i) => (
               <div className="card-detail__skill" key={i}>
                 <span
@@ -369,20 +372,21 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
             ))}
           </div>
 
-          <p className="card-detail__note">
+          <p className="bk-note">
             {readOnly
               ? "图鉴数据 · 基础数值（Lv.1 / 0 命座），实际养成的卡面以卡册为准。"
               : "当前原型：升级只消耗经验，经验来自熔入重复卡；进阶材料、金币和阀门后续接入。"}
           </p>
 
           {current.profileUrl && (
-            <a className="card-detail__link" href={current.profileUrl} target="_blank" rel="noreferrer">
+            <a className="bk-btn bk-btn--ghost card-detail__link" href={current.profileUrl} target="_blank" rel="noreferrer">
               查看 osu! 主页
               <i aria-hidden>›</i>
             </a>
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

@@ -3,6 +3,8 @@ import { useEffect, useState } from "react"
 import { battlePower } from "@/card/data"
 
 import { fetchDeck, toFace, type ApiDeck } from "./api"
+import { Pages } from "./BookPages"
+import "./battle-panel.css"
 
 export function BattlePanel({
   userId,
@@ -28,56 +30,105 @@ export function BattlePanel({
 
   if (!userId) {
     return (
-      <div className="album-panel__empty">
-        <p>登录后开始战斗</p>
-        <a href="/auth/osu">用 osu! 登录</a>
-      </div>
+      <Pages
+        left={<p className="bk-note">带上卡组，和练习对手打一场。</p>}
+        right={
+          <div className="bk-empty">
+            <span>登录后开始战斗</span>
+            <a className="bk-btn bk-btn--main" href="/auth/osu">
+              用 osu! 登录
+            </a>
+          </div>
+        }
+      />
     )
   }
-  if (error) return <div className="album-panel__empty">{error}</div>
-  if (!deck) return <div className="album-panel__empty">加载卡组…</div>
+  if (error || !deck) {
+    return (
+      <Pages
+        left={<p className="bk-note">带上卡组，和练习对手打一场。</p>}
+        right={<div className={`bk-empty ${error ? "bk-error" : ""}`}>{error ?? "加载卡组…"}</div>}
+      />
+    )
+  }
 
   const cards = deck.slots.flatMap((slot) => (slot.card ? [slot.card] : []))
   const totalBp = cards.reduce((sum, card) => sum + battlePower(toFace(card)), 0)
 
+  const enemy = (
+    <div className="bk-box battle-enemy">
+      <span className="bk-label">练习对手</span>
+      <b className="battle-enemy__name">谱面幽灵</b>
+      <div className="bk-stat">
+        <b>24,000</b>
+        <span>敌人 HP</span>
+      </div>
+    </div>
+  )
+
   if (cards.length === 0) {
     return (
-      <div className="album-panel__empty">
-        <p>卡组里还没有卡</p>
-        <button type="button" className="command-link" onClick={onOpenDeck}>
-          去卡组
-        </button>
-      </div>
+      <Pages
+        left={
+          <div className="bk-empty">
+            <span>卡组里还没有卡</span>
+            <button type="button" className="bk-btn bk-btn--main" onClick={onOpenDeck}>
+              去卡组
+            </button>
+          </div>
+        }
+        right={
+          <>
+            {enemy}
+            <p className="bk-note">至少放 1 张卡进卡组才能出战。</p>
+          </>
+        }
+      />
     )
   }
 
   return (
-    <div className="battle-panel">
-      <div className="battle-intro">
-        <span className="battle-intro__tag">PVE · PROTOTYPE</span>
-        <b>练习对手 · 谱面幽灵</b>
-        <p>
-          进入独立战斗界面：当前 {cards.length} 张卡、2 AP 起始、Combo、防御档位、敌方意图预告，
-          以及按 14 子职业分池的技能。卡组不满 7 张也可以出战。
-        </p>
-        <div className="battle-intro__stats">
-          <div>
-            <span>卡组</span>
-            <b>{cards.length} / 7</b>
+    <Pages
+      left={
+        <>
+          <div className="battle-stats">
+            <div className="bk-stat">
+              <b>
+                {cards.length} <small>/ 7</small>
+              </b>
+              <span>出战卡牌</span>
+            </div>
+            <div className="bk-stat">
+              <b>{totalBp.toLocaleString("en-US")}</b>
+              <span>总战力</span>
+            </div>
           </div>
-          <div>
-            <span>总战力</span>
-            <b>{totalBp.toLocaleString("en-US")}</b>
+          <div className="bk-list">
+            {cards.map((card, index) => (
+              <div className="bk-row" key={card.userCardId}>
+                <span className="battle-row__no bk-num">{index + 1}</span>
+                <span className="battle-row__name">{card.name}</span>
+                <span className="bk-num">{battlePower(toFace(card)).toLocaleString("en-US")}</span>
+              </div>
+            ))}
           </div>
-          <div>
-            <span>敌人 HP</span>
-            <b>24,000</b>
-          </div>
-        </div>
-        <a className="battle-start" href="/battle">
-          进入战斗
-        </a>
-      </div>
-    </div>
+          <button type="button" className="bk-btn bk-btn--ghost battle-edit" onClick={onOpenDeck}>
+            调整卡组
+          </button>
+        </>
+      }
+      right={
+        <>
+          {enemy}
+          <p className="bk-note">
+            开局 2 AP，靠 Combo、防御档位和技能应对敌方预告的意图。技能按 14 个子职业分池，卡组不满 7
+            张也可以出战。
+          </p>
+          <a className="bk-btn bk-btn--main bk-btn--block battle-start" href="/battle">
+            进入战斗
+          </a>
+        </>
+      }
+    />
   )
 }

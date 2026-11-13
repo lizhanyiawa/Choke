@@ -1,0 +1,227 @@
+/* =========================================================
+   桌子前沿的抽屉：抽屉面和对战垫同一块包边料、同一圈缝线，正中一根金属拉手。
+   拉开时里面的格子从抽屉面后面升上来；格子是垫子布面压出的浅槽，收起来的物件缩小躺在里面。
+   ========================================================= */
+
+.desk-drawer {
+  /* 合着时露出来的抽屉面高度，和 DeskDrawer.tsx 的 FRONT 一致 */
+  --dr-front: 30px;
+  --dr-felt: #221b28;
+  --pull: 0;
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  /* 压在物件层上面、邀请函（5）和翻开的书（10）下面 */
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  width: min(680px, calc(100% - 160px));
+  translate: -50% 0;
+  pointer-events: none;
+}
+.desk-drawer.is-open {
+  --pull: 1;
+}
+
+/* ---------- 抽屉里：从抽屉面后面升上来 ---------- */
+.desk-drawer__well {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  min-height: 84px;
+  padding: 16px 18px 14px;
+  border: 7px solid var(--desk-edge, #3a2f42);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  outline: 1px dashed rgb(255 228 240 / 0.3);
+  outline-offset: -4px;
+  background:
+    linear-gradient(180deg, rgb(0 0 0 / 0.32), transparent 22px),
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.02) 0 1px, transparent 1px 3px),
+    var(--dr-felt);
+  box-shadow: 0 -10px 26px rgb(0 0 0 / 0.42), inset 0 0 0 1px rgb(0 0 0 / 0.35);
+  translate: 0 calc((1 - var(--pull)) * 100%);
+  transition: translate 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: auto;
+}
+.desk-drawer.is-pulling .desk-drawer__well {
+  transition: none;
+}
+
+.desk-drawer__empty {
+  margin: auto;
+  color: rgb(255 228 240 / 0.42);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+/* 一格一件：压下去的浅槽，指上去槽口亮起、物件浮起来，看得出能拿 */
+.desk-drawer__cell {
+  position: relative;
+  width: 116px;
+  height: 96px;
+  border-radius: 9px;
+  background: rgb(255 255 255 / 0.025);
+  box-shadow: inset 0 2px 5px rgb(0 0 0 / 0.5), inset 0 -1px 0 rgb(255 255 255 / 0.05);
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+  transition: background 0.14s ease, box-shadow 0.14s ease;
+}
+.desk-drawer__cell:hover,
+.desk-drawer__cell:focus-visible {
+  background: rgb(255 228 240 / 0.07);
+  box-shadow: inset 0 2px 5px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 102 170 / 0.7),
+    0 0 14px rgb(255 102 170 / 0.25);
+}
+.desk-drawer__cell:active {
+  cursor: grabbing;
+}
+.desk-drawer__cell.is-lifted .desk-drawer__thing {
+  visibility: hidden;
+}
+
+.desk-drawer__thing {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 9px);
+  translate: -50% -50%;
+  scale: var(--s, 0.5);
+  pointer-events: none;
+  transition: scale 0.16s ease, translate 0.16s ease;
+}
+.desk-drawer__cell:hover .desk-drawer__thing,
+.desk-drawer__cell:focus-visible .desk-drawer__thing {
+  translate: -50% calc(-50% - 3px);
+  scale: calc(var(--s, 0.5) * 1.08);
+}
+
+/* 物件之外收着的东西（邀请函）经 portal 画进这里，和物件格子排在同一行里 */
+.desk-drawer__slot {
+  display: contents;
+}
+/* 抽屉里的信封：沿用桌上信封的画法，只是不再自己定位 */
+.desk-drawer__thing > .invite-env {
+  z-index: auto;
+}
+.desk-drawer__thing > .invite-env:hover .invite-env__body {
+  scale: 1;
+}
+
+.desk-drawer__tag {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 5px;
+  color: rgb(255 228 240 / 0.55);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-align: center;
+  transition: color 0.14s ease;
+}
+.desk-drawer__cell:hover .desk-drawer__tag,
+.desk-drawer__cell:focus-visible .desk-drawer__tag {
+  color: #ff9fca;
+}
+
+/* ---------- 抽屉面：挂在桌沿下，正中一根拉手 ---------- */
+.desk-drawer__front {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--dr-front);
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.08), transparent 40%, rgb(0 0 0 / 0.18)),
+    var(--desk-edge, #3a2f42);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), inset 0 0 0 1px rgb(0 0 0 / 0.3),
+    0 -2px 6px rgb(0 0 0 / 0.35);
+  outline: 1px dashed rgb(255 228 240 / 0.22);
+  outline-offset: -5px;
+  cursor: pointer;
+  touch-action: none;
+  pointer-events: auto;
+}
+.desk-drawer__front:focus-visible {
+  outline: 2px solid #ff66aa;
+  outline-offset: 2px;
+}
+
+/* 金属拉手：两头的脚钉在抽屉面上，中间一根横杆，光从左上来 */
+.desk-drawer__pull {
+  position: relative;
+  width: 64px;
+  height: 9px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #eceef1, #8a8f97 55%, #c9ccd2);
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.45), 0 4px 6px rgb(0 0 0 / 0.35);
+  transition: translate 0.14s ease;
+}
+.desk-drawer__pull::before,
+.desk-drawer__pull::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5c6068;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35);
+}
+.desk-drawer__pull::before {
+  left: 3px;
+}
+.desk-drawer__pull::after {
+  right: 3px;
+}
+.desk-drawer__front:hover .desk-drawer__pull {
+  translate: 0 -1px;
+}
+
+.desk-drawer__label {
+  position: absolute;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgb(255 228 240 / 0.5);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+}
+.desk-drawer__label b {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: rgb(255 228 240 / 0.14);
+  color: var(--d-ink, #f2e9ed);
+  font-size: 10px;
+  line-height: 16px;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+/* 拖着能放进来的东西悬在上面：抽屉面（开着连同格子）亮一圈 osu! 粉 */
+.desk-drawer[data-hot] .desk-drawer__front {
+  outline: 2px dashed #ff66aa;
+  outline-offset: -4px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 0 18px rgb(255 102 170 / 0.45);
+}
+.desk-drawer[data-hot].is-open .desk-drawer__well {
+  outline: 2px dashed #ff66aa;
+  box-shadow: 0 -10px 26px rgb(0 0 0 / 0.42), 0 0 22px rgb(255 102 170 / 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-drawer__well,
+  .desk-drawer__thing,
+  .desk-drawer__pull {
+    transition: none;
+  }
+}

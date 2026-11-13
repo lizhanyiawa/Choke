@@ -14,7 +14,7 @@ import {
 import { WEB_BASE } from "../auth/env"
 import { db } from "../db/client"
 import { cards, userCards, users } from "../db/schema"
-import { invalidateCardCache } from "../gacha/open"
+import { invalidatePublicCardCache } from "./cards"
 import { heroCardDef } from "../hero"
 import { grantStarterPacks } from "../packs/inventory"
 import { heroIndex, heroPersonalBonus, heroStatsFromOsu } from "../../../../src/pool/hero"
@@ -41,12 +41,15 @@ async function claimHeroCard(
 
   const def = heroCardDef(me, pool ?? null, onboarded, personalBonusBp)
   const { id, heroIndex: _index, heroPower: _power, ...rest } = def
+  void _index
+  void _power
 
   await db
     .insert(cards)
     .values({ id, ...rest })
     .onConflictDoUpdate({ target: cards.id, set: rest })
 
+  invalidatePublicCardCache()
   const [owned] = await db
     .select({ id: userCards.id })
     .from(userCards)
@@ -57,7 +60,6 @@ async function claimHeroCard(
     await db.insert(userCards).values({ userId, cardId: id })
   }
 
-  invalidateCardCache()
 }
 
 export async function authRoutes(app: FastifyInstance) {
@@ -113,7 +115,7 @@ export async function authRoutes(app: FastifyInstance) {
         maxAge: 60 * 60 * 24 * 30,
       })
 
-      return reply.redirect(`${WEB_BASE}${user.onboarded ? "/gacha" : "/intro"}`)
+      return reply.redirect(`${WEB_BASE}/`)
     } catch (error) {
       request.log.error(error)
       return reply.code(500).send({
@@ -188,6 +190,7 @@ export async function authRoutes(app: FastifyInstance) {
         .update(cards)
         .set({ heroBonus: user.heroBonus })
         .where(eq(cards.id, `hero-${user.osuId}`))
+      invalidatePublicCardCache()
     }
 
     if (!user.onboarded) {

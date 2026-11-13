@@ -1,11 +1,11 @@
+import type { PointerEvent } from "react"
 import type { CardFaceData } from "@/card/types"
 
-import type { CardData } from "./types"
+import type { CardData, PackPool } from "./types"
 
-/** 抽屉/开包结果 → 桌面 */
-export const CARD_MIME = "application/x-choke-card"
-/** 桌面/卡册/卡组之间移动 user_card 实例 */
-export const USER_CARD_MIME = "application/x-choke-usercard"
+/** 书页和开包层共用指针拖卡；桌面拖卡仍使用已有的指针路径。 */
+export const CARD_POINTER_START_EVENT = "choke:card-pointer-start"
+export const CARD_POINTER_DROP_EVENT = "choke:card-pointer-drop"
 /** 桌面卡拖到卡组槽位时广播 */
 export const DECK_HOVER_EVENT = "choke:deck-hover"
 export const DECK_ASSIGN_EVENT = "choke:deck-assign"
@@ -19,11 +19,22 @@ export const DESK_ITEMS_EVENT = "choke:desk-items"
 export const ALBUM_HOVER_EVENT = "choke:album-hover"
 /** 桌面卡包拖到背包面板 */
 export const BACKPACK_HOVER_EVENT = "choke:backpack-hover"
+/** 抽卡面板开出卡后交给桌面播放开包动画（rect 是卡包图在视口里的位置） */
+export const GACHA_OPEN_EVENT = "choke:gacha-open"
+
+export interface GachaOpenDetail {
+  /** 开包结果只属于发起请求时的账号；桌面必须拒绝其他账号的迟到事件 */
+  userId: string
+  cards: CardData[]
+  pool: PackPool
+  rect?: { left: number; top: number; width: number; height: number }
+}
 
 export function toDeskCard(card: CardFaceData, userCardId?: number): CardData {
   return {
     cardId: card.id,
     userCardId,
+    face: card,
     name: card.name,
     mapper: card.name,
     rarity: card.rarity,
@@ -34,45 +45,48 @@ export function toDeskCard(card: CardFaceData, userCardId?: number): CardData {
   }
 }
 
-export function setCardDrag(event: DragEvent, card: CardData) {
-  event.dataTransfer?.setData(CARD_MIME, JSON.stringify(card))
-  if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy"
-}
-
-export function readCardDrag(event: DragEvent): CardData | null {
-  const raw = event.dataTransfer?.getData(CARD_MIME)
-  if (!raw) return null
-  try {
-    const card = JSON.parse(raw) as CardData
-    return card && typeof card.name === "string" ? card : null
-  } catch {
-    return null
-  }
-}
-
-export interface DeckDragPayload {
-  userCardId: number
+export interface CardDragPayload {
+  userCardId?: number
   fromSlot?: number
-  /** 拖出卡组到桌面时携带卡面数据 */
   card?: CardData
 }
 
-export function setUserCardDrag(event: DragEvent, payload: DeckDragPayload) {
-  event.dataTransfer?.setData(USER_CARD_MIME, JSON.stringify(payload))
-  if (event.dataTransfer) event.dataTransfer.effectAllowed = "copyMove"
+export interface CardPointerStart {
+  source: HTMLElement
+  pointerId: number
+  x: number
+  y: number
+  payload: CardDragPayload
+  onStart?: () => void
+  onFinish?: () => void
+  onDrop?: () => void
 }
 
-export function readUserCardDrag(event: DragEvent): DeckDragPayload | null {
-  const raw = event.dataTransfer?.getData(USER_CARD_MIME)
-  if (!raw) return null
-  try {
-    const payload = JSON.parse(raw) as DeckDragPayload
-    return typeof payload.userCardId === "number" ? payload : null
-  } catch {
-    return null
-  }
+export interface CardPointerDrop {
+  payload: CardDragPayload
+  x: number
+  y: number
 }
 
-export function hasDragType(event: DragEvent, type: string): boolean {
-  return Array.from(event.dataTransfer?.types ?? []).includes(type)
+/** 按下先记住来源，越过阈值才抬卡；普通点击仍交给原来的详情/选槽处理。 */
+export function startCardPointerDrag(
+  event: PointerEvent<HTMLElement>,
+  payload: CardDragPayload,
+  callbacks: Pick<CardPointerStart, "onStart" | "onFinish" | "onDrop"> = {},
+) {
+  if (event.button !== 0 || !event.isPrimary) return
+  if (event.target instanceof Element && event.target.closest("button, a, input, select, textarea")) return
+  event.preventDefault()
+  event.stopPropagation()
+  event.currentTarget.dispatchEvent(new CustomEvent<CardPointerStart>(CARD_POINTER_START_EVENT, {
+    bubbles: true,
+    detail: {
+      source: event.currentTarget,
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      payload,
+      ...callbacks,
+    },
+  }))
 }

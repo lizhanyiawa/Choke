@@ -11,6 +11,7 @@ import {
   serial,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core"
 
 export const cards = pgTable(
@@ -36,7 +37,11 @@ export const cards = pgTable(
   },
   (table) => [
     index("cards_rarity_idx").on(table.rarity),
+    index("cards_rarity_pp_idx").on(table.rarity, table.pp.desc().nullsLast()),
+    index("cards_country_pp_idx").on(table.country, table.pp.desc().nullsLast()),
     index("cards_name_idx").on(table.name),
+    index("cards_name_trgm_idx").using("gin", table.name.op("gin_trgm_ops")),
+    index("cards_pp_idx").on(table.pp.desc().nullsLast()),
   ],
 )
 
@@ -76,6 +81,8 @@ export const userCards = pgTable(
   },
   (table) => [
     index("user_cards_user_idx").on(table.userId),
+    index("user_cards_user_obtained_idx").on(table.userId, table.obtainedAt.desc()),
+    index("user_cards_user_card_idx").on(table.userId, table.cardId),
     index("user_cards_card_idx").on(table.cardId),
   ],
 )
@@ -149,10 +156,16 @@ export const marketListings = pgTable(
   {
     id: serial("id").primaryKey(),
     sellerId: text("seller_id").notNull(),
-    userCardId: integer("user_card_id").notNull().unique(),
+    userCardId: integer("user_card_id").notNull(),
     price: integer("price").notNull(),
     status: text("status").notNull().default("active"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [index("market_listings_status_idx").on(table.status)],
+  (table) => [
+    index("market_listings_status_idx").on(table.status),
+    // 同一张卡同时只能有一条 active 上架；sold / cancelled 留作历史
+    uniqueIndex("market_listings_active_card_idx")
+      .on(table.userCardId)
+      .where(sql`${table.status} = 'active'`),
+  ],
 )

@@ -3,12 +3,10 @@ import { CardLab } from "@/card/CardLab"
 import { BattlePage } from "@/battle/BattlePage"
 import { BackToDesk } from "@/components/BackToDesk"
 import { DeskPage } from "@/desk/DeskPage"
-import { IntroPage } from "@/intro/IntroPage"
 import { PoolLab } from "@/pool/PoolLab"
 
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, "")
-  if (path.endsWith("intro")) return <IntroPage />
   if (path.endsWith("battle")) {
     return (
       <>
@@ -16,6 +14,11 @@ export function App() {
         <BackToDesk />
       </>
     )
+  }
+  if (path.endsWith("intro")) {
+    // 旧的引导页已经换成桌上的邀请函
+    window.history.replaceState(null, "", "/")
+    return <DeskPage />
   }
   if (path.endsWith("gacha")) {
     window.history.replaceState(null, "", "/?panel=packs")

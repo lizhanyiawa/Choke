@@ -3,8 +3,10 @@ import type { CardFaceData } from "@/card/types"
 
 import type { CardData } from "./types"
 
-/** 把桌面原型里的极简 CardData 补成一张完整卡面；同一张卡结果恒定 */
+/** 优先使用服务端完整卡面；仅旧存档与本地原型卡使用恒定的补全结果。 */
 export function cardFromDesk(card: CardData): CardFaceData {
+  if (card.face) return card.face
+
   const seed = `${card.name}|${card.mapper}|${card.rarity}`
   const h = hashOf(seed)
   const job = JOB_ORDER[h % JOB_ORDER.length]

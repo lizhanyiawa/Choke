@@ -32,6 +32,64 @@ END`
 
 const SORTS = ["recent", "rarity", "pp", "name"] as const
 
+interface PublicCardsPayload {
+  rows: (typeof cards.$inferSelect)[]
+  total: number
+  limit: number
+  offset: number
+}
+const publicCardsCache = new Map<string, PublicCardsPayload>()
+const publicCountCache = new Map<string, number>()
+const PUBLIC_CACHE_LIMIT = 64
+let publicStats: { total: number; byRarity: Record<string, number> } | null = null
+export function invalidatePublicCardCache() {
+  publicCardsCache.clear()
+  publicCountCache.clear()
+  publicStats = null
+}
+
+async function queryPublicCards(query: {
+  rarity?: string
+  q?: string
+  country?: string
+  sort: (typeof SORTS)[number]
+  limit: number
+  offset: number
+}) {
+  const filters = [notLike(cards.id, "hero-%")]
+  if (query.rarity) filters.push(eq(cards.rarity, query.rarity))
+  if (query.country) filters.push(eq(cards.country, query.country))
+  if (query.q) filters.push(ilike(cards.name, `%${query.q}%`))
+  const where = and(...filters)
+  const countKey = JSON.stringify({ rarity: query.rarity, q: query.q, country: query.country })
+  const cachedTotal = publicCountCache.get(countKey)
+    ?? (!query.rarity && !query.country && !query.q ? publicStats?.total : undefined)
+  const orderBy =
+    query.sort === "rarity"
+      ? [desc(RARITY_RANK), sql`${cards.pp} desc nulls last`]
+      : query.sort === "name"
+        ? [asc(cards.name)]
+        : [sql`${cards.pp} desc nulls last`]
+  const rowsPromise = db
+    .select()
+    .from(cards)
+    .where(where)
+    .orderBy(...orderBy)
+    .limit(query.limit)
+    .offset(query.offset)
+  const totalPromise = cachedTotal == null
+    ? db.select({ value: count() }).from(cards).where(where)
+    : Promise.resolve([{ value: cachedTotal }])
+  const [rows, totalRows] = await Promise.all([rowsPromise, totalPromise])
+  const total = Number(totalRows[0]?.value ?? 0)
+  if (cachedTotal == null) {
+    if (publicCountCache.size >= PUBLIC_CACHE_LIMIT) {
+      publicCountCache.delete(publicCountCache.keys().next().value!)
+    }
+    publicCountCache.set(countKey, total)
+  }
+  return { rows, total, limit: query.limit, offset: query.offset }
+}
 export async function cardRoutes(app: FastifyInstance) {
   app.get("/cards", async (request) => {
     const query = z
@@ -45,36 +103,20 @@ export async function cardRoutes(app: FastifyInstance) {
       })
       .parse(request.query)
 
-    const filters = [notLike(cards.id, "hero-%")]
-    if (query.rarity) filters.push(eq(cards.rarity, query.rarity))
-    if (query.country) filters.push(eq(cards.country, query.country))
-    if (query.q) filters.push(ilike(cards.name, `%${query.q}%`))
-    const where = and(...filters)
-
-    const orderBy =
-      query.sort === "rarity"
-        ? [desc(RARITY_RANK), sql`${cards.pp} desc nulls last`]
-        : query.sort === "name"
-          ? [asc(cards.name)]
-          : [sql`${cards.pp} desc nulls last`]
-
-    const rows = await db
-      .select()
-      .from(cards)
-      .where(where)
-      .orderBy(...orderBy)
-      .limit(query.limit)
-      .offset(query.offset)
-
-    const [{ value: total }] = await db
-      .select({ value: count() })
-      .from(cards)
-      .where(where)
-
-    return { ok: true, data: { rows, total: Number(total), limit: query.limit, offset: query.offset } }
+    const key = JSON.stringify(query)
+    let data = publicCardsCache.get(key)
+    if (!data) {
+      data = await queryPublicCards(query)
+      if (publicCardsCache.size >= PUBLIC_CACHE_LIMIT) {
+        publicCardsCache.delete(publicCardsCache.keys().next().value!)
+      }
+      publicCardsCache.set(key, data)
+    }
+    return { ok: true, data }
   })
 
   app.get("/cards/stats", async () => {
+    if (publicStats) return { ok: true, data: publicStats }
     const rows = await db
       .select({ rarity: cards.rarity, value: count() })
       .from(cards)
@@ -88,7 +130,8 @@ export async function cardRoutes(app: FastifyInstance) {
       byRarity[row.rarity] = value
       total += value
     }
-    return { ok: true, data: { total, byRarity } }
+    publicStats = { total, byRarity }
+    return { ok: true, data: publicStats }
   })
 
   app.get("/cards/countries", async () => {

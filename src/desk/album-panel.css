@@ -1,0 +1,128 @@
+/* 卡册：左页摘要 + 筛选 + 一排卡，右页三排卡。控件用 book.css 的 bk-* */
+
+/* 桌面的卡拖到卡册上：整个跨页粉色内描边 + 一句提示。
+   画在跨页的伪元素上，不挡指针（桌面靠 elementsFromPoint 找 .album-panel） */
+.album-panel::after {
+  content: "松开 · 放入卡册";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background: rgb(28 18 22 / 0.72);
+  color: var(--bk-osu-text);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  box-shadow: inset 0 0 0 3px var(--bk-osu);
+  pointer-events: none;
+  visibility: hidden;
+}
+.album-panel.is-drop-target::after {
+  visibility: visible;
+}
+
+.album-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.album-head .bk-stat {
+  flex: 0 0 auto;
+  min-width: 64px;
+}
+.album-head__search {
+  flex: 1 1 0;
+}
+
+.album-login {
+  align-self: flex-start;
+}
+/* 空状态占满整页 */
+.album-fill {
+  flex: 1 1 auto;
+  align-content: center;
+}
+
+/* 一页卡位：占满页面剩下的高度，卡的宽度取"按宽排满"和"按高排满"里小的那个，保证不用滚。
+   --w 由 FitArea 量出区域尺寸后写入（px）；尺寸不看内容，换页时卡格内的布局不外溢 */
+.album-sheet {
+  --gap: 10px;
+  flex: 1 1 0;
+  min-height: calc(var(--rows) * 110px);
+  contain: size layout style;
+  position: relative;
+  /* 焦点 / 选中描边画在卡外 4px，页面 .book__body 会滚动、会裁掉贴边的部分 */
+  padding: 5px;
+}
+.album-sheet__grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--w, 0px));
+  gap: var(--gap);
+  justify-content: center;
+  align-content: start;
+}
+.album-sheet__loading {
+  position: absolute;
+  inset: 5px;
+}
+
+
+.album-slot {
+  position: relative;
+  min-width: 0;
+  border-radius: 6px;
+  cursor: grab;
+}
+.album-slot:active {
+  cursor: grabbing;
+}
+.album-slot:focus-visible {
+  outline: 2px solid var(--bk-osu);
+  outline-offset: 2px;
+}
+.album-slot .cf a {
+  pointer-events: none;
+}
+/* 已经摆在桌面上的卡：压暗 */
+.album-slot.is-on-desk .cf {
+  opacity: 0.4;
+  filter: saturate(0.45);
+}
+/* 从桌面飞回来落进这一格：亮起来，轻轻弹一下 */
+.album-slot[data-landing] .cf {
+  animation: album-land 0.46s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+@keyframes album-land {
+  0% {
+    transform: scale(0.94);
+    filter: brightness(1.5) drop-shadow(0 0 10px var(--bk-osu));
+  }
+  100% {
+    transform: scale(1);
+    filter: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .album-slot[data-landing] .cf {
+    animation: none;
+  }
+}
+.album-slot__tags {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  pointer-events: none;
+}
+.album-slot__on-desk {
+  --c: var(--bk-osu);
+}
+.album-slot__ready {
+  --c: var(--bk-good);
+}

@@ -1,0 +1,311 @@
+/* 卡牌详情弹窗（fixed，盖在整页上）。颜色和按钮用 book.css 的 --bk-* / bk-*，
+   这里只写布局和弹窗自己的东西 */
+.card-detail {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  contain: strict;
+  background: rgb(20 12 16 / 0.82);
+  backdrop-filter: blur(4px);
+  animation: card-detail-in 0.16s ease both;
+}
+@keyframes card-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+}
+.card-detail__panel {
+  position: relative;
+  display: flex;
+  gap: 24px;
+  width: min(840px, 100%);
+  max-height: calc(100vh - 48px);
+  padding: 24px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  background: var(--bk-paper);
+  color: var(--bk-ink);
+  font-family: "Outfit Variable", "Outfit", sans-serif;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 0 0 1px rgb(0 0 0 / 0.4),
+    0 4px 0 var(--bk-edge),
+    0 30px 50px -12px rgb(0 0 0 / 0.65);
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bk-raised) transparent;
+}
+.card-detail__face {
+  width: 330px;
+  flex: 0 0 330px;
+}
+.card-detail__face .cf {
+  width: 100%;
+}
+.card-detail__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.card-detail__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bk-raised);
+  color: var(--bk-ink);
+  font: inherit;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 2px 0 var(--bk-edge);
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.card-detail__close:hover {
+  background: var(--bk-osu);
+  color: var(--bk-well);
+}
+.card-detail__close:focus-visible {
+  outline: 2px solid var(--bk-osu);
+  outline-offset: 2px;
+}
+.card-detail__eyebrow {
+  color: var(--bk-osu);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  line-height: 1;
+}
+.card-detail__name {
+  margin: -6px 40px 0 0;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.card-detail__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--bk-line);
+}
+
+/* 养成：经验条 + 升级 / 升命 / 熔卡，下面是精华镀闪 */
+.card-detail__level {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.card-detail__level-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--bk-dim);
+  font-family: var(--bk-mono);
+  font-size: 12px;
+}
+.card-detail__level-head em {
+  color: var(--bk-osu-text);
+  font-style: normal;
+}
+.card-detail__exp {
+  flex: 0 0 auto;
+  height: 8px;
+}
+.card-detail__exp > i {
+  transition: width 0.25s ease;
+}
+.card-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.card-detail__wallet {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--bk-line);
+}
+.card-detail__wallet span {
+  color: var(--bk-dim);
+  font-size: 12px;
+  font-weight: 700;
+}
+.card-detail__wallet b {
+  font-size: 18px;
+  line-height: 1;
+}
+.card-detail__wallet em {
+  margin-left: auto;
+  color: var(--bk-faint);
+  font-size: 11px;
+  font-style: normal;
+}
+.card-detail__message {
+  margin: 0;
+  color: var(--bk-good);
+  font-size: 12px;
+}
+
+/* 熔卡：可选的重复卡 */
+.card-detail__fuel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.card-detail__fuel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+  max-height: 260px;
+  padding-right: 4px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bk-raised) transparent;
+}
+.card-detail__fuel-card {
+  position: relative;
+  min-width: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.card-detail__fuel-card:focus-visible {
+  outline: 2px solid var(--bk-osu);
+  outline-offset: 2px;
+}
+.card-detail__fuel-card .cf {
+  width: 100%;
+  pointer-events: none;
+}
+.card-detail__fuel-card span {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  translate: -50% 0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgb(28 18 22 / 0.88);
+  color: var(--bk-good);
+  font-family: var(--bk-mono);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.card-detail__fuel-card.is-busy {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* 上架市场 */
+.card-detail__market {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.card-detail__market-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-detail__market-row input {
+  width: 110px;
+}
+.card-detail__market-row span {
+  color: var(--bk-dim);
+  font-size: 12px;
+}
+
+.card-detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--bk-dim);
+  font-family: var(--bk-mono);
+  font-size: 11px;
+}
+.card-detail__meta span {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--bk-well);
+}
+
+.card-detail__skills {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.card-detail__skill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: var(--bk-well);
+}
+.card-detail__element {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 50%;
+  background: var(--el);
+}
+.card-detail__skill b {
+  font-size: 14px;
+}
+.card-detail__skill em {
+  color: var(--bk-dim);
+  font-size: 12px;
+  font-style: normal;
+}
+.card-detail__cost {
+  margin-left: auto;
+  color: var(--bk-osu-text);
+  font-family: var(--bk-mono);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.card-detail__link {
+  align-self: flex-start;
+}
+.card-detail__link i {
+  font-style: normal;
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* 窄屏：卡面叠到信息上面 */
+@media (max-width: 760px) {
+  .card-detail__panel {
+    flex-direction: column;
+    padding: 16px;
+  }
+  .card-detail__face {
+    width: min(280px, 100%);
+    flex: none;
+    align-self: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-detail {
+    animation: none;
+  }
+}

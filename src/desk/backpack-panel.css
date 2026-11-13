@@ -1,282 +1,138 @@
-.backpack-panel {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.backpack-panel.is-drop-target {
-  outline: 3px dashed #21e985;
-  outline-offset: 6px;
-  border-radius: 12px;
-}
-.backpack-panel__drop {
+/* 背包：左页卡包库存，右页选中卡包的详情和操作。控件用 book.css 的 bk-*，这里只有布局和卡包图。 */
+
+/* 桌面卡包拖到书上：整个跨页盖一层提示。用伪元素，不占页面内容 */
+.backpack-panel.is-drop-target::after {
+  content: "松开 · 放回背包";
   position: absolute;
-  inset: -4px;
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3px dashed #21e985;
-  border-radius: 14px;
-  background: rgba(11, 15, 23, 0.82);
-  color: #7cf7bb;
-  font-family: "Fredoka", "Outfit", sans-serif;
-  font-size: 20px;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background: rgb(28 18 22 / 0.84);
+  color: var(--bk-good);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  outline: 2px dashed var(--bk-good);
+  outline-offset: -10px;
   pointer-events: none;
 }
-.backpack-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 4px 2px 0;
-}
-.backpack-head > div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.backpack-head span {
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 8px;
-  letter-spacing: 0.24em;
-  color: #3cbadb;
-}
-.backpack-head b {
-  font-family: "Fredoka", "Outfit", sans-serif;
-  font-size: 30px;
-  line-height: 1;
-}
-.backpack-head p {
-  margin: 0;
-  max-width: 380px;
-  color: #8ea9c9;
-  font-size: 12px;
-  line-height: 1.6;
-  text-align: right;
-}
-.backpack-error {
-  padding: 8px 10px;
-  border: 1px solid rgba(237, 95, 159, 0.4);
-  border-radius: 8px;
-  background: rgba(237, 95, 159, 0.1);
-  color: #ff9ac6;
-  font-size: 11px;
-}
-.backpack-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-.backpack-summary > div {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px 13px;
-  border: 1.5px solid rgba(60, 186, 219, 0.2);
-  border-radius: 11px;
-  background: rgba(17, 29, 53, 0.55);
-}
-.backpack-summary span {
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  color: #8ea9c9;
-}
-.backpack-summary b {
-  font-family: "Fredoka", "Outfit", sans-serif;
-  font-size: 22px;
-  line-height: 1;
-  color: #f4f4f6;
-}
-.backpack-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+
+/* ---------- 左页：库存行 ---------- */
+.backpack-row {
+  width: 100%;
   gap: 12px;
-}
-.backpack-pack {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  min-height: 0;
-  padding: 13px;
-  border: 2px solid #14244a;
-  border-radius: 14px;
-  background: rgba(17, 29, 53, 0.8);
-}
-.backpack-pack.is-mystery {
-  background:
-    radial-gradient(ellipse 90% 120% at 15% 0%, rgba(237, 95, 159, 0.18), transparent 65%),
-    rgba(17, 29, 53, 0.85);
-  border-color: rgba(237, 95, 159, 0.45);
-}
-.backpack-pack.is-empty {
-  opacity: 0.55;
-}
-.backpack-pack__art {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 84px;
-  border-radius: 10px;
-  background:
-    radial-gradient(circle at 50% 38%, rgba(60, 186, 219, 0.16), transparent 65%),
-    linear-gradient(155deg, rgba(27, 45, 87, 0.8), rgba(7, 10, 18, 0.72));
-  overflow: hidden;
-}
-.backpack-pack.is-mystery .backpack-pack__art {
-  background:
-    radial-gradient(circle at 50% 38%, rgba(237, 95, 159, 0.28), transparent 65%),
-    linear-gradient(155deg, rgba(43, 23, 48, 0.8), rgba(7, 10, 18, 0.72));
-}
-.backpack-pack__art-strip {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 6px;
-  opacity: 0.9;
-}
-.backpack-pack__art img {
-  width: 62%;
-  max-height: 42px;
-  object-fit: contain;
-  filter: brightness(0) invert(1) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
-  opacity: 0.92;
-}
-.backpack-pack__art-series {
-  position: absolute;
-  left: 14px;
-  bottom: 8px;
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 7px;
-  letter-spacing: 0.2em;
-  color: rgba(244, 244, 246, 0.42);
-}
-.backpack-pack__art em {
-  position: absolute;
-  right: 10px;
-  bottom: 7px;
-  font-style: normal;
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 12px;
-  color: #f4f4f6;
-}
-.backpack-pack__top {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-.backpack-pack__dot {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 8px;
-  border-radius: 50%;
-}
-.backpack-pack__top b {
-  font-family: "Fredoka", "Outfit", sans-serif;
-  font-size: 17px;
-  line-height: 1;
-}
-.backpack-pack__top em {
-  margin-left: auto;
-  font-style: normal;
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 13px;
-  color: #f4f4f6;
-}
-.backpack-pack p {
-  margin: 0;
-  color: #7f8da3;
-  font-size: 11px;
-  line-height: 1.5;
-}
-.backpack-pack__foot {
-  margin-top: auto;
-}
-.backpack-pack__open,
-.backpack-pack__link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 34px;
-  padding: 0 13px;
-  border: 2px solid #3cbadb;
-  border-radius: 9px;
-  background: #3cbadb;
-  color: #0b0d10;
+  border: 0;
+  background: none;
+  color: var(--bk-ink);
   font: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  text-decoration: none;
+  text-align: left;
   cursor: pointer;
 }
-.backpack-pack__open:hover:not(:disabled),
-.backpack-pack__link:hover {
-  background: #5fd0ec;
+.backpack-row:focus-visible {
+  outline: 2px solid var(--bk-osu);
+  outline-offset: -2px;
 }
-.backpack-pack__open:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.backpack-row.is-empty > :not(em) {
+  opacity: 0.5;
 }
-.backpack-pack__done {
-  display: inline-flex;
-  align-items: center;
-  height: 30px;
-  padding: 0 10px;
-  border: 1px solid rgba(33, 233, 133, 0.4);
-  border-radius: 8px;
-  color: #21e985;
-  font-size: 10px;
+.backpack-row__art {
+  position: relative;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 43px;
 }
-.backpack-hero {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 16px;
-  border: 2px solid #14244a;
-  border-radius: 16px;
-  background: rgba(17, 29, 53, 0.8);
-}
-.backpack-hero__face {
-  width: 180px;
-  flex: 0 0 180px;
-}
-.backpack-hero__face .cf {
-  width: 100%;
-}
-.backpack-hero__text {
+.backpack-row__text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
-.backpack-hero__text span {
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 8px;
-  letter-spacing: 0.22em;
-  color: #3cbadb;
+.backpack-row__text b {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.1;
 }
-.backpack-hero__text b {
-  font-family: "Fredoka", "Outfit", sans-serif;
-  font-size: 26px;
-  line-height: 1.05;
-}
-.backpack-hero__text em {
-  font-style: normal;
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 10px;
-  color: #8ea9c9;
-}
-.backpack-hero__text p {
-  margin: 4px 0 0;
-  max-width: 460px;
-  color: #7f8da3;
+.backpack-row__text small {
+  overflow: hidden;
+  color: var(--bk-dim);
   font-size: 12px;
-  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.backpack-row em {
+  margin-left: auto;
+  color: var(--bk-osu-text);
+  font-size: 15px;
+  font-style: normal;
+}
+.backpack-row.is-empty em {
+  color: var(--bk-faint);
 }
 
-/* mystery modal */
+/* 神秘卡包没有卡池图：一个粉色问号包，圆角和 PackArt 对齐 */
+.backpack-mystery {
+  position: absolute;
+  inset: 0;
+  container-type: inline-size;
+  display: grid;
+  place-items: center;
+  border-radius: 3.4% / 2.4%;
+  background: color-mix(in srgb, var(--bk-osu) 30%, var(--bk-well));
+  box-shadow: inset 0 0 0 1px rgb(255 102 170 / 0.55);
+  color: var(--bk-osu-text);
+  font-style: normal;
+  font-weight: 800;
+}
+.backpack-mystery::before {
+  content: "?";
+  font-size: 46cqw;
+  line-height: 1;
+}
+
+/* ---------- 右页：详情 ---------- */
+.backpack-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 0 2px;
+}
+.backpack-detail__art {
+  position: relative;
+  flex: 0 0 auto;
+  width: 150px;
+  height: 213px;
+  filter: drop-shadow(0 8px 10px rgb(0 0 0 / 0.5));
+}
+.backpack-detail__card {
+  flex: 0 0 auto;
+  width: 170px;
+}
+.backpack-detail__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 360px;
+  text-align: center;
+}
+.backpack-detail__name {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.backpack-done {
+  --c: var(--bk-good);
+  align-self: center;
+  height: 24px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* ---------- 神秘卡包问卷（fixed，相对视口） ---------- */
 .backpack-modal {
   position: fixed;
   inset: 0;
@@ -285,60 +141,36 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(4, 6, 10, 0.78);
-  backdrop-filter: blur(4px);
+  background: rgb(12 8 10 / 0.78);
+  cursor: auto;
+  font-family: "Outfit Variable", "Outfit", sans-serif;
+  color: var(--bk-ink);
 }
 .backpack-modal__panel {
-  width: min(520px, 100%);
-  padding: 20px;
-  border: 3px solid #14244a;
-  border-radius: 18px;
-  background:
-    radial-gradient(ellipse 80% 120% at 15% 0%, rgba(237, 95, 159, 0.16), transparent 65%),
-    #111d35;
-  box-shadow: 10px 10px 0 #05070b;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(480px, 100%);
+  padding: 20px 22px;
+  border-radius: 12px;
+  background: var(--bk-paper);
+  color: var(--bk-ink);
+  box-shadow:
+    inset 0 0 0 1px var(--bk-line),
+    0 4px 0 var(--bk-edge),
+    0 30px 50px -12px rgb(0 0 0 / 0.65);
 }
 .backpack-modal__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 9px;
-  letter-spacing: 0.2em;
-  color: #ed5f9f;
-}
-.backpack-modal__head button {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 2px solid rgba(237, 95, 159, 0.45);
-  border-radius: 50%;
-  background: transparent;
-  color: #ff9ac6;
-  font: inherit;
-  font-size: 16px;
-  cursor: pointer;
 }
 .backpack-modal h3 {
-  margin: 14px 0 16px;
-  font-family: "Fredoka", "Outfit", sans-serif;
-  font-size: 24px;
-  line-height: 1.2;
-}
-.backpack-modal__progress {
-  display: flex;
-  gap: 6px;
-  margin-top: 10px;
-}
-.backpack-modal__progress span {
-  flex: 1;
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(60, 186, 219, 0.16);
-}
-.backpack-modal__progress span.is-on {
-  background: linear-gradient(90deg, #ed5f9f, #3cbadb);
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.3;
 }
 .backpack-modal__options {
   display: flex;
@@ -346,52 +178,34 @@
   gap: 8px;
 }
 .backpack-modal__options button {
-  padding: 11px 13px;
-  border: 1.5px solid rgba(60, 186, 219, 0.24);
-  border-radius: 10px;
-  background: rgba(27, 45, 87, 0.65);
-  color: #dbe3ee;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--bk-raised);
+  color: var(--bk-ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+  transition: background 0.14s ease;
 }
 .backpack-modal__options button:hover {
-  border-color: rgba(60, 186, 219, 0.6);
+  background: var(--bk-raised-hi);
 }
-.backpack-modal__options button.is-selected {
-  border-color: #3cbadb;
-  background: rgba(60, 186, 219, 0.14);
-  color: #f4f4f6;
+.backpack-modal__options button[aria-pressed="true"] {
+  background: var(--bk-osu-soft);
+  color: var(--bk-osu-text);
+  box-shadow: inset 0 0 0 1px rgb(255 102 170 / 0.55);
+}
+.backpack-modal__options button:focus-visible {
+  outline: 2px solid var(--bk-osu);
+  outline-offset: 2px;
 }
 .backpack-modal__actions {
   display: flex;
+  justify-content: space-between;
   gap: 8px;
-  margin-top: 18px;
-}
-.backpack-modal__ghost,
-.backpack-modal__next {
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 10px;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.backpack-modal__ghost {
-  border: 2px solid rgba(60, 186, 219, 0.35);
-  background: transparent;
-  color: #9fd9ea;
-}
-.backpack-modal__next {
-  margin-left: auto;
-  border: 2px solid #3cbadb;
-  background: #3cbadb;
-  color: #0b0d10;
-}
-.backpack-modal__ghost:disabled,
-.backpack-modal__next:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
+  margin-top: 4px;
 }
