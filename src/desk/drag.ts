@@ -1,7 +1,7 @@
 import type { PointerEvent } from "react"
 import type { CardFaceData } from "@/card/types"
 
-import type { CardData } from "./types"
+import type { CardData, PackPool } from "./types"
 
 /** 书页和开包层共用指针拖卡；桌面拖卡仍使用已有的指针路径。 */
 export const CARD_POINTER_START_EVENT = "choke:card-pointer-start"
@@ -19,11 +19,22 @@ export const DESK_ITEMS_EVENT = "choke:desk-items"
 export const ALBUM_HOVER_EVENT = "choke:album-hover"
 /** 桌面卡包拖到背包面板 */
 export const BACKPACK_HOVER_EVENT = "choke:backpack-hover"
+/** 抽卡面板开出卡后交给桌面播放开包动画（rect 是卡包图在视口里的位置） */
+export const GACHA_OPEN_EVENT = "choke:gacha-open"
+
+export interface GachaOpenDetail {
+  /** 开包结果只属于发起请求时的账号；桌面必须拒绝其他账号的迟到事件 */
+  userId: string
+  cards: CardData[]
+  pool: PackPool
+  rect?: { left: number; top: number; width: number; height: number }
+}
 
 export function toDeskCard(card: CardFaceData, userCardId?: number): CardData {
   return {
     cardId: card.id,
     userCardId,
+    face: card,
     name: card.name,
     mapper: card.name,
     rarity: card.rarity,

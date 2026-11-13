@@ -1,18 +1,26 @@
-import { useEffect, useState, type CSSProperties } from "react"
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react"
 
 import { CardFace } from "@/card/CardFace"
-import { faceFromDef } from "@/card/def"
-import type { CardFaceData, CardSkill, Job, Rarity } from "@/card/types"
+import type { CardFaceData, Rarity } from "@/card/types"
 
-import { fetchPackInventory } from "./api"
+import { fetchPackInventory, toFace, type ApiUserCard } from "./api"
 import { Pages } from "./BookPages"
-import { DESK_ADD_CARDS_EVENT, PACKS_CHANGED_EVENT, startCardPointerDrag, toDeskCard } from "./drag"
+import {
+  DESK_ADD_CARDS_EVENT,
+  GACHA_OPEN_EVENT,
+  PACKS_CHANGED_EVENT,
+  startCardPointerDrag,
+  toDeskCard,
+  type GachaOpenDetail,
+} from "./drag"
 import { PackArt } from "./opening/PackArt"
 import { POOL_META, RARITY_COLOR } from "./rarity"
 import type { PackPool } from "./types"
 import "./gacha-panel.css"
 
 const API = "/api"
+/** 「跳过动画」：开出的卡直接摆在面板里，方便连抽 */
+const SKIP_KEY = "choke.gacha.skipAnim"
 
 export type PoolId = "normal" | "idle" | "golden" | "radiant" | "sky" | "prism"
 
@@ -33,22 +41,10 @@ const POOLS: Pool[] = [
   { id: "prism", name: "棱彩", note: "赛季牌面", art: "prism" },
 ]
 
-interface ApiCard {
-  id: string
-  name: string
-  rarity: Rarity
-  job: Job
-  no: number
-  total: number
-  country: string | null
-  globalRank: number | null
-  pp: string | null
-  profileUrl: string | null
-  art: string | null
-  banner: string | null
-  skills: CardSkill[]
-  version: number
-}
+type ApiCard = Omit<
+  ApiUserCard,
+  "userCardId" | "level" | "constellation" | "exp" | "foil" | "obtainedAt"
+>
 
 interface Pity {
   before: number
@@ -71,26 +67,6 @@ interface CardResponse {
   error?: { message?: string }
 }
 
-function toFace(row: ApiCard): CardFaceData {
-  return faceFromDef({
-    id: row.id,
-    osuId: null,
-    name: row.name,
-    rarity: row.rarity,
-    job: row.job,
-    no: row.no,
-    total: row.total,
-    country: row.country ?? undefined,
-    globalRank: row.globalRank,
-    pp: row.pp == null ? null : Number(row.pp),
-    profileUrl: row.profileUrl ?? undefined,
-    art: row.art ?? undefined,
-    banner: row.banner ?? undefined,
-    skills: row.skills,
-    version: row.version ?? 1,
-  })
-}
-
 export function GachaPanel({
   userId,
   initialPool = "normal",
@@ -99,11 +75,35 @@ export function GachaPanel({
   initialPool?: PoolId
 }) {
   const [pool, setPool] = useState<PoolId>(initialPool)
+  const [ownerId, setOwnerId] = useState(userId)
   const [cards, setCards] = useState<(CardFaceData & { userCardId: number })[]>([])
   const [pity, setPity] = useState<Pity | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [packs, setPacks] = useState<{ userId: string; data: Record<string, number> } | null>(null)
+  const [skipAnim, setSkipAnim] = useState(() => localStorage.getItem(SKIP_KEY) === "1")
+  /** 选中卡池那一行的卡包图，开包动画从这里长出来 */
+  const artRef = useRef<HTMLSpanElement>(null)
+  const ownerRef = useRef<{ userId: string | null } | null>(null)
+  const requestRef = useRef<object | null>(null)
+
+  // 账号切换不能沿用上一位玩家的结果、保底或加载状态。
+  if (ownerId !== userId) {
+    setOwnerId(userId)
+    setCards([])
+    setPity(null)
+    setLoading(false)
+    setError(null)
+  }
+
+  useLayoutEffect(() => {
+    ownerRef.current = { userId }
+    requestRef.current = null
+    return () => {
+      ownerRef.current = null
+      requestRef.current = null
+    }
+  }, [userId])
 
   useEffect(() => {
     if (!userId) return
@@ -132,9 +132,21 @@ export function GachaPanel({
     setError(null)
   }
 
-  async function openPack() {
-    if (!userId || loading) return
+  function toggleSkip() {
+    const next = !skipAnim
+    setSkipAnim(next)
+    localStorage.setItem(SKIP_KEY, next ? "1" : "0")
+  }
 
+  async function openPack() {
+    const owner = ownerRef.current
+    if (!userId || owner?.userId !== userId || requestRef.current) return
+
+    // 对写请求只放弃过期的展示结果，不中止可能已经消耗卡包的 POST。
+    const request = {}
+    requestRef.current = request
+    const isCurrent = () => ownerRef.current === owner && requestRef.current === request
+    let consumed = false
     setLoading(true)
     setError(null)
     setCards([])
@@ -154,10 +166,13 @@ export function GachaPanel({
         throw new Error(payload?.error?.message ?? "开包失败")
       }
 
+      consumed = true
+      if (!isCurrent()) return
       const result = payload.data
       setPity(result.pity)
-      if (result.packs) setPacks({ userId: userId!, data: result.packs })
+      if (result.packs) setPacks({ userId, data: result.packs })
       window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
+      if (!isCurrent()) return
 
       const faces = await Promise.all(
         result.results.map(async (item) => {
@@ -174,15 +189,50 @@ export function GachaPanel({
           if (!detailRes.ok || !detail?.ok || !detail.data) {
             throw new Error(detail?.error?.message ?? "卡详情加载失败")
           }
-          return { ...toFace(detail.data), userCardId: item.userCardId, foil: item.foil }
+          return {
+            ...toFace({
+              ...detail.data,
+              userCardId: item.userCardId,
+              level: 1,
+              constellation: 0,
+              exp: 0,
+              foil: item.foil,
+            }),
+            userCardId: item.userCardId,
+          }
         })
       )
 
-      setCards(faces)
+      if (!isCurrent()) return
+      if (skipAnim) {
+        setCards(faces)
+        return
+      }
+      const art = artRef.current?.getBoundingClientRect()
+      const event = new CustomEvent<GachaOpenDetail>(GACHA_OPEN_EVENT, {
+        cancelable: true,
+        detail: {
+          userId,
+          cards: faces.map((card) => toDeskCard(card, card.userCardId)),
+          pool: current.art,
+          rect: art && art.width > 0
+            ? { left: art.left, top: art.top, width: art.width, height: art.height }
+            : undefined,
+        },
+      })
+      // 桌面已有另一场开包时保留本次结果，不覆盖它，也不丢弃已经入库的卡。
+      if (!window.dispatchEvent(event) && isCurrent()) setCards(faces)
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "开包失败")
+      if (!isCurrent()) return
+      const message = reason instanceof Error ? reason.message : "开包失败"
+      setError(consumed
+        ? `卡包已开启，卡牌已收入卡册；${message}。请到卡册查看。`
+        : message)
     } finally {
-      setLoading(false)
+      if (isCurrent()) {
+        requestRef.current = null
+        setLoading(false)
+      }
     }
   }
 
@@ -218,7 +268,7 @@ export function GachaPanel({
                 disabled={loading}
                 onClick={() => selectPool(item.id)}
               >
-                <span className="gacha-pool__art" aria-hidden>
+                <span className="gacha-pool__art" ref={pool === item.id ? artRef : undefined} aria-hidden>
                   <PackArt pool={item.art} />
                 </span>
                 <span className="gacha-pool__text">
@@ -248,6 +298,16 @@ export function GachaPanel({
             </div>
             <p className="bk-note">60 抽未出 L 及以上时强制保底。</p>
           </div>
+
+          <button
+            type="button"
+            className="bk-chip gacha-skip"
+            aria-pressed={skipAnim}
+            onClick={toggleSkip}
+            title="开启后开出的卡直接摆在右页，适合连抽"
+          >
+            跳过动画
+          </button>
         </>
       }
       right={

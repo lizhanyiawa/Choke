@@ -302,6 +302,11 @@
   animation: desk-deal 0.64s cubic-bezier(0.16, 0.84, 0.24, 1) both;
   transform-origin: 50% 60%;
 }
+.desk-item:focus-visible {
+  outline: 2px solid #ff66aa;
+  outline-offset: 6px;
+  border-radius: 8px;
+}
 @keyframes desk-deal {
   from {
     opacity: 0;

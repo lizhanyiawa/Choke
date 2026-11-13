@@ -13,9 +13,12 @@ import {
   DESK_ADD_CARDS_EVENT,
   DECK_ASSIGN_EVENT,
   DECK_HOVER_EVENT,
+  GACHA_OPEN_EVENT,
   PACKS_CHANGED_EVENT,
   CARD_POINTER_DROP_EVENT,
   type CardPointerDrop,
+  type GachaOpenDetail,
+  toDeskCard,
 } from "./drag"
 import { InviteLetter } from "./InviteLetter"
 import { INVITE_OPEN_EVENT } from "./invite"
@@ -24,7 +27,7 @@ import { POOL_META } from "./rarity"
 import { DEFAULT_SKIN } from "./skins"
 import { publishDeskCardIds } from "./presence"
 import { cardsToItems, ITEM_SIZE, newId, sizeOf, useDesk } from "./store"
-import type { CardData, DeskItem, PackPool, Rarity } from "./types"
+import type { CardData, DeskItem, PackPool } from "./types"
 import { PackArt } from "./opening/PackArt"
 import { PackOpener, type OriginRect } from "./opening/PackOpener"
 import "./desk.css"
@@ -61,13 +64,7 @@ interface OpenResponse {
   error?: { code?: string; message?: string }
 }
 
-interface CardRow {
-  id: string
-  name: string
-  rarity: Rarity
-  art: string | null
-  banner: string | null
-}
+type CardRow = Omit<ApiUserCard, "userCardId" | "level" | "constellation" | "exp" | "foil">
 
 interface CardResponse {
   ok: boolean
@@ -123,7 +120,8 @@ export function DeskPage() {
   const [lifted, setLifted] = useState<{ item: DeskItem; grab: { u: number; v: number } } | null>(null)
   const liftPointer = useRef({ x: 0, y: 0 })
   const [settling, setSettling] = useState<string | null>(null)
-  const [opening, setOpening] = useState<{ pack: DeskItem; cards: CardData[]; pool: PackPool; rect?: OriginRect } | null>(null)
+  /** key 区分每次开包；x/y 是开完后卡片落桌的位置（桌面卡包原位，抽卡面板用桌面中央） */
+  const [opening, setOpening] = useState<{ key: string; x: number; y: number; cards: CardData[]; pool: PackPool; rect?: OriginRect } | null>(null)
   const [pool, setPool] = useState<PackPool>(() => {
     const saved = localStorage.getItem(POOL_KEY) as PackPool | null
     return saved && saved in POOL_META ? saved : "normal"
@@ -170,6 +168,8 @@ export function DeskPage() {
   const toastTimer = useRef<number | null>(null)
   const settleTimer = useRef<number | null>(null)
   const openingBusy = useRef(false)
+  const userIdRef = useRef(user?.id)
+  useLayoutEffect(() => { userIdRef.current = user?.id }, [user?.id])
   useEffect(() => {
     localStorage.setItem(POOL_KEY, pool)
   }, [pool])
@@ -224,6 +224,22 @@ export function DeskPage() {
     const handler = () => bookRef.current?.close()
     window.addEventListener(INVITE_OPEN_EVENT, handler)
     return () => window.removeEventListener(INVITE_OPEN_EVENT, handler)
+  }, [])
+
+  // 抽卡面板开出卡：合上书，卡包从面板里的卡包图长出来，走和桌面卡包一样的开包动画
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const { cards, pool, rect, userId } = (event as CustomEvent<GachaOpenDetail>).detail
+      if (!cards.length || userId !== userIdRef.current || openingBusy.current) {
+        event.preventDefault()
+        return
+      }
+      openingBusy.current = true
+      bookRef.current?.close()
+      setOpening({ key: newId("gacha"), x: 0.45, y: 0.3, cards, pool, rect })
+    }
+    window.addEventListener(GACHA_OPEN_EVENT, handler)
+    return () => window.removeEventListener(GACHA_OPEN_EVENT, handler)
   }, [])
 
   const onInviteClaimed = useCallback(() => {
@@ -477,7 +493,7 @@ export function DeskPage() {
       .then(
         async (res) =>
           (await res.json().catch(() => null)) as
-            | { ok: boolean; data?: { packs: Record<string, number> } }
+            | { ok: boolean; data?: { packs: Record<string, number> }; error?: { code?: string } }
             | null,
       )
       .catch(() => null)
@@ -501,7 +517,8 @@ export function DeskPage() {
     }
     if (quickTimer.current) window.clearTimeout(quickTimer.current)
     quickTimer.current = window.setTimeout(async () => {
-      flying.forEach((it) => remove(it.id))
+      // 有 token 的卡包留到服务端确认归还后再删除，避免未登录或请求失败丢失凭证。
+      flying.filter((it) => it.kind !== "pack" || !it.token).forEach((it) => remove(it.id))
       if (packs.length) land("backpack")
       setQuickTargets(null)
       const parts: string[] = []
@@ -512,14 +529,13 @@ export function DeskPage() {
       }
       const userId = user?.id
       const results = await Promise.all(
-        packs.map((pack) => (pack.token && userId ? postPackReturn(userId, pack.token) : Promise.resolve(undefined))),
+        packs.map((pack) => (pack.token ? (userId ? postPackReturn(userId, pack.token) : Promise.resolve(null)) : Promise.resolve(undefined))),
       )
-      // 没送到的卡包摆回原位；服务端拒绝或本地卡包直接收走
-      const failed = packs.filter((_, index) => results[index] === null)
-      if (failed.length) {
-        const topZ = Math.max(0, ...itemsRef.current.map((it) => it.z)) + 1
-        spawn(failed.map((pack, index) => ({ ...pack, z: topZ + index })))
-      }
+      const failed = packs.filter((_, index) => {
+        const result = results[index]
+        return result === null || (result && !(result.ok && result.data) && result.error?.code !== "invalid_token")
+      })
+      packs.filter((pack) => !failed.includes(pack)).forEach((pack) => remove(pack.id))
       const latest = [...results].reverse().find((payload) => payload?.ok && payload.data)
       if (latest?.data && userId) {
         setPackState({ userId, data: latest.data.packs })
@@ -602,6 +618,10 @@ export function DeskPage() {
     item: DeskItem,
     flight?: { source: FlightSource; slot: FlightSlot; receiver?: DeskObjectId },
   ) => {
+    if (item.token && !user) {
+      showToast("请先登录，卡包留在桌面")
+      return
+    }
     let landed: Promise<void>
     if (flight) {
       landed = flyInto(item, flight.source, flight.slot, flight.receiver)
@@ -610,15 +630,15 @@ export function DeskPage() {
       landed = Promise.resolve()
     }
 
-    // 本地卡包（没有 token）或没登录：没有库存可还，拿走就行
-    if (!item.token || !user) {
+    // 本地原型卡包没有预扣库存，可以直接收走。
+    if (!item.token) {
       await landed
       refreshPacks()
       showToast("卡包已从桌面收回")
       return
     }
 
-    const userId = user.id
+    const userId = user!.id
     const request = postPackReturn(userId, item.token)
 
     const [payload] = await Promise.all([request, landed])
@@ -628,7 +648,7 @@ export function DeskPage() {
       showToast("卡包已放回背包")
       return
     }
-    if (payload) {
+    if (payload?.error?.code === "invalid_token") {
       // 服务端明确拒绝：这个包已经失效，留在桌上也开不了
       refreshPacks()
       showToast("卡包已从桌面收回")
@@ -841,6 +861,7 @@ export function DeskPage() {
 
       openingBusy.current = true
       showToast("开包中…")
+      let showingResults = false
       try {
         const res = await fetch(`/api/packs/${SERVER_POOL[packPool]}/open`, {
           method: "POST",
@@ -862,6 +883,8 @@ export function DeskPage() {
           }
           return
         }
+        // 服务端已核销 token，卡面加载失败也不能留下可重复开的桌面包。
+        remove(item.id)
         if (payload.data.packs && user) {
           setPackState({ userId: user.id, data: payload.data.packs })
           window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
@@ -875,33 +898,32 @@ export function DeskPage() {
               throw new Error(detail.error?.message ?? "卡牌详情加载失败")
             }
             const row = detail.data
-            return {
-              cardId: row.id,
+            return toDeskCard(toFace({
+              ...row,
               userCardId: result.userCardId,
-              name: row.name,
-              mapper: row.name,
-              rarity: row.rarity,
-              art: row.art ?? undefined,
-              banner: row.banner ?? undefined,
+              level: 1,
+              constellation: 0,
+              exp: 0,
               foil: result.foil,
-            }
+            }), result.userCardId)
           }),
         )
 
-        // 抽卡已成功落库，立刻消耗桌面上的卡包，避免取消后重复开同一包
-        remove(item.id)
-        setOpening({ pack: item, cards, pool: packPool, rect })
+        if (userIdRef.current !== user.id) return
+        showingResults = true
+        setOpening({ key: item.id, x: item.x, y: item.y, cards, pool: packPool, rect })
       } catch (err) {
         showToast(err instanceof Error ? err.message : "开包失败")
       } finally {
-        openingBusy.current = false
+        if (!showingResults) openingBusy.current = false
       }
     }
   }
 
   const finishOpening = () => {
     if (!opening) return
-    spawn(cardsToItems(opening.cards, opening.pack.x + 0.01, opening.pack.y + 0.02))
+    spawn(cardsToItems(opening.cards, opening.x + 0.01, opening.y + 0.02))
+    openingBusy.current = false
     setOpening(null)
   }
 
@@ -912,11 +934,13 @@ export function DeskPage() {
     )
     spawnCards([card])
     showToast(`${card.name} · 已放到桌面`)
+    if (left.length === 0) openingBusy.current = false
     setOpening(left.length === 0 ? null : { ...opening, cards: left })
   }
 
   const quickFinishOpening = () => {
     if (!opening) return
+    openingBusy.current = false
     setOpening(null)
     showToast(`已收入卡册 ×${opening.cards.length}`)
   }
@@ -989,7 +1013,9 @@ export function DeskPage() {
           "--desk-edge": DEFAULT_SKIN.edge,
         } as CSSProperties}
         onDoubleClick={(event) => {
-          if ((event.target as HTMLElement).closest(".desk-item, .book")) return
+          // React portal 仍会冒泡到这里，只处理真正位于桌面 DOM 内的空白。
+          if (!(event.target instanceof Element) || !event.currentTarget.contains(event.target)) return
+          if (event.target.closest(".desk-item, .book, .invite-env, .invite-modal")) return
           bookRef.current?.close()
         }}
       >
@@ -1035,7 +1061,14 @@ export function DeskPage() {
                   e.currentTarget.setPointerCapture(e.pointerId)
                   startDrag(e, item)
                 }}
-                role="group"
+                tabIndex={!flying && item.kind !== "card" ? 0 : undefined}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget || flying || event.repeat) return
+                  if (event.key !== "Enter" && event.key !== " ") return
+                  event.preventDefault()
+                  void onTap(item)
+                }}
+                role={item.kind === "card" ? "group" : "button"}
                 aria-label={labelOf(item)}
               >
                 <div className="desk-body">{renderItem(item)}</div>
@@ -1081,7 +1114,7 @@ export function DeskPage() {
 
       {opening && (
         <PackOpener
-          key={opening.pack.id}
+          key={opening.key}
           cards={opening.cards}
           pool={opening.pool}
           origin={opening.rect}

@@ -63,6 +63,10 @@
   color: var(--bk-osu-text);
   font-size: 15px;
 }
+/* 跳过动画：开关胶囊，靠左放在保底进度下面 */
+.gacha-skip {
+  align-self: flex-start;
+}
 
 /* ---------- 右页：当前卡池 ---------- */
 .gacha-current {

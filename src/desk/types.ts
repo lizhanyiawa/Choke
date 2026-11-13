@@ -1,3 +1,5 @@
+import type { CardFaceData } from "@/card/types"
+
 import type { DeskObjectId } from "./objects"
 
 export type Rarity = "C" | "UC" | "R" | "E" | "L" | "Radiant" | "Prismatic"
@@ -11,6 +13,8 @@ export interface CardData {
   cardId?: string
   /** user_cards 实例 id；有它才能直接拖进卡组 */
   userCardId?: number
+  /** 服务端完整卡面；仅旧存档与本地原型卡缺省 */
+  face?: CardFaceData
   name: string
   mapper: string
   rarity: Rarity
