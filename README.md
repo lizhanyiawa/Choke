@@ -89,7 +89,7 @@ API 会从 `apps/api` 的工作目录向上查找 `.env`，根目录这份会被
 |---|---|---|---|---|
 | `OSU_CLIENT_ID` | `74418` | 无 | **是** | osu! OAuth 应用的 Client ID |
 | `OSU_CLIENT_SECRET` | `replace-with-your-osu-client-secret` | 无 | **是** | osu! OAuth 应用的 Client Secret，不要提交 |
-| `SESSION_SECRET` | 一段长随机字符串 | 回退到 `OSU_CLIENT_SECRET`，再回退到不安全的 `choke-dev` | **建议显式配置** | 用于签名 session cookie；改掉后旧登录全部失效 |
+| `SESSION_SECRET` | 一段长随机字符串 | 回退到 `OSU_CLIENT_SECRET`；两者都没填时每次启动用随机值（重启后登录全部失效） | **建议显式配置** | 用于签名 session cookie；改掉后旧登录全部失效 |
 | `API_BASE_URL` | `http://localhost:3100` | `http://localhost:3100` | 改端口时必填 | OAuth 回调的 base；**末尾不要带斜杠** |
 | `WEB_BASE_URL` | `http://localhost:5173` | `http://localhost:5173` | 前端不是 5173 时必填 | 登录成功后跳转的前端地址 |
 | `PG_DATA_DIR` | `./.data/pg` | `./.data/pg` | 可选 | PGlite 数据目录；**相对 `apps/api` 的工作目录解析** |

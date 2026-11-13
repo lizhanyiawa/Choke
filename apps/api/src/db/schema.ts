@@ -11,6 +11,7 @@ import {
   serial,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core"
 
 export const cards = pgTable(
@@ -149,10 +150,16 @@ export const marketListings = pgTable(
   {
     id: serial("id").primaryKey(),
     sellerId: text("seller_id").notNull(),
-    userCardId: integer("user_card_id").notNull().unique(),
+    userCardId: integer("user_card_id").notNull(),
     price: integer("price").notNull(),
     status: text("status").notNull().default("active"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [index("market_listings_status_idx").on(table.status)],
+  (table) => [
+    index("market_listings_status_idx").on(table.status),
+    // 同一张卡同时只能有一条 active 上架；sold / cancelled 留作历史
+    uniqueIndex("market_listings_active_card_idx")
+      .on(table.userCardId)
+      .where(sql`${table.status} = 'active'`),
+  ],
 )

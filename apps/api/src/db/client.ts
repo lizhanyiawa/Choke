@@ -117,15 +117,19 @@ CREATE TABLE IF NOT EXISTS pity (
   PRIMARY KEY (user_id, pool)
 );
 
+-- 同一张卡同时只能有一条 active 上架；sold / cancelled 记录留作历史，不占唯一性。
 CREATE TABLE IF NOT EXISTS market_listings (
   id serial PRIMARY KEY,
   seller_id text NOT NULL,
-  user_card_id integer NOT NULL UNIQUE,
+  user_card_id integer NOT NULL,
   price integer NOT NULL,
   status text NOT NULL DEFAULT 'active',
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS market_listings_status_idx ON market_listings (status);
+ALTER TABLE market_listings DROP CONSTRAINT IF EXISTS market_listings_user_card_id_key;
+CREATE UNIQUE INDEX IF NOT EXISTS market_listings_active_card_idx
+  ON market_listings (user_card_id) WHERE status = 'active';
 `
 
 await client.exec(DDL)
