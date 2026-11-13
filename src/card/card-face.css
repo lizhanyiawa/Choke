@@ -10,13 +10,13 @@
 
 @property --mx {
   syntax: "<number>";
-  inherits: true;
+  inherits: false;
   initial-value: 0.24;
 }
 
 @property --my {
   syntax: "<number>";
-  inherits: true;
+  inherits: false;
   initial-value: 0.16;
 }
 
@@ -37,10 +37,6 @@
     0 0 0 0.5px rgb(0 0 0 / 0.3),
     1px 1.5px 1.5px rgb(0 0 0 / 0.3),
     4px 7px 14px -5px rgb(0 0 0 / 0.55);
-  /* 光标离开后，反光滑回左上 */
-  transition:
-    --mx 0.55s ease-out,
-    --my 0.55s ease-out;
 
   /* 卡纸：所有稀有度共用黑卡纸，各档只微调色相 */
   --stock: #1f1d1b;
@@ -75,9 +71,6 @@
   --bezel-gap: 1.15cqw;
 }
 
-.cf[data-lit] {
-  transition: none;
-}
 
 /* =========================================================
    1. 卡纸
@@ -91,6 +84,34 @@
   border-radius: inherit;
   overflow: hidden;
   pointer-events: none;
+}
+
+/* 光照只更新反光节点；非继承属性不让正文跟着重算。 */
+.cf__bezel,
+.cf__sheen,
+.cf__seal,
+.cf__emblem,
+.cf__rarity,
+.cf__name-rule,
+.cf__foil > i {
+  --foil-pos: calc(var(--mx) * 100%) calc(var(--my) * 100%);
+  transition:
+    --mx 0.55s ease-out,
+    --my 0.55s ease-out;
+}
+
+.cf[data-lit] :is(.cf__bezel, .cf__sheen, .cf__seal, .cf__emblem, .cf__rarity, .cf__name-rule, .cf__foil > i) {
+  transition: none;
+}
+
+.cf__bezel::before,
+.cf__bezel::after,
+.cf__seal::before,
+.cf__seal::after,
+.cf__sheen::before,
+.cf__sheen::after {
+  --mx: inherit;
+  --my: inherit;
 }
 
 .cf__stock {
@@ -895,7 +916,6 @@
   mix-blend-mode: screen;
   opacity: 0.1;
 }
-
 .cf[data-rarity="Radiant"] .cf__sheen::after {
   background: radial-gradient(
     60% 44% at calc(var(--mx) * 100%) calc(var(--my) * 100%),
@@ -946,7 +966,6 @@
   mix-blend-mode: screen;
   opacity: 0.14;
 }
-
 .cf[data-rarity="Prismatic"] .cf__sheen::after {
   background:
     radial-gradient(
@@ -973,7 +992,7 @@
    就混不到卡面上了。
    ========================================================= */
 
-.cf__foil {
+.cf__foil > i {
   --foil-angle: calc(118deg + (var(--mx) - 0.5) * 36deg);
   --spectrum: repeating-linear-gradient(
     var(--foil-angle),
@@ -1089,6 +1108,10 @@
   100% {
     transform: translateX(62%);
   }
+}
+
+.cf:not([data-sweep-visible]) .cf__foil-sweep {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -8,6 +8,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
+  contain: strict;
   background: rgb(20 12 16 / 0.82);
   backdrop-filter: blur(4px);
   animation: card-detail-in 0.16s ease both;

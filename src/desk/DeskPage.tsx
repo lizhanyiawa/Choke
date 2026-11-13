@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react"
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react"
 import { CardFace } from "@/card/CardFace"
 
 import { cardFromDesk } from "./cardFace"
+
 import { DeskObject, type DealButtonState } from "./DeskObject"
 import { DeskBook, PANEL_IDS, type DeskBookHandle, type PanelId } from "./DeskBook"
 import { DragGhost } from "./DragGhost"
@@ -9,24 +10,32 @@ import { toFace, type ApiUserCard } from "./api"
 import {
   ALBUM_HOVER_EVENT,
   BACKPACK_HOVER_EVENT,
-  CARD_MIME,
   DESK_ADD_CARDS_EVENT,
-  DESK_ITEMS_EVENT,
   DECK_ASSIGN_EVENT,
   DECK_HOVER_EVENT,
   PACKS_CHANGED_EVENT,
-  USER_CARD_MIME,
-  readCardDrag,
-  readUserCardDrag,
+  CARD_POINTER_DROP_EVENT,
+  type CardPointerDrop,
 } from "./drag"
 import { OBJECT_META, type DeskObjectId } from "./objects"
 import { POOL_META } from "./rarity"
 import { DEFAULT_SKIN } from "./skins"
+import { publishDeskCardIds } from "./presence"
 import { cardsToItems, ITEM_SIZE, newId, sizeOf, useDesk } from "./store"
 import type { CardData, DeskItem, PackPool, Rarity } from "./types"
 import { PackArt } from "./opening/PackArt"
 import { PackOpener, type OriginRect } from "./opening/PackOpener"
 import "./desk.css"
+
+/** 卡牌域很重；桌面状态变化时复用同一张卡面。 */
+const DeskCard = memo(function DeskCard({ card, hero }: { card: CardData; hero: ApiUserCard | null }) {
+  return <CardFace card={card.isHero && hero ? toFace(hero) : cardFromDesk(card)} />
+})
+
+const DeskPack = memo(function DeskPack({ pool }: { pool: PackPool }) {
+  return <div className="desk-pack"><PackArt pool={pool} /></div>
+})
+
 
 const POOL_KEY = "choke.pool"
 
@@ -84,10 +93,12 @@ interface FlightSource {
   transformOrigin: string
 }
 
-/** 飞行落点：物件左上角在桌面里的坐标 */
+/** 飞行落点：物件左上角在桌面里的坐标；scale 是落地时的缩放，fade 为 true 时边飞边淡出 */
 interface FlightSlot {
   left: number
   top: number
+  scale?: number
+  fade?: boolean
 }
 
 /** 每个物件一个轻微的固定角度，让桌面看起来是随手摆放的 */
@@ -124,6 +135,8 @@ export function DeskPage() {
     viewportTop: number
     toLeft: number
     toTop: number
+    scale: number
+    fade: boolean
     transform: string
     transformOrigin: string
   } | null>(null)
@@ -147,7 +160,6 @@ export function DeskPage() {
     return query && PANEL_IDS.includes(query) ? { panel: query, origin: null } : null
   })
   const bookRef = useRef<DeskBookHandle>(null)
-  const [deskDropActive, setDeskDropActive] = useState(false)
   const collectTimer = useRef<number | null>(null)
   const quickTimer = useRef<number | null>(null)
   const toastTimer = useRef<number | null>(null)
@@ -241,7 +253,7 @@ export function DeskPage() {
         ? [item.card.userCardId]
         : [],
     )
-    window.dispatchEvent(new CustomEvent(DESK_ITEMS_EVENT, { detail: ids }))
+    publishDeskCardIds(ids)
   }, [items])
 
   const spawnCards = useCallback(
@@ -302,6 +314,21 @@ export function DeskPage() {
     return () => window.removeEventListener(DESK_ADD_CARDS_EVENT, onAddCards)
   }, [spawnCards, showToast])
 
+  useEffect(() => {
+    const stage = stageRef.current
+    if (!stage) return
+    const onDrop = (event: Event) => {
+      if (event.defaultPrevented || event.target !== stage) return
+      const { payload, x, y } = (event as CustomEvent<CardPointerDrop>).detail
+      if (!payload.card) return
+      event.preventDefault()
+      spawnCards([payload.card], x, y)
+      showToast(`${payload.card.name} · 已放到桌面`)
+    }
+    stage.addEventListener(CARD_POINTER_DROP_EVENT, onDrop)
+    return () => stage.removeEventListener(CARD_POINTER_DROP_EVENT, onDrop)
+  }, [spawnCards, showToast])
+
   const album = items.find((it) => it.object === "album")
   const backpack = items.find((it) => it.object === "backpack")
 
@@ -342,7 +369,7 @@ export function DeskPage() {
       // 上一件还在飞：让它立刻落定，不然会被这一件顶掉、永远留在桌上
       flightDone.current?.()
       setDropTarget(null)
-      setCollecting({ id: item.id, ...source, toLeft: slot.left, toTop: slot.top })
+      setCollecting({ id: item.id, ...source, toLeft: slot.left, toTop: slot.top, scale: slot.scale ?? 0.16, fade: slot.fade ?? true })
       if (receiver) setAwaiting(receiver)
       const done = () => {
         if (flightDone.current !== done) return
@@ -363,14 +390,43 @@ export function DeskPage() {
     void flyInto(item, source, destination).then(() => showToast("已收入卡册"))
   }
 
+  /**
+   * 拖进翻开的卡册：这张卡在卡册里本来就有一格（压暗、标着"在桌面"）。
+   * 那格在当前页就缩到格子大小、不透明地落进去，落地后那格亮起来弹一下；
+   * 不在当前页就飞向右下角页码，像塞进后面的书页。
+   */
+  const collectIntoAlbum = (item: DeskItem, source: FlightSource, stage: DOMRect) => {
+    const size = sizeOf(item)
+    const spread = document.querySelector<HTMLElement>(".book__spread.album-panel:not([data-preload])")
+    const userCardId = item.card?.userCardId
+    const slotEl = userCardId == null ? null : spread?.querySelector<HTMLElement>(`.album-slot[data-user-card="${userCardId}"]`)
+    const target = slotEl ?? spread?.querySelector<HTMLElement>(".book__folio") ?? spread
+    if (!target) return collectCard(item, source)
+    const box = target.getBoundingClientRect()
+    const slot: FlightSlot = {
+      left: box.left - stage.left + box.width / 2 - size.w / 2,
+      top: box.top - stage.top + box.height / 2 - size.h / 2,
+      ...(slotEl ? { scale: box.width / size.w, fade: false } : {}),
+    }
+    void flyInto(item, source, slot).then(() => {
+      if (slotEl?.isConnected) {
+        // data-* 不归 React 管，卡位重渲染（去掉 is-on-desk）时不会被冲掉
+        delete slotEl.dataset.landing
+        void slotEl.offsetWidth
+        slotEl.dataset.landing = ""
+        window.setTimeout(() => delete slotEl.dataset.landing, 480)
+      }
+      showToast("已收入卡册")
+    })
+  }
+
   useLayoutEffect(() => {
     if (!collecting) return
     const item = collectionRef.current?.querySelector<HTMLElement>(".desk-body")
     if (!item) return
-    const { left, top, toLeft, toTop, transform, transformOrigin } = collecting
+    const { left, top, toLeft, toTop, transform, transformOrigin, scale, fade } = collecting
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     // 缩小是绕抓取点（transformOrigin）做的，抓得越偏，缩完的中心离落点越远；把这段偏移补回来
-    const END_SCALE = 0.16
     const originPx = (part: string | undefined, full: number) => {
       const value = Number.parseFloat(part ?? "")
       if (!Number.isFinite(value)) return full / 2
@@ -379,13 +435,13 @@ export function DeskPage() {
     const parts = transformOrigin.split(" ")
     const w = item.offsetWidth
     const h = item.offsetHeight
-    const dx = toLeft - left - (1 - END_SCALE) * (originPx(parts[0], w) - w / 2)
-    const dy = toTop - top - (1 - END_SCALE) * (originPx(parts[1], h) - h / 2)
+    const dx = toLeft - left - (1 - scale) * (originPx(parts[0], w) - w / 2)
+    const dy = toTop - top - (1 - scale) * (originPx(parts[1], h) - h / 2)
     const animation = item.animate([
       { transform, transformOrigin, opacity: 1 },
       {
-        transform: `translate(${dx}px, ${dy}px) scale(${END_SCALE})`,
-        transformOrigin, opacity: 0,
+        transform: `translate(${dx}px, ${dy}px) scale(${scale})`,
+        transformOrigin, opacity: fade ? 0 : 1,
       },
     ], { duration: reduced ? 1 : 420, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" })
     return () => animation.cancel()
@@ -592,6 +648,46 @@ export function DeskPage() {
     const canAssign = item.kind === "card" && assignId != null
     front(item.id)
 
+    let hitFrame = 0
+    let hitX = startX
+    let hitY = startY
+    const updateTarget = () => {
+      hitFrame = 0
+      const elements = document.elementsFromPoint(hitX, hitY)
+      let slotEl: HTMLElement | null = null
+      let overAlbum = false
+      let overBackpack = false
+      let hovered: DeskObjectId | undefined
+      for (const el of elements) {
+        if (canAssign && !slotEl) slotEl = el.closest<HTMLElement>("[data-slot]")
+        if (item.kind === "card" && !overAlbum) overAlbum = !!el.closest(".album-panel")
+        if (item.kind === "pack" && !overBackpack) overBackpack = !!el.closest(".backpack-panel")
+        if (!hovered) {
+          const object = el.closest<HTMLElement>(".desk-item[data-object]")
+          if (object && object.dataset.id !== item.id) hovered = object.dataset.object as DeskObjectId
+        }
+      }
+      const parsed = slotEl ? Number(slotEl.dataset.slot) : Number.NaN
+      const nextSlot = Number.isInteger(parsed) ? parsed : null
+      if (nextSlot !== deckSlot) {
+        deckSlot = nextSlot
+        window.dispatchEvent(new CustomEvent(DECK_HOVER_EVENT, { detail: nextSlot }))
+      }
+      if (overAlbum !== albumPanelHover) {
+        albumPanelHover = overAlbum
+        window.dispatchEvent(new CustomEvent(ALBUM_HOVER_EVENT, { detail: overAlbum }))
+      }
+      if (overBackpack !== backpackPanelHover) {
+        backpackPanelHover = overBackpack
+        window.dispatchEvent(new CustomEvent(BACKPACK_HOVER_EVENT, { detail: overBackpack }))
+      }
+      const next = acceptsDrop(hovered, item) ? hovered : undefined
+      if (next !== target) {
+        target = next
+        setDropTarget(next ?? null)
+      }
+    }
+
     const onMove = (ev: PointerEvent) => {
       if (ev.pointerId !== e.pointerId) return
       const dx = ev.clientX - startX
@@ -606,48 +702,15 @@ export function DeskPage() {
       ny = Math.min(Math.max(originY + dy, 0), rect.height - size.h)
       liftPointer.current = { x: rect.left + nx, y: rect.top + ny }
 
-      const elements = document.elementsFromPoint(ev.clientX, ev.clientY)
-
-      if (canAssign) {
-        const slotEl = elements
-          .map((el) => el.closest<HTMLElement>("[data-slot]"))
-          .find((el): el is HTMLElement => !!el)
-        const parsed = slotEl ? Number(slotEl.dataset.slot) : Number.NaN
-        const next = Number.isInteger(parsed) ? parsed : null
-        if (next !== deckSlot) {
-          deckSlot = next
-          window.dispatchEvent(new CustomEvent(DECK_HOVER_EVENT, { detail: next }))
-        }
-      }
-
-      const overAlbum = elements.some((el) => !!el.closest(".album-panel"))
-      if (overAlbum !== albumPanelHover) {
-        albumPanelHover = overAlbum
-        window.dispatchEvent(new CustomEvent(ALBUM_HOVER_EVENT, { detail: overAlbum }))
-      }
-
-      const overBackpack = elements.some((el) => !!el.closest(".backpack-panel"))
-      if (overBackpack !== backpackPanelHover) {
-        backpackPanelHover = overBackpack
-        window.dispatchEvent(
-          new CustomEvent(BACKPACK_HOVER_EVENT, { detail: overBackpack }),
-        )
-      }
-
-      // 桌上的活页夹收卡，纸盒收卡包
-      const objectEl = elements
-        .map((el) => el.closest<HTMLElement>(".desk-item[data-object]"))
-        .find((el): el is HTMLElement => !!el && el.dataset.id !== item.id)
-      const hovered = objectEl?.dataset.object as DeskObjectId | undefined
-      const next = acceptsDrop(hovered, item) ? hovered : undefined
-      if (next !== target) {
-        target = next
-        setDropTarget(next ?? null)
-      }
+      hitX = ev.clientX
+      hitY = ev.clientY
+      if (!hitFrame) hitFrame = requestAnimationFrame(updateTarget)
     }
     const onUp = (ev: PointerEvent) => {
       if (ev.pointerId !== e.pointerId) return
       if (ev.type === "pointerup") onMove(ev)
+      if (hitFrame) cancelAnimationFrame(hitFrame)
+      if (moved && ev.type === "pointerup") updateTarget()
       window.removeEventListener("pointermove", onMove)
       window.removeEventListener("pointerup", onUp)
       window.removeEventListener("pointercancel", onUp)
@@ -660,22 +723,20 @@ export function DeskPage() {
         transformOrigin: pose?.transformOrigin ?? "50% 50%",
       }
       setLifted(null)
-      window.dispatchEvent(new CustomEvent(DECK_HOVER_EVENT, { detail: null }))
-      window.dispatchEvent(new CustomEvent(ALBUM_HOVER_EVENT, { detail: false }))
-      window.dispatchEvent(new CustomEvent(BACKPACK_HOVER_EVENT, { detail: false }))
+      if (deckSlot != null) window.dispatchEvent(new CustomEvent(DECK_HOVER_EVENT, { detail: null }))
+      if (albumPanelHover) window.dispatchEvent(new CustomEvent(ALBUM_HOVER_EVENT, { detail: false }))
+      if (backpackPanelHover) window.dispatchEvent(new CustomEvent(BACKPACK_HOVER_EVENT, { detail: false }))
       setDropTarget(null)
       if (!moved) {
         if (ev.type === "pointerup") void onTap(item)
         return
       }
-      move(item.id, nx / rect.width, ny / rect.height)
-      if (ev.type === "pointercancel") return
+      if (ev.type === "pointercancel") {
+        move(item.id, nx / rect.width, ny / rect.height)
+        return
+      }
       if (albumPanelHover && item.kind === "card") {
-        const panel = document.querySelector(".album-panel")?.getBoundingClientRect()
-        collectCard(item, source, panel ? {
-          left: panel.left - rect.left + panel.width / 2 - size.w / 2,
-          top: panel.top - rect.top + Math.min(panel.height / 2, 180) - size.h / 2,
-        } : albumSlot())
+        collectIntoAlbum(item, source, rect)
         return
       }
       if (backpackPanelHover && item.kind === "pack") {
@@ -709,6 +770,7 @@ export function DeskPage() {
         return
       }
       // 落桌：轻轻弹一下，影子收紧
+      move(item.id, nx / rect.width, ny / rect.height)
       setSettling(item.id)
       if (settleTimer.current) window.clearTimeout(settleTimer.current)
       settleTimer.current = window.setTimeout(() => setSettling(null), 460)
@@ -868,15 +930,8 @@ export function DeskPage() {
         />
       )
     }
-    if (item.kind === "pack") {
-      return (
-        <div className="desk-pack">
-          <PackArt pool={item.pool ?? "normal"} />
-        </div>
-      )
-    }
-    if (item.card?.isHero && user?.hero) return <CardFace card={toFace(user.hero)} />
-    return item.card ? <CardFace card={cardFromDesk(item.card)} /> : null
+    if (item.kind === "pack") return <DeskPack pool={item.pool ?? "normal"} />
+    return item.card ? <DeskCard card={item.card} hero={item.card.isHero ? user?.hero ?? null : null} /> : null
   }
 
   const labelOf = (item: DeskItem) => {
@@ -908,31 +963,12 @@ export function DeskPage() {
 
       <main
         ref={stageRef}
-        className={`desk-stage ${deskDropActive ? "is-card-drop" : ""}`}
+        className="desk-stage"
         style={{
           "--desk-bg": DEFAULT_SKIN.background,
           "--desk-blend": DEFAULT_SKIN.blend,
           "--desk-edge": DEFAULT_SKIN.edge,
         } as CSSProperties}
-        onDragOver={(event) => {
-          const types = Array.from(event.dataTransfer.types)
-          if (!types.includes(CARD_MIME) && !types.includes(USER_CARD_MIME)) return
-          event.preventDefault()
-          event.dataTransfer.dropEffect = "copy"
-          if (!deskDropActive) setDeskDropActive(true)
-        }}
-        onDragLeave={(event) => {
-          if (event.target === event.currentTarget) setDeskDropActive(false)
-        }}
-        onDrop={(event) => {
-          const deckCard = readUserCardDrag(event.nativeEvent)
-          const card = deckCard?.card ?? readCardDrag(event.nativeEvent)
-          if (!card) return
-          event.preventDefault()
-          setDeskDropActive(false)
-          spawnCards([card], event.clientX, event.clientY)
-          showToast(`${card.name} · 已放到桌面`)
-        }}
         onDoubleClick={(event) => {
           if ((event.target as HTMLElement).closest(".desk-item, .book")) return
           bookRef.current?.close()
@@ -989,12 +1025,10 @@ export function DeskPage() {
           })}
         </div>
 
-        {deskDropActive && (
-          <div className="desk-card-drop" aria-hidden>
-            <span>松开</span>
-            <b>放到桌面</b>
-          </div>
-        )}
+        <div className="desk-card-drop" aria-hidden>
+          <span>松开</span>
+          <b>放到桌面</b>
+        </div>
 
         {book && (
           <DeskBook

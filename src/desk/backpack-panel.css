@@ -143,6 +143,8 @@
   padding: 24px;
   background: rgb(12 8 10 / 0.78);
   cursor: auto;
+  font-family: "Outfit Variable", "Outfit", sans-serif;
+  color: var(--bk-ink);
 }
 .backpack-modal__panel {
   display: flex;

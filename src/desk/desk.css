@@ -167,6 +167,7 @@
   top: 0;
   z-index: 2000;
   pointer-events: none;
+  contain: size layout style;
   will-change: transform;
   filter: drop-shadow(
     calc(var(--lift, 0) * 16px + 2px)
@@ -257,6 +258,16 @@
   filter: drop-shadow(1px 2px 1.5px rgb(0 0 0 / 0.5)) drop-shadow(5px 9px 9px rgb(0 0 0 / 0.32));
 }
 
+/* 卡面手势只在页面内处理，不启动系统拖放或触屏滚动。 */
+.album-slot,
+.deck-slot,
+.deck-pick,
+.gacha-results__card,
+.op-card[data-phase="slot"] {
+  touch-action: none;
+  user-select: none;
+}
+
 .desk-card-drop {
   position: absolute;
   inset: 18px;
@@ -271,6 +282,10 @@
   background: rgba(255, 102, 170, 0.08);
   color: #ffb3d4;
   pointer-events: none;
+  visibility: hidden;
+}
+.desk-stage.is-card-drop .desk-card-drop {
+  visibility: visible;
 }
 .desk-card-drop span {
   font-family: "JetBrains Mono", Consolas, monospace;

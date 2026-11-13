@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties } from "react"
+import { memo, useEffect, useRef, type CSSProperties } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -24,6 +24,8 @@ interface Props {
   card: CardFaceData
   mode?: CardFaceMode
   className?: string
+  /** 书里的邻页提前加载，避免翻过去时才开始请求插画 */
+  eager?: boolean
 }
 
 /**
@@ -32,8 +34,25 @@ interface Props {
  * → 卡名条（名字 / 排名 / pp）→ 技能行（1–3 行，行数少时插画窗自动拉高）→ 底栏（职业 / BP / 编号）。
  * 战斗态只留插画窗和技能行。材质、压印、闪卡膜全在 card-face.css。
  */
-export function CardFace({ card, mode = "collection", className }: Props) {
+export const CardFace = memo(function CardFace({ card, mode = "collection", className, eager = false }: Props) {
+  const cardRef = useRef<HTMLDivElement>(null)
+
   useEffect(trackCardLight, [])
+
+  useEffect(() => {
+    if (!card.foil || !cardRef.current) return
+
+    const element = cardRef.current
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) element.dataset.sweepVisible = ""
+        else delete element.dataset.sweepVisible
+      },
+      { rootMargin: "100px" }
+    )
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [card.foil])
 
   const bp = battlePower(card)
   const flag = flagUrl(card.country)
@@ -46,6 +65,7 @@ export function CardFace({ card, mode = "collection", className }: Props) {
 
   return (
     <div
+      ref={cardRef}
       className={cn("cf", className)}
       data-rarity={card.rarity}
       data-mode={mode}
@@ -107,7 +127,7 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                 src={card.banner || card.art}
                 alt=""
                 draggable={false}
-                loading="lazy"
+                loading={eager ? "eager" : "lazy"}
                 decoding="async"
                 fetchPriority="low"
                 referrerPolicy="no-referrer"
@@ -126,7 +146,7 @@ export function CardFace({ card, mode = "collection", className }: Props) {
                 src={card.art}
                 alt=""
                 draggable={false}
-                loading="lazy"
+                loading={eager ? "eager" : "lazy"}
                 decoding="async"
                 referrerPolicy="no-referrer"
               />
@@ -256,7 +276,7 @@ export function CardFace({ card, mode = "collection", className }: Props) {
       )}
     </div>
   )
-}
+})
 
 function JobGlyph({ job }: { job: Job }) {
   const line = {

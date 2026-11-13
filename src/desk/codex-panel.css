@@ -43,22 +43,24 @@
 }
 
 /* 卡格占满页面剩下的高度，卡的大小由宽、高里更紧的那个决定，保证整排整排放得下不用滚。
-   容器查询只挂在卡格外层：详情弹窗不在它里面。 */
+   --w 由 FitArea 量出区域尺寸后写入（px）；尺寸不看内容，换页时卡格内的布局不外溢 */
 .codex-fit {
   flex: 1 1 0;
   min-height: 150px;
-  container-type: size;
+  contain: size layout style;
   display: flex;
   justify-content: center;
+  position: relative;
 }
 .codex-fit > .bk-cards {
-  --w: min(
-    (100cqw - 30px) / 4,
-    (100cqh - 2px - (var(--rows) - 1) * 12px) / var(--rows) * 2 / 3
-  );
   flex: 0 0 auto;
-  width: calc(var(--w) * 4 + 30px);
+  width: calc(var(--w, 0px) * 4 + 30px);
 }
+.codex-fit__loading {
+  position: absolute;
+  top: 0;
+}
+
 .codex-slot {
   min-width: 0;
   aspect-ratio: 2 / 3;

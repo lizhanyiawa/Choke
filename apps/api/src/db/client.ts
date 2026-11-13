@@ -2,6 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 
 import { PGlite } from "@electric-sql/pglite"
+import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm"
 import { drizzle } from "drizzle-orm/pglite"
 
 import * as schema from "./schema"
@@ -9,7 +10,7 @@ import * as schema from "./schema"
 const dataDir = path.resolve(process.env.PG_DATA_DIR ?? "./.data/pg")
 fs.mkdirSync(dataDir, { recursive: true })
 
-export const client = await PGlite.create(dataDir)
+export const client = await PGlite.create(dataDir, { extensions: { pg_trgm } })
 export const db = drizzle(client, { schema })
 
 const DDL = `
@@ -32,7 +33,12 @@ CREATE TABLE IF NOT EXISTS cards (
   version integer NOT NULL DEFAULT 1
 );
 CREATE INDEX IF NOT EXISTS cards_rarity_idx ON cards (rarity);
+CREATE INDEX IF NOT EXISTS cards_rarity_pp_idx ON cards (rarity, pp DESC NULLS LAST);
+CREATE INDEX IF NOT EXISTS cards_country_pp_idx ON cards (country, pp DESC NULLS LAST);
 CREATE INDEX IF NOT EXISTS cards_name_idx ON cards (name);
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX IF NOT EXISTS cards_name_trgm_idx ON cards USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS cards_pp_idx ON cards (pp DESC NULLS LAST);
 ALTER TABLE cards ADD COLUMN IF NOT EXISTS hero_bonus integer NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS users (
@@ -67,6 +73,8 @@ CREATE TABLE IF NOT EXISTS user_cards (
 ALTER TABLE user_cards ADD COLUMN IF NOT EXISTS exp integer NOT NULL DEFAULT 0;
 ALTER TABLE user_cards ADD COLUMN IF NOT EXISTS foil boolean NOT NULL DEFAULT false;
 CREATE INDEX IF NOT EXISTS user_cards_user_idx ON user_cards (user_id);
+CREATE INDEX IF NOT EXISTS user_cards_user_obtained_idx ON user_cards (user_id, obtained_at DESC);
+CREATE INDEX IF NOT EXISTS user_cards_user_card_idx ON user_cards (user_id, card_id);
 CREATE INDEX IF NOT EXISTS user_cards_card_idx ON user_cards (card_id);
 
 CREATE TABLE IF NOT EXISTS decks (

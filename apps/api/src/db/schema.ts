@@ -37,7 +37,11 @@ export const cards = pgTable(
   },
   (table) => [
     index("cards_rarity_idx").on(table.rarity),
+    index("cards_rarity_pp_idx").on(table.rarity, table.pp.desc().nullsLast()),
+    index("cards_country_pp_idx").on(table.country, table.pp.desc().nullsLast()),
     index("cards_name_idx").on(table.name),
+    index("cards_name_trgm_idx").using("gin", table.name.op("gin_trgm_ops")),
+    index("cards_pp_idx").on(table.pp.desc().nullsLast()),
   ],
 )
 
@@ -77,6 +81,8 @@ export const userCards = pgTable(
   },
   (table) => [
     index("user_cards_user_idx").on(table.userId),
+    index("user_cards_user_obtained_idx").on(table.userId, table.obtainedAt.desc()),
+    index("user_cards_user_card_idx").on(table.userId, table.cardId),
     index("user_cards_card_idx").on(table.cardId),
   ],
 )

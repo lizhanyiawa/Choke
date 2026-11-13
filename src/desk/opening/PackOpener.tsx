@@ -1,4 +1,5 @@
 import {
+  memo,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -12,7 +13,8 @@ import {
 import { CardFace } from "@/card/CardFace"
 
 import { cardFromDesk } from "../cardFace"
-import { CARD_MIME, readCardDrag, setCardDrag } from "../drag"
+import { CARD_POINTER_DROP_EVENT, startCardPointerDrag, type CardPointerDrop } from "../drag"
+import { CardDragLayer } from "../DragGhost"
 import { RARITY_COLOR } from "../rarity"
 import type { CardData, PackPool, Rarity } from "../types"
 import { PackArt } from "./PackArt"
@@ -53,6 +55,9 @@ type Stage = "seal" | "torn" | "stack"
 type CardPhase = "stack" | "charge" | "show" | "slot"
 
 const keyOf = (card: CardData) => String(card.userCardId ?? `${card.cardId}:${card.name}`)
+const OpenerFace = memo(function OpenerFace({ card }: { card: CardData }) {
+  return <CardFace card={cardFromDesk(card)} />
+})
 
 /**
  * 开包：拖住撕条往左撕开 → 5 张卡背朝上滑出叠成一摞 → 点最上面那张翻开（或全部翻开）。
@@ -69,6 +74,21 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard }:
   const [draggingCard, setDraggingCard] = useState(false)
   const tear = useRef<{ x: number; width: number; moved: boolean } | null>(null)
   const timers = useRef<number[]>([])
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    const onDrop = (event: Event) => {
+      if (!(event.target instanceof Element) || !event.target.closest("[data-card-drop]")) return
+      const { payload } = (event as CustomEvent<CardPointerDrop>).detail
+      if (!payload.card) return
+      event.preventDefault()
+      onDropCard(payload.card)
+    }
+    root.addEventListener(CARD_POINTER_DROP_EVENT, onDrop)
+    return () => root.removeEventListener(CARD_POINTER_DROP_EVENT, onDrop)
+  }, [onDropCard])
 
   const later = (ms: number, fn: () => void) => {
     timers.current.push(window.setTimeout(fn, ms))
@@ -241,6 +261,7 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard }:
 
   return (
     <div
+      ref={rootRef}
       className={`op ${allOpen ? "is-done" : ""}`}
       data-stage={stage}
       data-dim={spotlight ? "" : undefined}
@@ -265,12 +286,12 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard }:
               data-phase={stage === "stack" ? phase : stage}
               data-rarity={card.rarity}
               style={cardStyle(card, order)}
-              draggable={phase === "slot"}
-              onDragStart={(event) => {
-                setCardDrag(event.nativeEvent, card)
-                setDraggingCard(true)
+              onPointerDown={(event) => {
+                if (phase === "slot") startCardPointerDrag(event, { card }, {
+                  onStart: () => setDraggingCard(true),
+                  onFinish: () => setDraggingCard(false),
+                })
               }}
-              onDragEnd={() => setDraggingCard(false)}
               onClick={() => isTop && reveal(card)}
               role={isTop ? "button" : undefined}
               tabIndex={isTop ? 0 : undefined}
@@ -292,7 +313,7 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard }:
                   </div>
                 </div>
                 <div className="op-card__front">
-                  <CardFace card={cardFromDesk(card)} />
+                  <OpenerFace card={card} />
                   <i className="op-card__sweep" aria-hidden />
                 </div>
               </div>
@@ -331,17 +352,7 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard }:
       {allOpen && (
         <div
           className={`op__drop ${draggingCard ? "is-active" : ""}`}
-          onDragOver={(event) => {
-            if (!Array.from(event.dataTransfer.types).includes(CARD_MIME)) return
-            event.preventDefault()
-            event.dataTransfer.dropEffect = "copy"
-          }}
-          onDrop={(event) => {
-            event.preventDefault()
-            setDraggingCard(false)
-            const card = readCardDrag(event.nativeEvent)
-            if (card) onDropCard(card)
-          }}
+          data-card-drop
         >
           <b>拖到这里</b>
           <span>单张放到桌面</span>
@@ -366,6 +377,7 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard }:
           </div>
         )}
       </div>
+      <CardDragLayer root={rootRef} />
     </div>
   )
 }

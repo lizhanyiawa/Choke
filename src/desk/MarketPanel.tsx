@@ -13,7 +13,7 @@ import {
   type MarketListing,
   type OwnMarketListing,
 } from "./api"
-import { Pages } from "./BookPages"
+import { Pages, useBook } from "./BookPages"
 import "./market-panel.css"
 
 export function MarketPanel({
@@ -23,6 +23,7 @@ export function MarketPanel({
   userId: string | null
   onOpenAlbum: () => void
 }) {
+  const book = useBook()
   const [listings, setListings] = useState<MarketListing[]>([])
   const [own, setOwn] = useState<OwnMarketListing[]>([])
   const [coins, setCoins] = useState<number | null>(null)
@@ -57,6 +58,7 @@ export function MarketPanel({
     setMessage(null)
     try {
       const result = await buyMarketListing(userId, listing.id)
+      book.invalidate()
       setCoins(result.coins)
       setMessage(`买到了 ${result.card.name} · 花费 ${result.price} 金币`)
       setRefresh((value) => value + 1)

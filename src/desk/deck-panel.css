@@ -1,5 +1,28 @@
 /* 卡组：左页 7 个槽位，右页可放入的卡 */
 
+/* 槽里的卡拖到右页：右页盖一层提示，松开就移出卡组 */
+.deck-panel .book__page--right {
+  position: relative;
+}
+.deck-panel .book__page--right::after {
+  content: "松开 · 移出卡组";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  background: rgb(28 18 22 / 0.72);
+  color: var(--bk-osu-text);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  pointer-events: none;
+  visibility: hidden;
+}
+.deck-panel.is-return-target .book__page--right::after {
+  visibility: visible;
+}
+
 /* ----- 左页 ----- */
 .deck-summary {
   display: flex;
@@ -20,6 +43,8 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px 10px;
   flex: 0 0 auto;
+  /* 选中 / 拖放高亮的描边在槽外 5px（outline-offset 3 + 宽 2），左页 .book__body 会滚动、会裁掉贴边的部分 */
+  padding: 5px;
 }
 .deck-slot {
   position: relative;
@@ -142,10 +167,24 @@
 .deck-filters .bk-input {
   flex: 1 1 0;
 }
+/* 候选卡一页 4×3，占满右页剩下的高度不滚动；--w 由 FitArea 写入（px） */
 .deck-picks {
+  flex: 1 1 0;
+  min-height: 240px;
+  contain: size layout style;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.deck-picks__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  grid-template-columns: repeat(4, var(--w, 0px));
   gap: 12px 10px;
+  align-content: start;
+}
+.deck-picks__loading {
+  position: absolute;
+  top: 0;
 }
 .deck-pick {
   position: relative;

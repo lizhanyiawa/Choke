@@ -6,7 +6,7 @@ import type { CardFaceData, CardSkill, Job, Rarity } from "@/card/types"
 
 import { fetchPackInventory } from "./api"
 import { Pages } from "./BookPages"
-import { DESK_ADD_CARDS_EVENT, PACKS_CHANGED_EVENT, setCardDrag, toDeskCard } from "./drag"
+import { DESK_ADD_CARDS_EVENT, PACKS_CHANGED_EVENT, startCardPointerDrag, toDeskCard } from "./drag"
 import { PackArt } from "./opening/PackArt"
 import { POOL_META, RARITY_COLOR } from "./rarity"
 import type { PackPool } from "./types"
@@ -272,17 +272,13 @@ export function GachaPanel({
                     <div
                       className="gacha-results__card"
                       key={`${card.id}-${index}`}
-                      draggable
-                      onDragStart={(event) => {
-                        setCardDrag(event.nativeEvent, toDeskCard(card, card.userCardId))
-                      }}
-                      onDragEnd={(event) => {
-                        if (event.dataTransfer.dropEffect === "copy") {
-                          setCards((current) =>
-                            current.filter((item) => item.userCardId !== card.userCardId),
-                          )
-                        }
-                      }}
+                      onPointerDown={(event) => startCardPointerDrag(event, {
+                        card: toDeskCard(card, card.userCardId),
+                      }, {
+                        onDrop: () => setCards((current) =>
+                          current.filter((item) => item.userCardId !== card.userCardId),
+                        ),
+                      })}
                       title="拖到桌面"
                     >
                       <CardFace card={card} />

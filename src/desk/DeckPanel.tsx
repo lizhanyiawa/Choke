@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { memo, useCallback, useEffect, useRef, useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
 import { RARITY_LABEL, battlePower } from "@/card/data"
@@ -15,26 +15,30 @@ import {
 import {
   DECK_ASSIGN_EVENT,
   DECK_HOVER_EVENT,
-  hasDragType,
-  readUserCardDrag,
-  setUserCardDrag,
+  CARD_POINTER_DROP_EVENT,
+  startCardPointerDrag,
   toDeskCard,
-  USER_CARD_MIME,
+  type CardPointerDrop,
 } from "./drag"
-import { Pages } from "./BookPages"
+import { Pages, useBook, usePageCache } from "./BookPages"
+import { FitArea } from "./FitArea"
 import { useDeskCardIds } from "./presence"
 import "./deck-panel.css"
 
 const RARITIES: (Rarity | "")[] = ["", "C", "UC", "R", "E", "L", "Radiant", "Prismatic"]
+/** 右页候选卡：一页 4 列 × 3 排，用书的翻页，不滚动 */
+const PICK_COLS = 4
+const PICK_ROWS = 3
+const PICK_SIZE = PICK_COLS * PICK_ROWS
 
 interface PickerResult {
-  key: string
   rows: ApiUserCard[]
   total: number
   error: string | null
 }
 
-export function DeckPanel({ userId }: { userId: string | null }) {
+export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | null }) {
+  const book = useBook()
   const [deck, setDeck] = useState<ApiDeck | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -47,55 +51,56 @@ export function DeckPanel({ userId }: { userId: string | null }) {
   const [query, setQuery] = useState("")
   const [deferredQuery, setDeferredQuery] = useState("")
   const [rarity, setRarity] = useState<Rarity | "">("")
-  const [pickerResult, setPickerResult] = useState<PickerResult | null>(null)
+  const [pickPage, setPickPage] = useState(0)
 
   const assignRef = useRef<(userCardId: number, slotIndex: number, fromSlot?: number) => void>(
     () => {},
   )
+  const removeRef = useRef<(slotIndex: number) => void>(() => {})
 
   useEffect(() => {
     if (!userId) return
     const controller = new AbortController()
     fetchDeck(userId, controller.signal)
-      .then((data) => setDeck(data))
+      .then((data) => { setDeck(data); setError(null) })
       .catch((reason: unknown) => {
         if (reason instanceof DOMException && reason.name === "AbortError") return
         setError(reason instanceof Error ? reason.message : "加载卡组失败")
       })
     return () => controller.abort()
-  }, [userId])
+  }, [userId, book.revision])
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setDeferredQuery(query.trim()), 260)
+    const timer = window.setTimeout(() => {
+      setDeferredQuery(query.trim())
+      setPickPage(0)
+    }, 260)
     return () => window.clearTimeout(timer)
   }, [query])
 
-  const pickerKey = `${deferredQuery}|${rarity}`
-
-  useEffect(() => {
-    if (!userId) return
-    const controller = new AbortController()
-    fetchUserCards(userId, {
-      q: deferredQuery || undefined,
-      rarity: rarity || undefined,
-      sort: "pp",
-      limit: 60,
-      signal: controller.signal,
-    })
-      .then((data) => {
-        setPickerResult({ key: pickerKey, rows: data.rows, total: data.total, error: null })
+  const pickerKey = userId ? `${userId}|${deferredQuery}|${rarity}|${book.revision}` : ""
+  const loadPage = useCallback(async (index: number, signal: AbortSignal): Promise<PickerResult> => {
+    try {
+      const data = await fetchUserCards(userId!, {
+        q: deferredQuery || undefined,
+        rarity: rarity || undefined,
+        sort: "pp",
+        limit: PICK_SIZE,
+        page: index,
+        signal,
       })
-      .catch((reason: unknown) => {
-        if (reason instanceof DOMException && reason.name === "AbortError") return
-        setPickerResult({
-          key: pickerKey,
-          rows: [],
-          total: 0,
-          error: reason instanceof Error ? reason.message : "加载卡册失败",
-        })
-      })
-    return () => controller.abort()
-  }, [pickerKey, userId, deferredQuery, rarity])
+      return { rows: data.rows, total: data.total, error: null }
+    } catch (reason) {
+      if (signal.aborted) throw reason
+      return { rows: [], total: 0, error: reason instanceof Error ? reason.message : "加载卡册失败" }
+    }
+  }, [userId, deferredQuery, rarity])
+  const cachedPages = usePageCache(pickerKey, pickPage, PICK_SIZE, loadPage)
+  const currentResult = cachedPages.find(([index]) => index === pickPage)?.[1]
+  if (currentResult && !currentResult.error) {
+    const lastPage = Math.max(0, Math.ceil(currentResult.total / PICK_SIZE) - 1)
+    if (pickPage > lastPage) setPickPage(lastPage)
+  }
 
   const commit = async (slots: (number | null)[]) => {
     if (!userId || !deck || saving) return
@@ -139,6 +144,9 @@ export function DeckPanel({ userId }: { userId: string | null }) {
     setPickerSlot(null)
     void commit(slots)
   }
+  useEffect(() => {
+    removeRef.current = remove
+  })
 
   const clear = () => {
     if (!deck || saving) return
@@ -162,6 +170,25 @@ export function DeckPanel({ userId }: { userId: string | null }) {
     }
   }, [])
 
+  // 卡组槽接住指针拖卡；槽内卡拖到右页则移出卡组，左页空白不接。
+  const bindRoot = useCallback((root: HTMLDivElement | null) => {
+    if (!root) return
+    const onDrop = (event: Event) => {
+      const { payload } = (event as CustomEvent<CardPointerDrop>).detail
+      const hit = event.target instanceof Element ? event.target : null
+      const slot = hit?.closest<HTMLElement>(".deck-slot[data-slot]")
+      if (slot && payload.userCardId != null) {
+        event.preventDefault()
+        assignRef.current(payload.userCardId, Number(slot.dataset.slot), payload.fromSlot)
+      } else if (payload.fromSlot != null && hit === root) {
+        event.preventDefault()
+        removeRef.current(payload.fromSlot)
+      }
+    }
+    root.addEventListener(CARD_POINTER_DROP_EVENT, onDrop)
+    return () => root.removeEventListener(CARD_POINTER_DROP_EVENT, onDrop)
+  }, [])
+
   if (!userId) {
     return (
       <Pages
@@ -183,6 +210,7 @@ export function DeckPanel({ userId }: { userId: string | null }) {
     return (
       <Pages
         className="deck-panel"
+        ready={!!error}
         left={<p className="bk-note">出战卡组最多 7 张，改动自动保存。</p>}
         right={<div className={`bk-empty ${error ? "bk-error" : ""}`}>{error ?? "加载中…"}</div>}
       />
@@ -194,17 +222,28 @@ export function DeckPanel({ userId }: { userId: string | null }) {
     (sum, slot) => (slot.card ? sum + battlePower(toFace(slot.card)) : sum),
     0,
   )
-  const ready = pickerResult?.key === pickerKey
   const usedIds = new Set(
     deck.slots.flatMap((slot) => (slot.card ? [slot.card.userCardId] : [])),
   )
   // 没点槽位时，点右页的卡放进第一个空槽
   const firstEmpty = deck.slots.findIndex((slot) => !slot.card)
   const targetSlot = pickerSlot ?? (firstEmpty >= 0 ? firstEmpty : null)
+  const renderPage = (index: number, pickerResult: PickerResult | null) => {
+  const ready = pickerResult !== null
+  const pickTotalPages = Math.max(1, Math.ceil((pickerResult?.total ?? 0) / PICK_SIZE))
 
   return (
     <Pages
+      key={index}
+      rootRef={index === pickPage ? bindRoot : undefined}
+      preload={index !== pickPage}
       className="deck-panel"
+      ready={ready}
+      pager={
+        pickTotalPages > 1
+          ? { page: Math.min(index + 1, pickTotalPages), pages: pickTotalPages, onPage: (next) => setPickPage(next - 1) }
+          : undefined
+      }
       left={
         <>
           <div className="deck-summary">
@@ -237,29 +276,13 @@ export function DeckPanel({ userId }: { userId: string | null }) {
                   role="button"
                   tabIndex={0}
                   aria-pressed={pickerSlot === index}
-                  draggable={!!slot.card}
-                  onDragStart={(event) => {
+                  onPointerDown={(event) => {
                     if (!slot.card) return
-                    setUserCardDrag(event.nativeEvent, {
+                    startCardPointerDrag(event, {
                       userCardId: slot.card.userCardId,
                       fromSlot: index,
                       card: toDeskCard(toFace(slot.card), slot.card.userCardId),
                     })
-                  }}
-                  onDragOver={(event) => {
-                    if (!hasDragType(event.nativeEvent, USER_CARD_MIME)) return
-                    event.preventDefault()
-                    event.dataTransfer.dropEffect = "move"
-                    if (dropSlot !== index) setDropSlot(index)
-                  }}
-                  onDragLeave={() => {
-                    if (dropSlot === index) setDropSlot(null)
-                  }}
-                  onDrop={(event) => {
-                    event.preventDefault()
-                    const payload = readUserCardDrag(event.nativeEvent)
-                    setDropSlot(null)
-                    if (payload) assign(payload.userCardId, index, payload.fromSlot)
                   }}
                   onClick={() => setPickerSlot(pickerSlot === index ? null : index)}
                   onKeyDown={(event) => {
@@ -272,7 +295,7 @@ export function DeckPanel({ userId }: { userId: string | null }) {
                     slot.card ? `第 ${index + 1} 槽 ${slot.card.name}，点击更换` : `第 ${index + 1} 槽，空`
                   }
                 >
-                  {slot.card ? <CardFace card={toFace(slot.card)} /> : <span aria-hidden>+</span>}
+                  {slot.card ? <DeckFace row={slot.card} /> : <span aria-hidden>+</span>}
                   <span className="deck-slot__no">{index + 1}</span>
                   {slot.card && (
                     <button
@@ -346,7 +369,10 @@ export function DeckPanel({ userId }: { userId: string | null }) {
             <select
               className="bk-select"
               value={rarity}
-              onChange={(event) => setRarity(event.target.value as Rarity | "")}
+              onChange={(event) => {
+                setRarity(event.target.value as Rarity | "")
+                setPickPage(0)
+              }}
               aria-label="按品质筛选"
             >
               {RARITIES.map((item) => (
@@ -357,7 +383,7 @@ export function DeckPanel({ userId }: { userId: string | null }) {
             </select>
           </div>
 
-          {!ready ? (
+          {!pickerResult ? (
             <div className="bk-empty">加载卡册…</div>
           ) : pickerResult.error ? (
             <div className="bk-empty bk-error">{pickerResult.error}</div>
@@ -365,46 +391,61 @@ export function DeckPanel({ userId }: { userId: string | null }) {
             <div className="bk-empty">没有符合条件的卡</div>
           ) : (
             <>
-              <div className="deck-picks">
-                {pickerResult.rows.map((row) => {
-                  const used = usedIds.has(row.userCardId)
-                  const blocked = used || targetSlot == null
-                  return (
-                    <div
-                      key={row.userCardId}
-                      className={`deck-pick ${used ? "is-used" : ""}`}
-                      role="button"
-                      tabIndex={blocked ? -1 : 0}
-                      aria-disabled={blocked}
-                      draggable={!used}
-                      onDragStart={(event) => {
-                        if (used) return
-                        setUserCardDrag(event.nativeEvent, { userCardId: row.userCardId })
-                      }}
-                      onClick={() => {
-                        if (!blocked) assign(row.userCardId, targetSlot)
-                      }}
-                      onKeyDown={(event) => {
-                        if (!blocked && (event.key === "Enter" || event.key === " ")) {
-                          event.preventDefault()
-                          assign(row.userCardId, targetSlot)
-                        }
-                      }}
-                    >
-                      <CardFace card={toFace(row)} />
-                      {used && <span className="deck-pick__used">已在卡组</span>}
-                    </div>
-                  )
-                })}
-              </div>
-              <p className="bk-note">
-                点一下放入，或拖到左页的槽位。按战力排序，显示 {pickerResult.rows.length} 张 / 共{" "}
-                {pickerResult.total} 张。
-              </p>
+              <FitArea className="deck-picks" cols={PICK_COLS} rows={PICK_ROWS} gapX={10} gapY={12}>
+                <div
+                  className="deck-picks__grid"
+                  aria-busy={!ready}
+                  style={{ visibility: ready ? undefined : "hidden" }}
+                >
+                  {pickerResult.rows.map((row) => {
+                    const used = usedIds.has(row.userCardId)
+                    const blocked = used || targetSlot == null
+                    return (
+                      <div
+                        key={row.userCardId}
+                        className={`deck-pick ${used ? "is-used" : ""}`}
+                        role="button"
+                        tabIndex={blocked ? -1 : 0}
+                        aria-disabled={blocked}
+                        onPointerDown={(event) => {
+                          if (!used) startCardPointerDrag(event, { userCardId: row.userCardId })
+                        }}
+                        onClick={() => {
+                          if (!blocked) assign(row.userCardId, targetSlot)
+                        }}
+                        onKeyDown={(event) => {
+                          if (!blocked && (event.key === "Enter" || event.key === " ")) {
+                            event.preventDefault()
+                            assign(row.userCardId, targetSlot)
+                          }
+                        }}
+                      >
+                        <DeckFace row={row} />
+                        {used && <span className="deck-pick__used">已在卡组</span>}
+                      </div>
+                    )
+                  })}
+                </div>
+                <div
+                  className="deck-picks__grid deck-picks__loading"
+                  style={{ visibility: ready ? "hidden" : undefined }}
+                  aria-hidden
+                >
+                  {Array.from({ length: PICK_SIZE }, (_, i) => <div className="bk-slot" key={i} />)}
+                </div>
+              </FitArea>
+              <p className="bk-note">点一下放入，或拖到左页的槽位。按战力排序，共 {pickerResult.total} 张。</p>
             </>
           )}
         </>
       }
     />
   )
-}
+  }
+  return cachedPages.map(([index, result]) => renderPage(index, result))
+})
+
+// 卡面只跟随卡实例变化，输入、选槽和拖放高亮不重新生成卡面树。
+const DeckFace = memo(function DeckFace({ row }: { row: ApiUserCard }) {
+  return <CardFace card={toFace(row)} eager />
+})

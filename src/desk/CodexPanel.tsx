@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react"
+import { memo, useCallback, useEffect, useMemo, useState, type CSSProperties } from "react"
 
 import { CardFace } from "@/card/CardFace"
 import { faceFromDef } from "@/card/def"
 import { RARITY_LABEL } from "@/card/data"
 import type { CardFaceData, CardSkill, Job, Rarity } from "@/card/types"
 
-import { Pages } from "./BookPages"
+import { Pages, useBook, usePageCache } from "./BookPages"
 import { CardDetail } from "./CardDetail"
 import type { ApiUserCard } from "./api"
 import { RARITY_COLOR } from "./rarity"
+import { FitArea } from "./FitArea"
 import "./codex-panel.css"
 
 /** 一个跨页 = 一次请求：左页筛选下面 2 排，右页整页 3 排，每排 4 张 */
@@ -71,7 +72,6 @@ interface CodexStats {
 }
 
 interface Result {
-  key: string
   rows: ApiCardDef[]
   total: number
   ownedTotal: number
@@ -126,7 +126,8 @@ function toPseudoCard(row: ApiCardDef): ApiUserCard {
   }
 }
 
-export function CodexPanel({ userId }: { userId: string | null }) {
+export const CodexPanel = memo(function CodexPanel({ userId }: { userId: string | null }) {
+  const book = useBook()
   const [rarity, setRarity] = useState("")
   const [query, setQuery] = useState("")
   const [deferredQuery, setDeferredQuery] = useState("")
@@ -135,7 +136,6 @@ export function CodexPanel({ userId }: { userId: string | null }) {
   const [ownedFilter, setOwnedFilter] = useState<OwnedFilter>("all")
   const [page, setPage] = useState(0)
   const [dimUnseen, setDimUnseen] = useState(false)
-  const [result, setResult] = useState<Result | null>(null)
   const [stats, setStats] = useState<CodexStats | null>(null)
   const [detail, setDetail] = useState<ApiCardDef | null>(null)
 
@@ -186,7 +186,7 @@ export function CodexPanel({ userId }: { userId: string | null }) {
       .catch(() => {})
 
     return () => controller.abort()
-  }, [userId])
+  }, [userId, book.revision])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -197,89 +197,52 @@ export function CodexPanel({ userId }: { userId: string | null }) {
   }, [query])
 
   const effectiveOwned = userId ? ownedFilter : "all"
-  const key = `${userId ?? "guest"}|${rarity}|${deferredQuery}|${country}|${effectiveOwned}|${sort}|${page}`
-
-  useEffect(() => {
-    const controller = new AbortController()
-    const search = new URLSearchParams({
-      sort,
-      limit: String(PAGE_SIZE),
-      offset: String(page * PAGE_SIZE),
-    })
+  const key = `${userId ?? "guest"}|${rarity}|${deferredQuery}|${country}|${effectiveOwned}|${sort}|${book.revision}`
+  const loadPage = useCallback(async (index: number, signal: AbortSignal): Promise<Result> => {
+    const search = new URLSearchParams({ sort, limit: String(PAGE_SIZE), offset: String(index * PAGE_SIZE) })
     if (rarity) search.set("rarity", rarity)
     if (deferredQuery) search.set("q", deferredQuery)
     if (country) search.set("country", country)
-
     const url = userId
-      ? `/api/users/${userId}/codex?${new URLSearchParams({
-          ...Object.fromEntries(search),
-          owned: effectiveOwned,
-        }).toString()}`
+      ? `/api/users/${userId}/codex?${new URLSearchParams({ ...Object.fromEntries(search), owned: effectiveOwned }).toString()}`
       : `/api/cards?${search.toString()}`
+    try {
+      const response = await fetch(url, { credentials: "include", signal })
+      const data = await response.json()
+      if (!data.ok) throw new Error(data.error?.message ?? "加载图鉴失败")
+      const pageData = data.data as CardPage
+      return {
+        rows: userId ? pageData.rows : pageData.rows.map((row) => ({ ...row, owned: false })),
+        total: pageData.total,
+        ownedTotal: userId ? (pageData.ownedTotal ?? 0) : 0,
+        error: null,
+      }
+    } catch (reason) {
+      if (signal.aborted) throw reason
+      return { rows: [], total: 0, ownedTotal: 0, error: reason instanceof Error ? reason.message : "加载图鉴失败" }
+    }
+  }, [userId, rarity, deferredQuery, country, effectiveOwned, sort])
+  const cachedPages = usePageCache(key, page, PAGE_SIZE, loadPage)
+  const detailCard = useMemo(() => (detail ? toPseudoCard(detail) : null), [detail])
 
-    fetch(url, { credentials: "include", signal: controller.signal })
-      .then((response) => response.json())
-      .then((data) => {
-        if (!data.ok) throw new Error(data.error?.message ?? "加载图鉴失败")
-        const pageData = data.data as CardPage
-        const rows = userId
-          ? pageData.rows
-          : pageData.rows.map((row) => ({ ...row, owned: false }))
-        setResult({
-          key,
-          rows,
-          total: pageData.total,
-          ownedTotal: userId ? (pageData.ownedTotal ?? 0) : 0,
-          error: null,
-        })
-      })
-      .catch((reason: unknown) => {
-        if (reason instanceof DOMException && reason.name === "AbortError") return
-        setResult({
-          key,
-          rows: [],
-          total: 0,
-          ownedTotal: 0,
-          error: reason instanceof Error ? reason.message : "加载图鉴失败",
-        })
-      })
-    return () => controller.abort()
-  }, [key, userId, rarity, deferredQuery, country, effectiveOwned, sort, page])
-
-  const ready = result?.key === key
+  const renderPage = (index: number, result: Result | null) => {
+  const ready = result !== null
   const total = result?.total ?? 0
   const ownedTotal = result?.ownedTotal ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages - 1)
+  const currentPage = Math.min(index, totalPages - 1)
   const poolBase = effectiveOwned === "unseen" ? total + ownedTotal : total
-  const detailCard = useMemo(() => (detail ? toPseudoCard(detail) : null), [detail])
 
   const num = (value: number) => value.toLocaleString("en-US")
   const filterLabel = rarity ? RARITY_LABEL[rarity as Rarity] : "全部品质"
-  const rows = ready && !result.error ? result.rows : []
+  const rows = result && !result.error ? result.rows : []
 
   const renderGrid = (list: ApiCardDef[], gridRows: number, skeleton: number) => (
-    <div className="codex-fit" style={{ "--rows": gridRows } as CSSProperties}>
-      <div className="bk-cards" style={{ "--cols": COLS } as CSSProperties} aria-busy={!ready}>
-        {!ready
-          ? Array.from({ length: skeleton }, (_, i) => <div className="bk-slot" key={i} aria-hidden />)
-          : list.map((row) =>
+    <FitArea className="codex-fit" cols={COLS} rows={gridRows} gapX={10} gapY={12} slack={2} style={{ "--rows": gridRows } as CSSProperties}>
+      <div className="bk-cards" style={{ "--cols": COLS, visibility: ready ? undefined : "hidden" } as CSSProperties} aria-busy={!ready}>
+        {list.map((row) =>
               row.owned ? (
-                <div
-                  className="codex-slot"
-                  key={row.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setDetail(row)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault()
-                      setDetail(row)
-                    }
-                  }}
-                >
-                  <CardFace card={toFace(row)} />
-                </div>
+                <CodexSlot key={row.id} row={row} onDetail={setDetail} />
               ) : (
                 <div
                   className={`bk-slot codex-unknown ${dimUnseen ? "is-dimmed" : ""}`}
@@ -289,14 +252,20 @@ export function CodexPanel({ userId }: { userId: string | null }) {
                   ?
                 </div>
               ),
-            )}
+        )}
       </div>
-    </div>
+      <div className="bk-cards codex-fit__loading" style={{ "--cols": COLS, visibility: ready ? "hidden" : undefined } as CSSProperties} aria-hidden>
+        {Array.from({ length: skeleton }, (_, i) => <div className="bk-slot" key={i} />)}
+      </div>
+    </FitArea>
   )
 
   return (
     <Pages
+      key={index}
+      preload={index !== page}
       className="codex-panel"
+      ready={ready}
       pager={{ page: currentPage + 1, pages: totalPages, onPage: (next) => setPage(next - 1) }}
       left={
         <>
@@ -439,7 +408,7 @@ export function CodexPanel({ userId }: { userId: string | null }) {
 
           {renderGrid(rows.slice(0, LEFT_COUNT), LEFT_ROWS, LEFT_COUNT)}
 
-          {detailCard && (
+          {book.active && index === page && detailCard && (
             <CardDetail
               key={`codex-${detailCard.id}`}
               card={detailCard}
@@ -461,4 +430,31 @@ export function CodexPanel({ userId }: { userId: string | null }) {
       }
     />
   )
-}
+  }
+  return cachedPages.map(([index, result]) => renderPage(index, result))
+})
+
+const CodexSlot = memo(function CodexSlot({
+  row,
+  onDetail,
+}: {
+  row: ApiCardDef
+  onDetail: (row: ApiCardDef) => void
+}) {
+  return (
+    <div
+      className="codex-slot"
+      role="button"
+      tabIndex={0}
+      onClick={() => onDetail(row)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault()
+          onDetail(row)
+        }
+      }}
+    >
+      <CardFace card={toFace(row)} eager />
+    </div>
+  )
+})

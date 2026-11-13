@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useReducer } from "react"
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef } from "react"
+
+import { onIdle } from "@/lib/idle"
 
 import { OBJECT_META, OBJECT_ORDER, type DeskObjectId } from "./objects"
 import type { CardData, DeskItem, DeskState } from "./types"
@@ -97,13 +99,29 @@ export function newId(prefix: string) {
 export function useDesk() {
   const [state, dispatch] = useReducer(reducer, undefined, initial)
 
-  useEffect(() => {
+  const latest = useRef(state)
+  useLayoutEffect(() => {
+    latest.current = state
+  }, [state])
+  const save = useCallback(() => {
     try {
-      localStorage.setItem(KEY, JSON.stringify(state))
+      localStorage.setItem(KEY, JSON.stringify(latest.current))
     } catch {
       // 存储已满时忽略
     }
-  }, [state])
+  }, [])
+
+  // 拖动提交先绘制，连续操作只保存最新布局；离开页面时补齐。
+  useEffect(() => {
+    return onIdle(save, 1000)
+  }, [state, save])
+  useEffect(() => {
+    window.addEventListener("pagehide", save)
+    return () => {
+      window.removeEventListener("pagehide", save)
+      save()
+    }
+  }, [save])
 
   const move = useCallback(
     (id: string, x: number, y: number) => dispatch({ type: "move", id, x, y }),

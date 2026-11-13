@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react"
+import { createPortal } from "react-dom"
 
 import { CardFace } from "@/card/CardFace"
 import { RARITY_LABEL, battlePower } from "@/card/data"
@@ -268,7 +269,7 @@ export function BackpackPanel({
             </button>
           )}
 
-          {step !== null && (
+          {step !== null && createPortal(
             <div className="backpack-modal" role="dialog" aria-modal="true" aria-label="神秘卡包问卷">
               <div className="backpack-modal__panel">
                 <div className="backpack-modal__head">
@@ -341,7 +342,8 @@ export function BackpackPanel({
                   )}
                 </div>
               </div>
-            </div>
+            </div>,
+            document.body,
           )}
         </>
       }

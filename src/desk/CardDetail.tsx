@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react"
+import { createPortal } from "react-dom"
 
 import { CardFace } from "@/card/CardFace"
 import {
@@ -175,9 +176,9 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
     }
   }
 
-  return (
+  return createPortal(
     <div className="card-detail" role="dialog" aria-modal="true" aria-label={current.name} onClick={onClose}>
-      <div className="card-detail__panel" onClick={(event) => event.stopPropagation()}>
+      <div className="card-detail__panel" data-light onClick={(event) => event.stopPropagation()}>
         <button type="button" className="card-detail__close" onClick={onClose} aria-label="关闭">
           ×
         </button>
@@ -385,6 +386,7 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
