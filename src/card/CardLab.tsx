@@ -55,7 +55,8 @@ export function CardLab() {
   const solo = params.get("solo")
   if (solo !== null) {
     const index = Number(solo)
-    const card = DEMO_CARDS[index] ?? DEMO_CARDS[4]
+    const base = DEMO_CARDS[index] ?? DEMO_CARDS[4]
+    const card = params.get("foil") === "1" ? { ...base, foil: true } : base
     const width = Math.min(Math.max(Number(params.get("w")) || 480, 240), 960)
     const battle = params.get("mode") === "battle"
     const guides = params.get("guides") === "1"
@@ -88,7 +89,7 @@ export function CardLab() {
           <div className="lab__eyebrow">CHOKE! · CARD FACE</div>
           <h1 className="lab__title">卡面实验室 v0.1</h1>
           <p className="lab__sub">
-            2:3 竖版 · 卡名 + 身份行 + 三技能 · BP 是唯一战力数字
+            2:3 竖版 · 统一黑卡纸 · 稀有度看线条颜色和工艺 · BP 是唯一战力数字
           </p>
         </div>
         <button
@@ -100,12 +101,23 @@ export function CardLab() {
         </button>
       </header>
 
-      <Section label="七档卡框材质" note="主识别来自卡框：纸 / 压印 / 烫金 / 银箔 / 珠光 / 绿松 / 镭射箔">
+      <Section label="七档材质" note="石墨墨 / 翡翠墨 / 烫钢蓝 / 烫紫+压纹 / 烫金 / 烫铂+珠光 / 镭射线+镭射纸；把鼠标移到卡上看反光">
         <div className="lab__row">
           {DEMO_CARDS.map((card) => (
             <div className="lab__slot" style={{ width: 200 }} key={card.id}>
               <CardFace card={card} />
               <span className="lab__tag">{RARITY_LABEL[card.rarity]}</span>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section label="闪卡" note="任何稀有度都能叠的一层淡镭射膜；只有迎着光的地方出彩带和碎闪，静止时偶尔扫一道光">
+        <div className="lab__row">
+          {DEMO_CARDS.map((card) => (
+            <div className="lab__slot" style={{ width: 200 }} key={card.id}>
+              <CardFace card={{ ...card, id: `${card.id}-foil`, foil: true }} />
+              <span className="lab__tag">{RARITY_LABEL[card.rarity]} · FOIL</span>
             </div>
           ))}
         </div>
@@ -156,7 +168,7 @@ export function CardLab() {
         </div>
       </Section>
 
-      <Section label="字段取舍" note="单技能留空位；被动不显示 AP；法系才有 MP；无 MOD 则 MOD 槽留空">
+      <Section label="字段取舍" note="技能少的卡插画窗自动拉高；被动不显示 AP；法系才有 MP；没装 MOD 的槽留空">
         <div className="lab__row">
           <div className="lab__slot" style={{ width: 200 }}>
             <CardFace card={SOLO_SKILL} />
