@@ -3,6 +3,11 @@ import "./about-panel.css"
 
 const TOOLS = [
   {
+    href: "/developer",
+    label: "开发者工具",
+    note: "测试账号、开包与战斗调试。",
+  },
+  {
     href: "/card-lab",
     label: "卡面实验室",
     note: "七档卡框材质、三档尺寸、战斗态和本体卡命座阶梯。",

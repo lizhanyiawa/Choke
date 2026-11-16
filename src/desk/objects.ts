@@ -23,7 +23,7 @@ export const OBJECT_META: Record<DeskObjectId, DeskObjectMeta> = {
   market: { label: "市场", sub: "MARKET", thing: "价签盒", w: 156, h: 128, x: 0.8, y: 0.38 },
   backpack: { label: "背包", sub: "BACKPACK", thing: "纸盒", w: 188, h: 140, x: 0.03, y: 0.66 },
   packs: { label: "抽卡", sub: "GACHA", thing: "卡包展架", w: 176, h: 150, x: 0.17, y: 0.64 },
-  button: { label: "发牌", sub: "DEAL", thing: "按钮", w: 124, h: 150, x: 0.45, y: 0.68 },
+  button: { label: "发卡包", sub: "DEAL", thing: "红色按钮", w: 124, h: 150, x: 0.45, y: 0.68 },
   deck: { label: "卡组", sub: "DECK", thing: "卡套槽", w: 284, h: 118, x: 0.58, y: 0.76 },
   battle: { label: "战斗", sub: "BATTLE", thing: "对战垫", w: 236, h: 148, x: 0.8, y: 0.66 },
 }

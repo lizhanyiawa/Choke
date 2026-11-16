@@ -1,14 +1,13 @@
 import type { CardData, PackPool, Rarity } from "./types"
 
-/** 跟卡框线条一致：石墨 / 翡翠 / 钢蓝 / 紫 / 金 / 铂 / 镭射（单色场合用近白） */
 export const RARITY_COLOR: Record<Rarity, string> = {
-  C: "#9A9AA0",
-  UC: "#5FA679",
-  R: "#5D8CC4",
-  E: "#9B74DA",
-  L: "#D8B24E",
-  Radiant: "#C3C9D2",
-  Prismatic: "#F4F4F6",
+  C: "#C7C8D6",
+  UC: "#95D2EC",
+  R: "#A4B9FF",
+  E: "#CFADFF",
+  L: "#F5CE82",
+  Radiant: "#FBA9CD",
+  Prismatic: "#F1DBFF",
 }
 
 type WeightTable = [Rarity, number][]
@@ -89,13 +88,23 @@ export interface PoolMeta {
 export const POOL_META: Record<PackPool, PoolMeta> = {
   normal: { label: "普通卡池", short: "普通", color: "#E5484D", weights: NORMAL_WEIGHTS },
   idle: { label: "挂机卡池", short: "挂机", color: "#3CBADB", weights: IDLE_WEIGHTS },
-  quest: { label: "任务卡池", short: "任务", color: "#FFC24B", weights: QUEST_WEIGHTS },
+  quest: { label: "黄金卡池", short: "黄金", color: "#FFC24B", weights: QUEST_WEIGHTS },
   radiant: { label: "璀璨卡池", short: "璀璨", color: "#B98CFF", weights: RADIANT_WEIGHTS },
   sky: { label: "天穹卡池", short: "天穹", color: "#21E985", weights: SKY_WEIGHTS },
   prism: { label: "棱彩卡池", short: "棱彩", color: "#F4F4F6", weights: PRISM_WEIGHTS },
 }
 
 export const POOL_ORDER: PackPool[] = ["normal", "idle", "quest", "radiant", "sky", "prism"]
+
+/** 本地存档保留 quest，服务端用 golden。 */
+export const SERVER_POOL = {
+  normal: "normal",
+  idle: "idle",
+  quest: "golden",
+  radiant: "radiant",
+  sky: "sky",
+  prism: "prism",
+} as const satisfies Record<PackPool, string>
 
 const NAMES = [
   "Freedom Dive",

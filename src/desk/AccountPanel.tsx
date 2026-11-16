@@ -16,6 +16,8 @@ export function AccountPanel({
   essence = 0,
   coins = 0,
   hero,
+  testLoginHref,
+  testExitHref,
   onLogout,
   onOpenBackpack,
 }: {
@@ -26,6 +28,8 @@ export function AccountPanel({
   essence?: number
   coins?: number
   hero?: ApiUserCard | null
+  testLoginHref?: string
+  testExitHref?: string
   onLogout?: () => void
   onOpenBackpack?: () => void
 }) {
@@ -36,10 +40,10 @@ export function AccountPanel({
       <Pages
         left={
           <>
-            <p className="account-text">用 osu! 登录后，抽到的卡和保底进度都会绑定到你的账号。</p>
             <a className="bk-btn bk-btn--main account-action" href="/auth/osu">
               用 osu! 登录
             </a>
+            {testLoginHref && <a className="bk-btn account-action" href={testLoginHref}>测试账号登录</a>}
           </>
         }
         right={<div className="bk-empty">登录后，这里会显示你的本体卡。</div>}
@@ -87,7 +91,7 @@ export function AccountPanel({
           <div className="bk-list">
             <div className="bk-row account-row">
               <span>登录状态</span>
-              <b>已连接 osu!</b>
+              <b>{testExitHref ? "测试账号" : "已连接 osu!"}</b>
             </div>
             <div className="bk-row account-row">
               <span>osu! 主页</span>

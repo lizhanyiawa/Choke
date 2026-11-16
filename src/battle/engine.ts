@@ -122,7 +122,7 @@ export function createBattle(inputs: BattleInputCard[]): BattleState {
     cards,
     supports: [],
     enemy: makeEnemy(),
-    log: ["战斗开始", "敌方：谱面幽灵"],
+    log: ["战斗开始"],
     selectedCard: null,
   }
 }
@@ -157,7 +157,7 @@ function applyDamageToEnemy(state: BattleState, card: BattleCard, skillPower: nu
         elementMultiplier(element, state.enemy.element) *
         (1 - mitigation(enemyDef)) *
         random(0.95, 1.05) *
-        (crit ? 1.5 : 1),
+        (crit ? card.stats.critDamage : 1),
     )
     total += damage
     state.enemy.hp = Math.max(0, state.enemy.hp - damage)

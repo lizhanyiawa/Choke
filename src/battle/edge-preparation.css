@@ -1,0 +1,65 @@
+.edge-prep__start { justify-self: end; }
+.edge-prep__shell {
+  display: grid;
+  grid-template-columns: minmax(145px, 200px) minmax(0, 1fr);
+  gap: 15px;
+  width: min(1110px, calc(100% - 24px));
+  margin: 15px auto 30px;
+}
+.edge-prep__team, .edge-prep__body { display: grid; gap: 9px; align-content: start; min-width: 0; }
+.edge-prep__team { align-self: start; padding: 10px; }
+.edge-prep__side { --team-tint: #a3ceff; display: grid; gap: 5px; min-width: 0; }
+.edge-prep__side[data-side="enemy"] { --team-tint: #ffa1c5; }
+.edge-prep__side-title { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 2px 0 2px 8px; border-left: 2px solid var(--team-tint); }
+.edge-prep__side-title h2 { margin: 0; color: var(--team-tint); font-size: 13px; }
+.edge-prep__side-title .client-key { min-height: 26px; padding: 2px 8px; }
+.edge-prep__side .edge-prep__member[aria-pressed="true"] { border-color: var(--team-tint); }
+.edge-prep__member, .edge-prep__skill {
+  min-width: 0;
+  border: 1px solid var(--client-line);
+  border-radius: 8px;
+  background: var(--bk-paper-hi);
+  color: var(--client-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.edge-prep__member {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+}
+.edge-prep__member[aria-pressed="true"], .edge-prep__skill[aria-pressed="true"] { border-color: var(--client-accent); background: var(--bk-osu-soft); }
+.edge-prep__member > span:nth-child(2) { display: grid; gap: 3px; min-width: 0; }
+.edge-prep__member > span:nth-child(2) b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.edge-prep__avatar { display: grid; place-items: center; width: 32px; height: 32px; overflow: hidden; border-radius: 5px; background: var(--client-bg); color: var(--team-tint); }
+.edge-prep__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.edge-prep__member small, .edge-prep__skill small { color: var(--client-muted); font-size: 11px; line-height: 1.5; }
+.edge-prep__member i { color: var(--client-gold); font-style: normal; }
+.edge-prep__columns, .edge-prep__gold-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.edge-prep__column, .edge-prep__gold { display: grid; gap: 8px; align-content: start; padding: 12px; }
+.edge-prep__column h2, .edge-prep__gold h2 { margin: 0; font-size: 15px; }
+.edge-prep__slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+.edge-prep__slots .client-key { justify-content: flex-start; padding-inline: 8px; gap: 6px; text-align: left; }
+.edge-prep kbd { font: 10px var(--bk-mono); padding: 1px 4px; border: 1px solid var(--client-line); border-radius: 4px; background: var(--client-bg); }
+.edge-prep__pool { display: grid; gap: 4px; }
+.edge-prep__skill { display: grid; gap: 3px; padding: 8px 9px; }
+.edge-prep__skill > span { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.edge-prep__skill:not(:disabled):hover, .edge-prep__member:hover { border-color: var(--bk-osu-text); }
+.edge-prep__skill:disabled { opacity: .55; cursor: default; }
+.edge-prep__gold .edge-prep__skill b { color: var(--client-gold); }
+.edge-prep__gold .edge-prep__skill > span { color: var(--client-muted); font-size: 11px; }
+.edge-prep__template { display: flex; gap: 12px; flex-wrap: wrap; padding: 6px 0; }
+.edge-prep__template label { display: flex; align-items: center; gap: 5px; color: var(--client-muted); font-size: 12px; }
+@media (min-width: 671px) {
+  .edge-prep__team { position: sticky; top: calc(var(--client-header-height) + 15px); }
+}
+@media (max-width: 670px) {
+  .edge-prep__shell { grid-template-columns: 1fr; gap: 9px; }
+  .edge-prep__team { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .edge-prep__team--sparring { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .edge-prep__member { grid-template-columns: minmax(0, 1fr) auto; padding: 5px; }
+  .edge-prep__avatar { display: none; }
+}
+@media (max-width: 450px) { .edge-prep__columns, .edge-prep__gold-grid { grid-template-columns: 1fr; } }

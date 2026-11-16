@@ -170,6 +170,7 @@ export function DeskDrawer({ ref, items, liftedId, render, onItemPointerDown, on
               <div
                 className="desk-drawer__thing"
                 style={{ width: meta.w, height: meta.h, "--s": scale } as CSSProperties}
+                inert
               >
                 {render(item)}
               </div>

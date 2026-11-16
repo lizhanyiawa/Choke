@@ -325,6 +325,7 @@ export const CodexPanel = memo(function CodexPanel({ userId }: { userId: string 
             <div className="codex-toolbar">
               <input
                 className="bk-input codex-toolbar__search"
+                data-client-search
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="搜索玩家名"

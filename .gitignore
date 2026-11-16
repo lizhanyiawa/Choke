@@ -32,6 +32,8 @@ dist-ssr
 # Secrets and sync output
 .env
 .cache/
+/Choke.exe
+/Choke.exe.config
 data/
 apps/api/.data/
 .tmp_holo/

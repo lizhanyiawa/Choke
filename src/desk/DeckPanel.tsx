@@ -19,6 +19,7 @@ import {
   startCardPointerDrag,
   toDeskCard,
   type CardPointerDrop,
+  type DeckAssignment,
 } from "./drag"
 import { Pages, useBook, usePageCache } from "./BookPages"
 import { FitArea } from "./FitArea"
@@ -37,7 +38,13 @@ interface PickerResult {
   error: string | null
 }
 
-export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | null }) {
+interface Props {
+  userId: string | null
+  pendingCard: ApiUserCard | null
+  onClearPending: (row: ApiUserCard) => void
+}
+
+export const DeckPanel = memo(function DeckPanel({ userId, pendingCard, onClearPending }: Props) {
   const book = useBook()
   const [deck, setDeck] = useState<ApiDeck | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +60,7 @@ export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | 
   const [rarity, setRarity] = useState<Rarity | "">("")
   const [pickPage, setPickPage] = useState(0)
 
-  const assignRef = useRef<(userCardId: number, slotIndex: number, fromSlot?: number) => void>(
+  const assignRef = useRef<(userCardId: number, slotIndex: number, fromSlot?: number, onSaved?: () => void) => void>(
     () => {},
   )
   const removeRef = useRef<(slotIndex: number) => void>(() => {})
@@ -102,7 +109,7 @@ export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | 
     if (pickPage > lastPage) setPickPage(lastPage)
   }
 
-  const commit = async (slots: (number | null)[]) => {
+  const commit = async (slots: (number | null)[], onSaved?: () => void) => {
     if (!userId || !deck || saving) return
     setSaving(true)
     setNotice(null)
@@ -110,6 +117,7 @@ export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | 
       const next = await saveDeck(userId, slots)
       setDeck(next)
       setSavedAt(new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }))
+      onSaved?.()
     } catch (reason) {
       setNotice(reason instanceof Error ? reason.message : "保存失败")
     } finally {
@@ -117,8 +125,12 @@ export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | 
     }
   }
 
-  const assign = (userCardId: number, slotIndex: number, fromSlot?: number) => {
+  const assign = (userCardId: number, slotIndex: number, fromSlot?: number, onSaved?: () => void) => {
     if (!deck || saving) return
+    const finish = () => {
+      if (pendingCard?.userCardId === userCardId) onClearPending(pendingCard)
+      onSaved?.()
+    }
     const slots = deck.slots.map((slot) => slot.card?.userCardId ?? null)
     if (fromSlot != null) {
       const target = slots[slotIndex] ?? null
@@ -126,12 +138,19 @@ export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | 
       slots[slotIndex] = userCardId
     } else {
       const existing = slots.indexOf(userCardId)
-      if (existing === slotIndex) return
+      if (existing === slotIndex) {
+        finish()
+        return
+      }
       if (existing >= 0) slots[existing] = slots[slotIndex] ?? null
       slots[slotIndex] = userCardId
     }
     setPickerSlot(null)
-    void commit(slots)
+    void commit(slots, finish)
+  }
+  const chooseSlot = (index: number) => {
+    if (pendingCard) assign(pendingCard.userCardId, index)
+    else setPickerSlot(pickerSlot === index ? null : index)
   }
   useEffect(() => {
     assignRef.current = assign
@@ -155,12 +174,13 @@ export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | 
   }
 
   useEffect(() => {
+    if (!book.active) return
     const onHover = (event: Event) => {
       setDropSlot((event as CustomEvent<number | null>).detail)
     }
     const onAssign = (event: Event) => {
-      const detail = (event as CustomEvent<{ userCardId: number; slot: number }>).detail
-      if (detail) assignRef.current(detail.userCardId, detail.slot)
+      const detail = (event as CustomEvent<DeckAssignment>).detail
+      if (detail) assignRef.current(detail.userCardId, detail.slot, undefined, detail.onSaved)
     }
     window.addEventListener(DECK_HOVER_EVENT, onHover)
     window.addEventListener(DECK_ASSIGN_EVENT, onAssign)
@@ -168,7 +188,7 @@ export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | 
       window.removeEventListener(DECK_HOVER_EVENT, onHover)
       window.removeEventListener(DECK_ASSIGN_EVENT, onAssign)
     }
-  }, [])
+  }, [book.active])
 
   // 卡组槽接住指针拖卡；槽内卡拖到右页则移出卡组，左页空白不接。
   const bindRoot = useCallback((root: HTMLDivElement | null) => {
@@ -211,7 +231,7 @@ export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | 
       <Pages
         className="deck-panel"
         ready={!!error}
-        left={<p className="bk-note">出战卡组最多 7 张，改动自动保存。</p>}
+        left={null}
         right={<div className={`bk-empty ${error ? "bk-error" : ""}`}>{error ?? "加载中…"}</div>}
       />
     )
@@ -263,6 +283,13 @@ export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | 
           </div>
 
           {notice && <div className="bk-box bk-error">{notice}</div>}
+          {pendingCard && (
+            <div className="deck-target">
+              <span>选择槽位放入 <b>{pendingCard.name}</b></span>
+              <button type="button" className="bk-btn bk-btn--ghost bk-btn--sm" disabled={saving}
+                onClick={() => onClearPending(pendingCard)}>取消</button>
+            </div>
+          )}
 
           <div className="deck-grid">
             {deck.slots.map((slot, index) => {
@@ -284,15 +311,17 @@ export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | 
                       card: toDeskCard(toFace(slot.card), slot.card.userCardId),
                     })
                   }}
-                  onClick={() => setPickerSlot(pickerSlot === index ? null : index)}
+                  onClick={() => chooseSlot(index)}
                   onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget) return
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault()
-                      setPickerSlot(pickerSlot === index ? null : index)
+                      chooseSlot(index)
                     }
                   }}
                   aria-label={
-                    slot.card ? `第 ${index + 1} 槽 ${slot.card.name}，点击更换` : `第 ${index + 1} 槽，空`
+                    pendingCard ? `将 ${pendingCard.name} 放入第 ${index + 1} 槽`
+                      : slot.card ? `第 ${index + 1} 槽 ${slot.card.name}，点击更换` : `第 ${index + 1} 槽，空`
                   }
                 >
                   {slot.card ? <DeckFace row={slot.card} /> : <span aria-hidden>+</span>}
@@ -334,15 +363,11 @@ export const DeckPanel = memo(function DeckPanel({ userId }: { userId: string | 
                 进入战斗
               </button>
             ) : (
-              <a className="bk-btn bk-btn--main" href="/battle">
+              <a className="bk-btn bk-btn--main" href="/battle?from=deck">
                 进入战斗
               </a>
             )}
           </div>
-
-          <p className="bk-note">
-            不必满 7 张也能出战，但至少要 1 张。桌面上的卡可以直接拖进槽位。
-          </p>
         </>
       }
       right={

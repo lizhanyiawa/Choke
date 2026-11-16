@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#13101b">
+  <title>Toke · 霜弧 | Choke! 棱彩样卡</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page-ink: #fff3fa;
+      --page-muted: #bba8c4;
+      --rose: #f4accd;
+      --line: #9c77a34d;
+      --mono: Consolas, "SFMono-Regular", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      background:
+        radial-gradient(ellipse at 24% 32%, #30213d 0%, transparent 54%),
+        radial-gradient(ellipse at 85% 83%, #241931, transparent 60%),
+        #13101b;
+      color: var(--page-ink);
+      font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    a:focus-visible, button:focus-visible, input:focus-visible {
+      outline: 2px solid var(--rose);
+      outline-offset: 4px;
+    }
+
+    .lab-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 60px;
+      padding: 0 clamp(18px, 5vw, 64px);
+      border-bottom: 1px solid #9c77a330;
+      background: #17121fe0;
+    }
+
+    .lab-top__brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 19px;
+      font-weight: 820;
+      letter-spacing: -.045em;
+    }
+
+    .lab-top__brand img { width: 19px; height: 27px; object-fit: contain; }
+
+    .lab-top__brand small {
+      margin-left: 5px;
+      padding-left: 11px;
+      border-left: 1px solid #b89ab865;
+      color: #ceb7d5;
+      font: 540 10px/1.6 var(--mono);
+      letter-spacing: .09em;
+    }
+
+    .lab-top a {
+      color: #e9cce3;
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .lab-top a:hover { color: var(--rose); }
+
+    .inspection {
+      display: grid;
+      grid-template-columns: minmax(250px, 1.12fr) minmax(200px, .88fr);
+      align-items: center;
+      gap: clamp(24px, 6vw, 84px);
+      width: min(100%, 1080px);
+      min-height: calc(100svh - 60px);
+      margin: auto;
+      padding: 30px clamp(19px, 5vw, 62px) 38px;
+    }
+
+    .specimen {
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+      min-width: 0;
+      margin: 0;
+    }
+
+    .toke-tilt {
+      --tilt-x: 0deg;
+      --tilt-y: 0deg;
+      --light-x: 50%;
+      --light-y: 49%;
+      --band-x: 49%;
+      --foil-angle: 118deg;
+      --foil-strength: .28;
+      --ring-angle: 105deg;
+      --ring-strength: .34;
+      width: min(100%, 390px, calc((100svh - 160px) * .6667));
+      aspect-ratio: 2 / 3;
+      perspective: 1150px;
+      touch-action: pan-y;
+    }
+
+    .toke-card {
+      position: relative;
+      isolation: isolate;
+      container-type: inline-size;
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      overflow: hidden;
+      border-radius: 5.2% / 3.47%;
+      background: #1b1426;
+      box-shadow: 0 20px 44px #090710b5, 0 3px 12px #09071080;
+      transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+      transition: transform .24s cubic-bezier(.18,.74,.21,1);
+      user-select: none;
+    }
+
+    .toke-tilt.is-tracking .toke-card { transition: none; }
+
+    .toke-card__art,
+    .toke-card__foil,
+    .toke-card__rims,
+    .toke-card__ink,
+    .toke-card__edge {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .toke-card__art { object-fit: cover; }
+
+    .toke-card__foil {
+      z-index: 1;
+      background:
+        radial-gradient(ellipse 37% 33% at var(--light-x) var(--light-y), #fff5fde6, #a3ccff89 37%, transparent 81%),
+        repeating-linear-gradient(128deg, #f3d2fd4f 0 1px, transparent 1px 3px),
+        linear-gradient(var(--foil-angle), transparent 18%, #9acbffba 34%, #e6f1ff 45%, #ffc7e5 56%, #a992fae6 66%, transparent 81%);
+      background-position: center, center, var(--band-x) center;
+      background-size: 100% 100%, auto, 190% 160%;
+      mask: url("./foil-mask.svg") center / 100% 100% no-repeat;
+      mix-blend-mode: screen;
+      opacity: var(--foil-strength);
+    }
+
+    .toke-card__rims {
+      z-index: 1;
+      background:
+        repeating-conic-gradient(from var(--ring-angle) at 60% 42%, transparent 0 4deg, #fff1fb65 4deg 4.75deg, transparent 4.75deg 7deg),
+        conic-gradient(from var(--ring-angle) at 60% 42%, transparent, #ffc1e4 13%, #f5e8ff 21%, transparent 34%, #9bc6ff 56%, #e1d5ff 63%, transparent 79%);
+      mask: url("./foil-rings.svg") center / 100% 100% no-repeat;
+      mix-blend-mode: screen;
+      opacity: var(--ring-strength);
+    }
+
+    .toke-card__ink {
+      z-index: 2;
+      background:
+        linear-gradient(180deg, #100b1c85, transparent 18%, transparent 65%, #100b1c7a 78%, #100b1ce6 100%);
+    }
+
+    .toke-card__edge {
+      z-index: 4;
+      border: 1px solid #dcc8eac4;
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 2px #1e142ba8, inset 0 0 0 3px #c7b2da51;
+    }
+
+    .toke-card__edge::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 2px;
+      background: linear-gradient(var(--foil-angle), #9972a7, #fbe4f5 33%, #a1c3ee 47%, #735581 65%, #f5b9d5 92%);
+      background-position: var(--band-x) center;
+      background-size: 170% 100%;
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      opacity: .82;
+    }
+
+    .toke-card__edition {
+      position: absolute;
+      z-index: 3;
+      inset: 5.5% 7.4% auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 3cqw;
+      color: #f9d9f0;
+      text-shadow: 0 1px 9px #1b102a;
+    }
+
+    .toke-card__edition div {
+      display: grid;
+      gap: 1.3cqw;
+    }
+
+    .toke-card__edition b {
+      color: #fff5fb;
+      font-size: 6.3cqw;
+      font-weight: 860;
+      letter-spacing: -.05em;
+      line-height: 1;
+    }
+
+    .toke-card__edition span {
+      font: 680 3.35cqw/1.15 var(--mono);
+      letter-spacing: .16em;
+    }
+
+    .toke-card__sigil {
+      width: 8.5cqw;
+      height: 8.5cqw;
+      color: #eed6ff;
+      filter: drop-shadow(0 0 5px #dcc2fe7d);
+    }
+
+    .toke-card__beat {
+      position: absolute;
+      z-index: 3;
+      top: 43.95%;
+      left: 9.38%;
+      color: #50376b;
+      font: 800 4.6cqw/1 Bahnschrift, "Segoe UI", sans-serif;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .toke-card__label {
+      position: absolute;
+      z-index: 3;
+      inset: auto 7.4% 5.4%;
+      text-shadow: 0 2px 12px #11091a;
+    }
+
+    .toke-card__trace {
+      display: flex;
+      align-items: center;
+      gap: 2.1cqw;
+      margin: 0 0 2cqw;
+      color: #efc5e3;
+      font: 690 3.7cqw/1.2 var(--mono);
+      letter-spacing: .14em;
+    }
+
+    .toke-card__trace::before {
+      content: "";
+      width: 7cqw;
+      height: 1px;
+      background: #e4b1d9;
+      box-shadow: 0 0 6px #e4b1d96b;
+    }
+
+    .toke-card__name {
+      display: block;
+      margin: 0 0 3.7cqw;
+      color: #fff8fd;
+      font-family: Bahnschrift, "Arial Black", "Segoe UI", sans-serif;
+      font-size: 23.5cqw;
+      font-style: italic;
+      font-weight: 860;
+      letter-spacing: -.09em;
+      line-height: .8;
+      text-transform: uppercase;
+    }
+
+    .toke-card__footer {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 2cqw;
+      padding-top: 3.3cqw;
+      border-top: 1px solid #e9c2e288;
+      color: #ecdaee;
+      font: 590 3.55cqw/1.2 var(--mono);
+      white-space: nowrap;
+    }
+
+    .toke-card__footer b { color: #fff5fb; }
+
+    .lighting {
+      display: grid;
+      gap: 11px;
+      padding-block: 15px;
+      border-block: 1px solid var(--line);
+    }
+
+    .lighting__title {
+      color: #f7e2ef;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .lighting__presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .lighting__presets button {
+      min-height: 35px;
+      padding: 5px 12px;
+      border: 1px solid #95739f80;
+      border-radius: 6px;
+      background: #2b2038;
+      color: #ead8eb;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .lighting__presets button[aria-pressed="true"] {
+      border-color: #f3b2d7;
+      background: #502f4a;
+      color: #fff3fa;
+    }
+
+    .lighting__presets button:hover { border-color: var(--rose); }
+
+    .lighting input {
+      width: 100%;
+      margin: 0;
+      accent-color: var(--rose);
+      cursor: ew-resize;
+    }
+
+    @media (max-width: 580px) {
+      .lab-top { min-height: 53px; }
+      .inspection {
+        grid-template-columns: 1fr;
+        gap: 28px;
+        padding-top: 26px;
+      }
+      .toke-tilt { width: min(82vw, 345px, calc((100svh - 107px) * .64)); }
+      .inspection__copy { width: min(100%, 345px); margin-inline: auto; }
+    }
+
+    @media (max-height: 485px) and (min-width: 581px) {
+      .toke-tilt { width: min(100%, 240px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .toke-card { transform: none; transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="lab-top">
+    <div class="lab-top__brand">
+      <img src="/brand/choke-icon.svg" alt="">
+      Choke!
+      <small>样卡</small>
+    </div>
+    <a href="/">返回牌桌 ↗</a>
+  </header>
+
+  <main class="inspection">
+    <figure class="specimen">
+      <div class="toke-tilt">
+        <article class="toke-card" aria-label="Toke 霜弧棱彩收藏卡">
+          <img class="toke-card__art" src="./art.png" alt="" draggable="false" fetchpriority="high">
+          <div class="toke-card__foil" aria-hidden="true"></div>
+          <div class="toke-card__rims" aria-hidden="true"></div>
+          <div class="toke-card__ink" aria-hidden="true"></div>
+          <div class="toke-card__edge" aria-hidden="true"></div>
+          <span class="toke-card__beat" aria-hidden="true">1</span>
+
+          <div class="toke-card__edition">
+            <div>
+              <b>CHOKE!</b>
+              <span>PRISMATIC</span>
+            </div>
+            <svg class="toke-card__sigil" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <path d="M20 2 38 20 20 38 2 20Z" stroke="currentColor" stroke-width="1.4"/>
+              <path d="m20 7 3.4 9.6L33 20l-9.6 3.4L20 33l-3.4-9.6L7 20l9.6-3.4Z" fill="currentColor"/>
+            </svg>
+          </div>
+
+          <div class="toke-card__label">
+            <p class="toke-card__trace">FROST TRACE</p>
+            <strong class="toke-card__name">Toke</strong>
+            <div class="toke-card__footer">
+              <span>JP <b>9,800 pp</b></span>
+              <span>No. 099999</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </figure>
+
+    <section class="inspection__copy" aria-labelledby="lighting-title">
+      <div class="lighting">
+        <h1 class="lighting__title" id="lighting-title"><label for="light-angle">转动光线</label></h1>
+        <div class="lighting__presets">
+          <button type="button" data-angle="0" aria-pressed="true">正面</button>
+          <button type="button" data-angle="78" aria-pressed="false">看闪面</button>
+        </div>
+        <input id="light-angle" type="range" min="-100" max="100" value="0">
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    const tilt = document.querySelector(".toke-tilt");
+    const angle = document.querySelector("#light-angle");
+    const presets = [...document.querySelectorAll("[data-angle]")];
+    const clamp = (value) => Math.max(0, Math.min(1, value));
+
+    function paintLight(x, y) {
+      const horizontal = x - .5;
+      const vertical = y - .5;
+      tilt.style.setProperty("--tilt-x", `${vertical * -18}deg`);
+      tilt.style.setProperty("--tilt-y", `${horizontal * 23}deg`);
+      tilt.style.setProperty("--light-x", `${x * 100}%`);
+      tilt.style.setProperty("--light-y", `${y * 100}%`);
+      tilt.style.setProperty("--band-x", `${x * 145 - 22}%`);
+      tilt.style.setProperty("--foil-angle", `${118 + horizontal * 56}deg`);
+      tilt.style.setProperty("--foil-strength", String(.28 + Math.min(.64, Math.abs(horizontal) * 1.5 + Math.abs(vertical) * .35)));
+      tilt.style.setProperty("--ring-angle", `${105 + horizontal * 310 + vertical * 87}deg`);
+      tilt.style.setProperty("--ring-strength", String(.34 + Math.min(.5, Math.abs(horizontal) * 1.05 + Math.abs(vertical) * .65)));
+    }
+
+    function paintPreset() {
+      const value = Number(angle.value);
+      paintLight(.5 + value / 225, .49 - value / 520);
+      for (const button of presets) {
+        button.setAttribute("aria-pressed", String(Number(button.dataset.angle) === value));
+      }
+    }
+
+    for (const button of presets) {
+      button.addEventListener("click", () => {
+        angle.value = button.dataset.angle;
+        paintPreset();
+      });
+    }
+
+    angle.addEventListener("input", paintPreset);
+    tilt.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "touch") tilt.setPointerCapture(event.pointerId);
+    });
+
+    tilt.addEventListener("pointermove", (event) => {
+      if (event.pointerType === "touch" && !tilt.hasPointerCapture(event.pointerId)) return;
+      const bounds = tilt.getBoundingClientRect();
+      tilt.classList.add("is-tracking");
+      paintLight(clamp((event.clientX - bounds.left) / bounds.width), clamp((event.clientY - bounds.top) / bounds.height));
+    });
+
+    function releaseLight() {
+      tilt.classList.remove("is-tracking");
+      paintPreset();
+    }
+
+    tilt.addEventListener("pointerleave", releaseLight);
+    tilt.addEventListener("pointercancel", releaseLight);
+    tilt.addEventListener("lostpointercapture", releaseLight);
+    paintPreset();
+  </script>
+</body>
+</html>

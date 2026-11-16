@@ -1,0 +1,142 @@
+.edge-preview__layout {
+  display: grid;
+  grid-template-columns: minmax(238px, min(34%, 310px)) minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+  width: min(1130px, calc(100% - 28px));
+  margin-inline: auto;
+  padding-block: 13px 16px;
+}
+
+.edge-preview__library {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: max(290px, calc(100dvh - var(--client-header-height) - 30px));
+  max-height: 854px;
+  overflow: hidden;
+}
+
+.edge-preview__filters { display: grid; gap: 7px; padding: 11px; border-bottom: 1px solid var(--client-line); }
+.edge-preview__selects, .edge-preview__kinds { display: grid; gap: 5px; }
+.edge-preview__selects { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.edge-preview__kinds { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.edge-preview__kinds .client-key { min-height: 31px; gap: 3px; padding-inline: 3px; border-radius: 6px; font-size: 12px; white-space: nowrap; }
+.edge-preview__kinds small { font: 9px var(--bk-mono); opacity: .85; }
+
+.edge-preview__results {
+  overflow-y: auto;
+  overflow-anchor: none;
+  min-height: 0;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bk-raised-hi) transparent;
+}
+.edge-preview__results > p { margin: 16px 12px; color: var(--client-muted); font-size: 13px; }
+.edge-preview__rows { position: relative; }
+.edge-preview__row {
+  position: absolute;
+  inset-inline: 0;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--client-line);
+  border-left: 2px solid transparent;
+  text-align: left;
+  color: var(--client-ink);
+  background: transparent;
+  cursor: pointer;
+}
+.edge-preview__row:hover { background: var(--bk-paper-hi); }
+.edge-preview__row[aria-pressed="true"] { border-left-color: var(--preview-rarity); background: var(--bk-osu-soft); }
+.edge-preview__row:focus-visible { outline: 1px solid var(--client-accent); outline-offset: -2px; }
+.edge-preview__row i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--preview-rarity);
+}
+.edge-preview__row > span { display: grid; min-width: 0; gap: 2px; }
+.edge-preview__row b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.edge-preview__row small { color: var(--client-muted); font-size: 10px; white-space: nowrap; }
+
+.edge-preview__viewer {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  height: max(290px, calc(100dvh - var(--client-header-height) - 30px));
+  max-height: 854px;
+  padding: 12px;
+}
+.edge-preview__details { display: grid; gap: 4px; padding: 1px 2px 2px; }
+.edge-preview__title { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
+.edge-preview__title h1 { margin: 0; font-size: clamp(17px, 2.8vw, 25px); line-height: 1.2; }
+.edge-preview__title span { color: var(--preview-rarity); font-size: 11px; }
+.edge-preview__details p { margin: 0; color: var(--client-muted); font-size: 12px; line-height: 1.55; }
+.edge-preview__pair { color: var(--client-gold); font-size: 12px; }
+.edge-preview__canvas {
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+  overflow: hidden;
+  padding: 5px;
+  border: 1px solid var(--client-line);
+  border-radius: 9px;
+  background: var(--client-felt);
+  box-shadow: var(--client-well-shadow);
+}
+.edge-preview__canvas .edge-board {
+  width: auto;
+  max-width: 100%;
+  height: 100%;
+  border: 1px solid var(--client-felt-edge);
+  border-radius: 5px;
+  background: var(--client-bg);
+  cursor: default;
+  touch-action: auto;
+}
+.edge-preview__transport { display: grid; gap: 6px; width: min(100%, 664px); margin-inline: auto; }
+.edge-preview__timeline, .edge-preview__buttons { display: flex; align-items: center; gap: 8px; }
+.edge-preview__timeline input { flex: 1; min-width: 0; accent-color: var(--client-accent); cursor: pointer; }
+.edge-preview__timeline span { color: var(--client-muted); font: 11px var(--bk-mono); white-space: nowrap; }
+.edge-preview__buttons .client-key { min-height: 32px; padding-inline: 10px; gap: 4px; font-size: 12px; }
+.edge-preview__buttons select { margin-left: auto; min-width: 63px; }
+.edge-preview__buttons select + select { margin-left: 0; }
+.edge-preview__buttons .edge-preview__repeat { padding-inline: 8px; }
+.edge-preview__sheet-link { justify-self: end; }
+.edge-storyboard { width: min(1090px, calc(100% - 24px)); margin: 0 auto; padding: 12px 0 20px; }
+.edge-storyboard__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  position: sticky;
+  top: calc(var(--client-header-height) + 8px);
+  z-index: 1;
+  padding: 9px;
+}
+.edge-storyboard__filters select { min-width: 90px; }
+.edge-storyboard__strip { padding-top: 9px; }
+.edge-storyboard__strip h2 { margin: 0 0 5px; font-size: 14px; }
+.edge-storyboard__strip h2 a { color: var(--bk-osu-text); text-decoration: none; }
+.edge-storyboard__frames { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.edge-storyboard__frame { display: block; min-width: 0; overflow: hidden; color: var(--client-ink); text-decoration: none; border: 1px solid var(--client-line); border-radius: 8px; background: var(--client-plane); }
+.edge-storyboard__frame:hover, .edge-storyboard__frame:focus-visible { border-color: var(--client-accent); }
+.edge-storyboard__frame span { display: flex; justify-content: space-between; gap: 4px; padding: 4px 6px; font-size: 11px; }
+.edge-storyboard__frame small { color: var(--client-muted); font-family: var(--bk-mono); }
+.edge-storyboard__frame .edge-board { cursor: pointer; }
+.edge-token .edge-preview-unit-status { font-size: 15px; stroke: none; }
+
+@media (max-width: 615px) {
+  .edge-preview__layout { grid-template-columns: minmax(0, 1fr); width: calc(100% - 16px); gap: 8px; padding-block: 8px; }
+  .edge-preview__library { height: min(234px, 36dvh); min-height: 185px; }
+  .edge-preview__filters { padding: 6px; gap: 5px; }
+  .edge-preview__viewer { grid-template-rows: auto; gap: 6px; height: auto; max-height: none; padding: 7px; }
+  .edge-preview__canvas { width: min(100%, 420px, max(218px, calc((100dvh - 350px) * .888889))); margin-inline: auto; }
+  .edge-preview__canvas .edge-board { width: 100%; height: auto; }
+  .edge-preview__buttons { flex-wrap: wrap; }
+  .edge-storyboard__frames { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

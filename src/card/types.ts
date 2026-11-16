@@ -41,6 +41,8 @@ export interface CardSkill {
 }
 
 export interface CardFaceData {
+  /** Battle-only snapshot; legacy cosmetic mods stay in `mods`. */
+  cultivation?: import("./cultivation").CultivationInput
   id: string
   name: string
   rarity: Rarity
@@ -69,7 +71,7 @@ export interface CardFaceData {
   heroBonus?: number
 }
 
-/** 卡面显示层：收藏态全显，战斗态只留立绘 + 技能 */
+/** 收藏态展示肖像与战力，战斗态展示技能。 */
 export type CardFaceMode = "collection" | "battle"
 
 export type StarState = "empty" | "copper" | "prism"

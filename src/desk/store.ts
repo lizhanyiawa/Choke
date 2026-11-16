@@ -3,16 +3,17 @@ import { useCallback, useEffect, useLayoutEffect, useReducer, useRef } from "rea
 import { onIdle } from "@/lib/idle"
 
 import { OBJECT_META, OBJECT_ORDER, type DeskObjectId } from "./objects"
-import type { CardData, DeskItem, DeskState } from "./types"
+import type { DeskItem, DeskState } from "./types"
 
 const KEY = "choke.desk.v2"
+export const ITEM_INSET = 12
 
 const CARD_SIZE = { w: 168, h: 252 }
 const PACK_SIZE = { w: 170, h: 240 }
 
 export const ITEM_SIZE = { card: CARD_SIZE, pack: PACK_SIZE }
 
-export function sizeOf(item: DeskItem): { w: number; h: number } {
+export function sizeOf(item: Pick<DeskItem, "kind" | "object">): { w: number; h: number } {
   if (item.kind === "object" && item.object) return OBJECT_META[item.object]
   return item.kind === "pack" ? PACK_SIZE : CARD_SIZE
 }
@@ -36,10 +37,12 @@ function defaultItems(): DeskItem[] {
   ]
 }
 
+type SpawnItems = DeskItem[] | ((items: readonly DeskItem[]) => DeskItem[])
+
 type Action =
   | { type: "move"; id: string; x: number; y: number }
   | { type: "front"; id: string }
-  | { type: "spawn"; items: DeskItem[] }
+  | { type: "spawn"; items: SpawnItems }
   | { type: "remove"; id: string }
   | { type: "stow"; id: string }
   | { type: "unstow"; id: string; x: number; y: number }
@@ -52,13 +55,12 @@ function migrate(items: DeskItem[]): DeskItem[] {
     const legacy = item.kind as string
     if (legacy === "album" || legacy === "market") return []
     if (item.kind === "object") {
-      if (!item.object || !(item.object in OBJECT_META)) return []
+      if (!item.object || !Object.hasOwn(OBJECT_META, item.object)) return []
       const { stowed, ...rest } = item
       return [stowed === true ? { ...rest, stowed } : rest]
     }
     return item.kind === "card" || item.kind === "pack" ? [item] : []
   })
-  if (kept.length === 0) return defaultItems()
   const present = new Set(kept.flatMap((item) => (item.object ? [item.object] : [])))
   const missing = OBJECT_ORDER.filter((id) => !present.has(id)).map((id, index) =>
     objectItem(id, index + 1 - OBJECT_ORDER.length),
@@ -89,8 +91,10 @@ function reducer(state: DeskState, action: Action): DeskState {
       const top = Math.max(0, ...state.items.map((it) => it.z)) + 1
       return { ...state, items: state.items.map((it) => (it.id === action.id ? { ...it, z: top } : it)) }
     }
-    case "spawn":
-      return { ...state, items: [...state.items, ...action.items] }
+    case "spawn": {
+      const next = typeof action.items === "function" ? action.items(state.items) : action.items
+      return next.length ? { ...state, items: [...state.items, ...next] } : state
+    }
     case "remove":
       return { ...state, items: state.items.filter((it) => it.id !== action.id) }
     case "stow":
@@ -108,7 +112,7 @@ function reducer(state: DeskState, action: Action): DeskState {
       }
     }
     case "reset":
-      return { version: 2, items: defaultItems() }
+      return { ...state, items: migrate(state.items.filter((item) => item.kind !== "object")) }
   }
 }
 
@@ -149,7 +153,7 @@ export function useDesk() {
   )
   const front = useCallback((id: string) => dispatch({ type: "front", id }), [])
   const spawn = useCallback(
-    (items: DeskItem[]) => dispatch({ type: "spawn", items }),
+    (items: SpawnItems) => dispatch({ type: "spawn", items }),
     [],
   )
   /** 卡包用掉 / 卡收进卡册 / 卡放进卡组，都是把它从桌面拿走 */
@@ -163,18 +167,4 @@ export function useDesk() {
   )
 
   return { items: state.items, move, front, spawn, remove, reset, stow, unstow }
-}
-
-export function cardsToItems(cards: CardData[], originX: number, originY: number): DeskItem[] {
-  const n = cards.length
-  const step = 0.065
-  const startX = originX - ((n - 1) * step) / 2
-  return cards.map((card, i) => ({
-    id: newId("card"),
-    kind: "card",
-    x: Math.min(0.82, Math.max(0.03, startX + i * step)),
-    y: Math.min(0.72, Math.max(0.04, originY + 0.05 + Math.abs(i - (n - 1) / 2) * 0.012)),
-    z: 100 + i,
-    card,
-  }))
 }

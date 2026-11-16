@@ -1,0 +1,30 @@
+.cultivation { padding: 20px; margin-bottom: 18px; color: #d9e4f5; background: #101b2c; }
+.cultivation__heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.cultivation h2 { margin: 4px 0 12px; } .cultivation h3 { margin: 20px 0 12px; }
+.cultivation p, .cultivation small { color: #9cafc8; font-size: 12px; line-height: 1.7; }
+.cultivation__stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: 8px; margin: 12px 0; }
+.cultivation__stats span { display: flex; flex-direction: column; gap: 4px; padding: 9px 12px; background: #91b9f00c; border: 1px solid #91b9f022; border-radius: 8px; font-size: 11px; color: #9cafc8; }
+.cultivation__stats b { color: #edf3ff; font-size: 16px; }
+.cultivation__actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.cultivation label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.cultivation select, .cultivation input { border: 1px solid #92b2db55; border-radius: 5px; padding: 7px; background: #142033; color: #edf3ff; max-width: 100%; }
+.cultivation input { width: 70px; }
+.cultivation__ranks { display: grid; gap: 6px; padding: 0; list-style: none; }
+.cultivation__ranks li { display: flex; gap: 12px; border-left: 2px solid #53647c; padding: 7px 10px; font-size: 12px; color: #92a0b4; }
+.cultivation__ranks li[data-unlocked=true] { border-color: #8ddbc8; background: #8ddbc80a; color: #d3f3e9; }
+.cultivation__ranks b { flex: 0 0 34px; }
+.cultivation__title { display: flex; gap: 12px; flex-wrap: wrap; border-block: 1px solid #91b9f025; padding: 15px 0; margin-top: 15px; }
+.cultivation__title small { flex-basis: 100%; }
+.cultivation__mods { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 8px; }
+.cultivation__mods button { padding: 12px; min-width: 0; background: #17263b; color: #edf3ff; }
+.cultivation__mods [data-rare=true] { border-color: #bc97e755; }
+.cultivation__mods span { font-size: 11px; color: #a4d9d1; }
+.cultivation details { margin-top: 16px; } .cultivation summary { font-size: 12px; cursor: pointer; }
+.cultivation-status { padding: 12px 16px; color: #bdd2ec; font-size: 13px; }
+.combat-rules__compare { overflow-x: auto; border: 1px solid #91b9f025; border-radius: 7px; margin: 12px 0; }
+.combat-rules__compare > div { display: grid; grid-template-columns: repeat(7, minmax(75px, 1fr)); min-width: 560px; }
+.combat-rules__compare span, .combat-rules__compare b { padding: 7px 10px; font-size: 12px; }
+.combat-rules__compare > div:first-child { background: #91b9f014; }
+.combat-rules__compare [data-changed=true] { color: #f5d49e; }
+.combat-rules__tactics { list-style: none; display: grid; gap: 8px; padding: 0; }
+.combat-rules__tactics li { display: grid; gap: 4px; border-left: 2px solid #8ddbc8; padding: 5px 10px; font-size: 12px; }

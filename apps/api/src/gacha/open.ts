@@ -15,6 +15,7 @@ const RANK: Record<string, number> = {
 }
 
 const idCache = new Map<string, string[]>()
+
 async function idsFor(rarity: string): Promise<string[]> {
   const cached = idCache.get(rarity)
   if (cached) return cached

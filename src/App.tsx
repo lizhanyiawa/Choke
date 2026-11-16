@@ -1,53 +1,26 @@
+import { lazy, Suspense, useEffect } from "react"
+
 import { CardEditor } from "@/card/CardEditor"
 import { CardLab } from "@/card/CardLab"
-import { BattlePage } from "@/battle/BattlePage"
-import { BackToDesk } from "@/components/BackToDesk"
 import { DeskPage } from "@/desk/DeskPage"
+import { DeveloperTools } from "@/developer/DeveloperTools"
 import { PoolLab } from "@/pool/PoolLab"
+import { installPressFeedback } from "@/client/press-feedback"
+
+const BattlePage = lazy(() => import("@/battle/BattlePage").then(({ BattlePage }) => ({ default: BattlePage })))
 
 export function App() {
+  useEffect(installPressFeedback, [])
   const path = window.location.pathname.replace(/\/+$/, "")
-  if (path.endsWith("battle")) {
-    return (
-      <>
-        <BattlePage />
-        <BackToDesk />
-      </>
-    )
-  }
-  if (path.endsWith("intro")) {
-    // 旧的引导页已经换成桌上的邀请函
-    window.history.replaceState(null, "", "/")
+  if (path === "/developer") return <DeveloperTools />
+  if (path.endsWith("battle")) return <Suspense fallback={<main className="client-loading" role="status">加载中…</main>}><BattlePage /></Suspense>
+  if (path === "/gacha" || path === "/intro") {
+    window.history.replaceState(window.history.state, "", "/")
     return <DeskPage />
   }
-  if (path.endsWith("gacha")) {
-    window.history.replaceState(null, "", "/?panel=packs")
-    return <DeskPage />
-  }
-  if (path.endsWith("card-editor")) {
-    return (
-      <>
-        <CardEditor />
-        <BackToDesk />
-      </>
-    )
-  }
-  if (path.endsWith("pool-lab")) {
-    return (
-      <>
-        <PoolLab />
-        <BackToDesk />
-      </>
-    )
-  }
-  if (path.endsWith("card-lab")) {
-    return (
-      <>
-        <CardLab />
-        <BackToDesk />
-      </>
-    )
-  }
+  if (path.endsWith("card-editor")) return <CardEditor />
+  if (path.endsWith("pool-lab")) return <PoolLab />
+  if (path.endsWith("card-lab")) return <CardLab />
   return <DeskPage />
 }
 

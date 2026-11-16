@@ -1,397 +1,471 @@
-import { useEffect, useState, type CSSProperties } from "react"
+import { lazy, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react"
+import { RiArrowLeftLine, RiShieldLine } from "@remixicon/react"
 
 import { CardFace } from "@/card/CardFace"
-import {
-  ELEMENT_COLOR,
-  ELEMENT_LABEL,
-} from "@/card/data"
-import { fetchDeck, toFace, type ApiDeck } from "@/desk/api"
+import { DEMO_CARDS, ELEMENT_COLOR, ELEMENT_LABEL } from "@/card/data"
+import { SUBJOBS } from "@/card/jobs"
+import { JOB_LABEL } from "@/card/cultivation"
+import { fetchDeck, toFace } from "@/desk/api"
 
+import { EdgeArena } from "./EdgeArena"
+import { EdgePreparation } from "./EdgePreparation"
+import { EDGE_LIMIT } from "./edgeBattle"
+import type { EdgeInputCard } from "./edgeSkills/catalog"
 import { cloneBattle, createBattle, endTurn, enemyDamageTier, playSkill, raiseDefense, teamHpOf } from "./engine"
 import type { BattleState } from "./types"
 import "./battle.css"
 
-interface ApiUser {
-  id: string
-  username: string
+const EdgeSkillPreview = lazy(() => import("./EdgeSkillPreview").then(({ EdgeSkillPreview }) => ({ default: EdgeSkillPreview })))
+
+type Lineup = Parameters<typeof createBattle>[0]
+type DeckLoad = { status: "guest" | "error" | "ready"; lineup: Lineup; message?: string }
+type EdgeLineups = { lineup: EdgeInputCard[]; rivals?: EdgeInputCard[] }
+
+const practiceLineup: Lineup = DEMO_CARDS.slice(0, 4).map((face, index) => ({
+  uid: index + 1,
+  cardId: face.id,
+  face,
+}))
+const practiceEdge: EdgeInputCard[] = (["warden", "bard", "ranger"] as const).map((edgeSubjob, i) => ({
+  uid: -i - 1,
+  cardId: "edge-rehearsal-" + i,
+  edgeSubjob,
+  face: {
+    ...DEMO_CARDS[i], name: ["战坦", "吟游诗人", "游侠"][i], job: i === 0 ? "tank" : i === 1 ? "support" : "warrior",
+    rarity: i === 2 ? "Prismatic" : i === 1 ? "Radiant" : "C", level: 1, constellation: 0, mods: [],
+  },
+}))
+const sparringCards: EdgeInputCard[] = (["ranger", "warlock"] as const).map((edgeSubjob, index) => {
+  const { archetype } = SUBJOBS[edgeSubjob]
+  const id = "edge-sparring-" + index
+  return { uid: -index - 1, cardId: id, edgeSubjob, combatVersion: "four-v2", edgePool: "curated-v1", face: {
+    ...DEMO_CARDS[0], id, art: undefined, name: JOB_LABEL[archetype], job: archetype, rarity: "R", level: 1, constellation: 0, mods: [],
+  } }
+})
+const defenseLabels = ["0", "I", "II", "III", "IV"]
+const number = new Intl.NumberFormat("zh-CN")
+
+interface Feedback {
+  id: number
+  actor: number | null
+  enemy: number
+  allies: { uid: number; delta: number }[]
+  guard: boolean
+}
+
+function makeFeedback(before: BattleState, after: BattleState, actor: number | null, id: number): Feedback {
+  return {
+    id,
+    actor,
+    enemy: after.enemy.hp - before.enemy.hp,
+    allies: after.cards.flatMap((card, index) => {
+      const delta = card.stats.hp - before.cards[index].stats.hp
+      return delta === 0 ? [] : [{ uid: card.uid, delta }]
+    }),
+    guard: after.defenseTier > before.defenseTier,
+  }
+}
+
+function Ghost() {
+  return (
+    <svg className="battle-ghost" viewBox="0 0 320 210" aria-hidden>
+      <defs>
+        <linearGradient id="battle-ghost-body" x1="0" y1="0" x2="1" y2="1">
+          <stop stopColor="#fde4f6" />
+          <stop offset="1" stopColor="#a77bd6" />
+        </linearGradient>
+        <linearGradient id="battle-ghost-line">
+          <stop stopColor="#f3b8ed" stopOpacity="0" />
+          <stop offset=".5" stopColor="#f3b8ed" />
+          <stop offset="1" stopColor="#f3b8ed" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <ellipse cx="160" cy="108" rx="129" ry="78" fill="none" stroke="#d29ae8" strokeOpacity=".24" />
+      <ellipse cx="160" cy="108" rx="110" ry="62" fill="none" stroke="#f2b2eb" strokeOpacity=".38" strokeDasharray="6 9" />
+      <path d="M7 108h71m164 0h71M160 10v29m0 142v23" stroke="url(#battle-ghost-line)" strokeWidth="2" />
+      <path d="M91 139l23-22-9-27 31-38 24-13 24 13 31 38-9 27 23 22-51-11-18 38-18-38z" fill="url(#battle-ghost-body)" stroke="#ffe8f9" strokeWidth="2" />
+      <path d="M128 92l25 8-21 12zm64 0-25 8 21 12zM153 123l7-7 7 7-7 11z" fill="#301d41" />
+      <path d="M73 67l27-21m120 0l27 21M79 148l26 16m110 0l26-16" stroke="#dda4ee" strokeOpacity=".65" strokeWidth="3" />
+      <circle cx="55" cy="115" r="4" fill="#f0b6ed" />
+      <circle cx="265" cy="115" r="4" fill="#f0b6ed" />
+    </svg>
+  )
+}
+
+function Health({ value, max, label, type }: { value: number; max: number; label: string; type: "enemy" | "ally" }) {
+  return (
+    <div className={`battle-health battle-health--${type}`}>
+      <div
+        className="battle-health__track"
+        role="meter"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-valuenow={value}
+      >
+        <i style={{ width: `${max ? Math.max(0, Math.min(100, value / max * 100)) : 0}%` }} />
+      </div>
+      <span>{number.format(value)} / {number.format(max)}</span>
+    </div>
+  )
+}
+
+function Delta({ value, delay = 0 }: { value: number; delay?: number }) {
+  return (
+    <span
+      className={`battle-delta ${value > 0 ? "is-heal" : "is-hit"}`}
+      style={{ "--delta-delay": `${delay}ms` } as CSSProperties}
+      aria-hidden
+    >
+      {value > 0 ? "+" : "−"}{number.format(Math.abs(value))}
+    </span>
+  )
 }
 
 export function BattlePage() {
-  const [user, setUser] = useState<ApiUser | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [deck, setDeck] = useState<ApiDeck | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [battle, setBattle] = useState<BattleState | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
+  const search = new URLSearchParams(window.location.search)
+  if (search.get("view") === "skills") {
+    const from = search.get("from")
+    if (from === "album" || from === "codex") {
+      return <EdgeSkillPreview backHref={"/?panel=" + from} backLabel={from === "album" ? "卡册" : "图鉴"} matchRarity />
+    }
+    for (const param of ["view", "skill", "t", "scene", "sheet"]) search.delete(param)
+    const query = search.toString()
+    return <EdgeSkillPreview backHref={query ? "/battle?" + query : "/battle"} />
+  }
+  search.set("view", "skills")
+  return <BattleLobby previewHref={"/battle?" + search.toString()} />
+}
+
+function BattleLobby({ previewHref }: { previewHref: string }) {
+  const [load, setLoad] = useState<DeckLoad | null>(null)
+  const [lineup, setLineup] = useState<Lineup | null>(null)
+  const [edgeRun, setEdgeRun] = useState<EdgeLineups | null>(null)
+  const [preparation, setPreparation] = useState<(EdgeLineups & { practice: boolean }) | null>(null)
+  const [mode, setMode] = useState<"edge" | "turn">("edge")
+  const [picked, setPicked] = useState<number[] | null>(null)
+  const from = new URLSearchParams(window.location.search).get("from")
+  const backTo = from === "developer" ? "/developer"
+    : from === "deck" ? "/?panel=deck"
+      : from === "lobby" ? "/?panel=battle" : "/"
 
   useEffect(() => {
-    let cancelled = false
-    fetch("/auth/me", { credentials: "include" })
+    const controller = new AbortController()
+    const { signal } = controller
+    fetch("/auth/me", { credentials: "include", signal })
       .then((response) => response.json())
-      .then((data) => {
-        if (cancelled) return
-        if (data.ok) setUser({ id: data.data.id, username: data.data.username })
-        else setUser(null)
+      .then(async (response) => {
+        if (!response.ok) {
+          if (!signal.aborted) setLoad({ status: "guest", lineup: [] })
+          return
+        }
+        const deck = await fetchDeck(response.data.id, signal)
+        if (!signal.aborted) {
+          setLoad({
+            status: "ready",
+            lineup: deck.slots.flatMap(({ card }) => card ? [{
+              uid: card.userCardId, cardId: card.id, face: toFace(card),
+            }] : []),
+          })
+        }
       })
-      .catch(() => {
-        if (!cancelled) setUser(null)
+      .catch((error: unknown) => {
+        if (!signal.aborted) setLoad({
+          status: "error",
+          lineup: [],
+          message: error instanceof Error ? error.message : "加载卡组失败",
+        })
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
+    return () => controller.abort()
   }, [])
 
   useEffect(() => {
-    if (!user) return
-    let cancelled = false
-    fetchDeck(user.id)
-      .then((data) => {
-        if (!cancelled) setDeck(data)
-      })
-      .catch((reason: unknown) => {
-        if (!cancelled) setError(reason instanceof Error ? reason.message : "加载卡组失败")
-      })
-    return () => {
-      cancelled = true
+    const back = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented && !event.repeat) window.location.assign(backTo)
     }
-  }, [user])
+    window.addEventListener("keydown", back)
+    return () => window.removeEventListener("keydown", back)
+  }, [backTo])
 
-  if (loading) return <div className="battle-page battle-page--center">加载中…</div>
-  if (!user) {
-    return (
-      <div className="battle-page battle-page--center">
-        <div className="battle-gate">
-          <span>CHOKE! · BATTLE</span>
-          <h1>需要先登录</h1>
-          <p>战斗读取你账号里保存的 7 张主队卡。</p>
-          <a href="/auth/osu">用 osu! 登录</a>
-        </div>
-      </div>
-    )
-  }
-  if (error) return <div className="battle-page battle-page--center">{error}</div>
-  if (!deck) return <div className="battle-page battle-page--center">加载卡组…</div>
+  if (edgeRun) return <EdgeArena {...edgeRun} onBack={() => setEdgeRun(null)} />
+  if (preparation) return <EdgePreparation {...preparation}
+    onBack={() => setPreparation(null)} onStart={(cards, rivals) => {
+      const run = { lineup: cards, rivals }
+      setPreparation({ ...run, practice: preparation.practice })
+      setEdgeRun(run)
+    }} />
+  if (lineup) return <BattleArena lineup={lineup} backTo={backTo} />
 
-  const cards = deck.slots.flatMap((slot) => (slot.card ? [slot.card] : []))
-
-  if (cards.length === 0) {
-    return (
-      <div className="battle-page battle-page--center">
-        <div className="battle-gate">
-          <span>CHOKE! · BATTLE</span>
-          <h1>卡组里还没有卡</h1>
-          <p>回桌面，把卡拖进卡组；至少 1 张就能出战。</p>
-          <a href="/">回桌面</a>
-        </div>
-      </div>
-    )
-  }
-
-  const start = () => {
-    setActionError(null)
-    setBattle(
-      createBattle(
-        cards.map((card) => ({
-          uid: card.userCardId,
-          cardId: card.id,
-          face: toFace(card),
-        })),
-      ),
-    )
-  }
-
-  if (!battle) {
-    const totalBp = cards.reduce((sum, card) => sum + card.level, 0)
-    return (
-      <div className="battle-page battle-page--center">
-        <div className="battle-gate">
-          <span>PVE · PROTOTYPE</span>
-          <h1>练习对手 · 谱面幽灵</h1>
-          <p>当前 {cards.length} 张主队卡、AP 2 起始、Combo、防御档位和敌方意图预告。</p>
-          <div className="battle-gate__stats">
-            <div>
-              <span>卡组</span>
-              <b>{cards.length} / 7</b>
-            </div>
-            <div>
-              <span>敌人 HP</span>
-              <b>24,000</b>
-            </div>
-            <div>
-              <span>总等级</span>
-              <b>{totalBp}</b>
-            </div>
-          </div>
-          <button type="button" onClick={start}>
-            开始战斗
-          </button>
-          <a href="/">回桌面</a>
-        </div>
-      </div>
-    )
-  }
-
-  const team = teamHpOf(battle)
-  const enemyPct = (battle.enemy.hp / battle.enemy.hpMax) * 100
-  const teamPct = (team.hp / team.max) * 100
-  const hasTank = battle.cards.some((card) => !card.down && card.subjob.tags.includes("tank"))
-
-  const play = (index: number, skillId: string) => {
-    const next = cloneBattle(battle)
-    const message = playSkill(next, index, skillId)
-    setBattle(next)
-    setActionError(message)
-  }
-
-  const defend = (tier: number) => {
-    const next = cloneBattle(battle)
-    const message = raiseDefense(next, tier)
-    setBattle(next)
-    setActionError(message)
-  }
-
-  const finishTurn = () => {
-    const next = cloneBattle(battle)
-    const message = endTurn(next)
-    setBattle(next)
-    setActionError(message)
-  }
+  const available = load?.lineup ?? []
+  const selected = picked ?? available.slice(0, EDGE_LIMIT).map(({ uid }) => uid)
+  const edgeLineup = available.filter(({ uid }) => selected.includes(uid))
 
   return (
     <div className="battle-page">
-      <header className="battle-top">
-        <a className="battle-top__back" href="/">
-          ‹ 桌面
-        </a>
-        <div className="battle-top__title">
-          <span>PVE · 练习对手</span>
-          <b>谱面幽灵</b>
-        </div>
-        <div className="battle-top__stats">
-          <div className="battle-stat">
-            <span>TURN</span>
-            <b>{battle.turn}</b>
-          </div>
-          <div className="battle-stat">
-            <span>COMBO</span>
-            <b>{battle.combo}</b>
-          </div>
-          <div className="battle-stat">
-            <span>防御</span>
-            <b>{["0", "I", "II", "III", "IV"][battle.defenseTier]}</b>
-          </div>
-          <div className="battle-ap">
-            <span>AP</span>
-            {Array.from({ length: battle.apMax }, (_, i) => (
-              <i key={i} className={i < battle.ap ? "is-on" : ""} />
-            ))}
-          </div>
-        </div>
+      <header className="client-header battle-top">
+        <BattleBack href={backTo} />
+        <b>战斗</b>
       </header>
-
-      <main className="battle-main">
-        <aside className="battle-side battle-side--enemy">
-          <div className="battle-enemy-stage">
-            <div className="battle-enemy">
-              <span className="battle-enemy__tag">ENEMY · {ELEMENT_LABEL[battle.enemy.element]}</span>
-              <div
-                className="battle-enemy-token"
-                style={{ "--enemy": ELEMENT_COLOR[battle.enemy.element] ?? "#ed5f9f" } as CSSProperties}
-                aria-hidden
-              >
-                <span>幽</span>
-                <i />
-              </div>
-              <b>{battle.enemy.name}</b>
-              <em>
-                {battle.enemy.hp.toLocaleString("en-US")} / {battle.enemy.hpMax.toLocaleString("en-US")}
-              </em>
-              <div className="battle-hp battle-hp--enemy">
-                <div className="battle-hp__fill battle-hp__fill--enemy" style={{ width: `${enemyPct}%` }} />
-              </div>
-            </div>
-
-            <div className="battle-enemy-side">
-              <div className="battle-panel">
-                <div className="battle-panel__title">意图预告</div>
-                <div className="battle-intents">
-                  {battle.enemy.intents.map((intent) => (
-                    <div className="battle-intent" key={intent.id}>
-                      <span
-                        className="battle-intent__dot"
-                        style={{ background: ELEMENT_COLOR[intent.element] ?? "#8a9099" }}
-                      />
-                      <div>
-                        <b>{intent.label}</b>
-                        <em>
-                          {ELEMENT_LABEL[intent.element] ?? intent.element} · {enemyDamageTier(intent)}
-                        </em>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {battle.supports.length > 0 && (
-                <div className="battle-panel">
-                  <div className="battle-panel__title">侧面支援</div>
-                  <div className="battle-supports">
-                    {battle.supports.map((support) => (
-                      <div className="battle-support" key={support.id}>
-                        <span style={{ background: ELEMENT_COLOR[support.element] ?? "#8a9099" }} />
-                        <b>{support.name}</b>
-                        <em>自动攻击 50%</em>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+      <main className="battle-lobby">
+        <div className="battle-lobby__portrait"><Ghost /></div>
+        <section className="battle-lobby__ready">
+          <h1>谱面幽灵</h1>
+          {load?.message && <p role="alert">{load.message}</p>}
+          {!load && <p role="status">加载中…</p>}
+          <div className="edge-lobby-modes" role="group" aria-label="战斗方式">
+            <button type="button" className="client-key" aria-pressed={mode === "edge"} onClick={() => setMode("edge")}>边线试战</button>
+            <button type="button" className="client-key" aria-pressed={mode === "turn"} onClick={() => setMode("turn")}>经典回合 · 旧规则</button>
           </div>
-        </aside>
-
-        <section className="battle-center">
-          <div className="battle-team">
-            <div className="battle-team__head">
-              <span>YOUR TEAM · {battle.cards.filter((card) => !card.down).length} / 7</span>
-              <em>
-                {team.hp.toLocaleString("en-US")} / {team.max.toLocaleString("en-US")}
-              </em>
-            </div>
-            <div className="battle-hp battle-hp--team">
-              <div className="battle-hp__fill battle-hp__fill--team" style={{ width: `${teamPct}%` }} />
-            </div>
-          </div>
-
-          <div className="battle-cards">
-            {battle.cards.map((card, index) => {
-              const hpPct = (card.stats.hp / card.stats.hpMax) * 100
-              const canAct = battle.phase === "player" && !card.acted && !card.down
-              return (
-                <div
-                  className={`battle-card ${card.acted ? "is-acted" : ""} ${card.down ? "is-down" : ""}`}
-                  key={card.uid}
-                >
-                  <div className="battle-card__badges">
-                    <span>{card.subjob.label}</span>
-                    {card.face.foil && <em>✦ FLASH</em>}
-                  </div>
-                  <div className="battle-card__face">
-                    <CardFace card={card.face} />
-                  </div>
-                  <div className="battle-card__hp">
-                    <div className="battle-hp">
-                      <div className="battle-hp__fill battle-hp__fill--card" style={{ width: `${hpPct}%` }} />
-                    </div>
-                    <em>
-                      {card.stats.hp.toLocaleString("en-US")} / {card.stats.hpMax.toLocaleString("en-US")}
-                    </em>
-                  </div>
-                  <div className="battle-card__stats">
-                    <span>ATK {card.stats.atk.toLocaleString("en-US")}</span>
-                    <span>DEF {card.stats.def.toLocaleString("en-US")}</span>
-                    <span>INT {card.stats.int.toLocaleString("en-US")}</span>
-                  </div>
-                  <div className="battle-card__skills">
-                    {card.skills
-                      .filter((skill) => !skill.passive)
-                      .map((skill) => {
-                        const used = skill.once && card.usedOnce.includes(skill.id)
-                        const disabled = !canAct || battle.ap < skill.ap || used
-                        return (
-                          <button
-                            type="button"
-                            key={skill.id}
-                            className="battle-skill"
-                            onClick={() => play(index, skill.id)}
-                            disabled={disabled}
-                            title={skill.desc}
-                          >
-                            <span
-                              className="battle-skill__el"
-                              style={{ background: ELEMENT_COLOR[skill.element] ?? "#8a9099" }}
-                            />
-                            <b>{skill.name}</b>
-                            <em>
-                              {used ? "已用" : `${skill.ap} AP`}
-                              {skill.hits && skill.hits > 1 ? ` ×${skill.hits}` : ""}
-                            </em>
-                          </button>
-                        )
-                      })}
-                    {card.skills
-                      .filter((skill) => skill.passive)
-                      .map((skill) => (
-                        <span className="battle-passive" key={skill.id} title={skill.desc}>
-                          {skill.name}
-                        </span>
-                      ))}
-                  </div>
-                  {card.down && <div className="battle-card__overlay">DOWN</div>}
-                  {!card.down && card.acted && <div className="battle-card__overlay">已行动</div>}
-                </div>
-              )
-            })}
-          </div>
-
-          {battle.phase === "player" ? (
-            <div className="battle-actions">
-              <div className="battle-defense">
-                <span>防御</span>
-                {[1, 2, 3, 4].map((tier) => (
-                  <button
-                    type="button"
-                    key={tier}
-                    onClick={() => defend(tier)}
-                    disabled={
-                      tier <= battle.defenseTier ||
-                      battle.ap < tier - battle.defenseTier ||
-                      (tier === 4 && !hasTank)
-                    }
-                  >
-                    {["I", "II", "III", "IV"][tier - 1]}
-                  </button>
-                ))}
-              </div>
-              <button type="button" className="battle-end" onClick={finishTurn}>
-                结束回合
-              </button>
-            </div>
-          ) : (
-            <div className="battle-result">
-              <b>{battle.phase === "won" ? "战斗胜利" : "战斗失败"}</b>
-              <div>
-                <button type="button" onClick={start}>
-                  再来一场
-                </button>
-                <a href="/">回桌面</a>
+          {mode === "edge" && available.length > 0 && (
+            <div className="edge-pick">
+              <p>出战 {edgeLineup.length} / {EDGE_LIMIT}</p>
+              <div className="edge-pick__cards" role="group" aria-label="边线出战卡牌">
+                {available.map(({ uid, face }) => {
+                  const active = selected.includes(uid)
+                  return (
+                    <button type="button" key={uid} className="client-key" aria-pressed={active}
+                      disabled={!active && edgeLineup.length >= EDGE_LIMIT} title={face.name}
+                      onClick={() => setPicked(active ? selected.filter((id) => id !== uid) : [...selected, uid])}>
+                      {face.name}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
-          {actionError && <div className="battle-action-error">{actionError}</div>}
+          <div className="battle-lobby__actions">
+            {load?.status === "guest" && <a className="client-key" href="/auth/osu">用 osu! 登录</a>}
+            {load?.status === "ready" && (
+              load.lineup.length
+                ? <button type="button" className="client-key client-key--primary" disabled={mode === "edge" && !edgeLineup.length}
+                    onClick={() => mode === "edge" ? setPreparation({ lineup: edgeLineup, practice: false }) : setLineup(load.lineup)}>
+                    {mode === "edge" ? "战斗配装" : "开始战斗"}</button>
+                : <a className="client-key" href="/?panel=deck">选择出战卡牌</a>
+            )}
+            <button type="button" className="client-key" onClick={() => mode === "edge"
+              ? setPreparation({ lineup: practiceEdge, practice: true }) : setLineup(practiceLineup)}>演练</button>
+            <button type="button" className="client-key" onClick={() =>
+              setPreparation({ lineup: [sparringCards[0]], rivals: [sparringCards[1]], practice: true })}>斗蛐蛐</button>
+            <a className="client-key" href={previewHref}>技能预览</a>
+          </div>
+        </section>
+      </main>
+    </div>
+  )
+}
+
+function BattleBack({ href }: { href: string }) {
+  const label = href === "/developer" ? "开发者工具" : href === "/?panel=deck" ? "卡组" : "牌桌"
+  return <a className="battle-back" href={href}><RiArrowLeftLine size={19} aria-hidden />{label}</a>
+}
+
+function BattleArena({ lineup, backTo }: { lineup: Lineup; backTo: string }) {
+  const [battle, setBattle] = useState(() => createBattle(lineup))
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [feedback, setFeedback] = useState<Feedback | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const scene = useRef<HTMLDivElement>(null)
+  const nextEffect = useRef(0)
+  const active = battle.phase === "player"
+  const team = teamHpOf(battle)
+  const selected = battle.cards.find((card) => card.uid === selectedId)
+    ?? battle.cards.find((card) => !card.down && !card.acted)
+    ?? battle.cards[0]
+  const selectedIndex = battle.cards.indexOf(selected)
+  const canAct = active && !selected.acted && !selected.down
+  const hasTank = battle.cards.some((card) => !card.down && card.subjob.tags.includes("tank"))
+
+  useLayoutEffect(() => {
+    const root = scene.current
+    if (!feedback || !root || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    const animations: Animation[] = []
+    const animate = (selector: string, frames: Keyframe[], duration: number, delay = 0) => {
+      const target = root.querySelector(selector)
+      if (target) animations.push(target.animate(frames, { duration, delay, easing: "cubic-bezier(.2,.65,.25,1)" }))
+    }
+    if (feedback.actor != null) {
+      animate(`[data-fighter="${feedback.actor}"] .battle-fighter__portrait`, [
+        { transform: "translateY(0)" },
+        { transform: "translateY(-24px) scale(1.055)", offset: 0.37 },
+        { transform: "translateY(0)" },
+      ], 330)
+    }
+    if (feedback.allies.some(({ delta }) => delta < 0)) {
+      animate(".battle-boss__shape", [
+        { transform: "translateY(0)" },
+        { transform: "translateY(20px) scale(1.1)", offset: 0.4 },
+        { transform: "translateY(0)" },
+      ], 330)
+    }
+    if (feedback.enemy < 0) {
+      animate(".battle-boss__body", [
+        { transform: "translateX(0)", filter: "brightness(1)" },
+        { transform: "translateX(13px)", filter: "brightness(2.2)", offset: 0.17 },
+        { transform: "translateX(-5px)", filter: "brightness(1.2)", offset: 0.49 },
+        { transform: "translateX(0)", filter: "brightness(1)" },
+      ], 270, feedback.actor == null ? 0 : 104)
+    }
+    for (const { uid, delta } of feedback.allies) {
+      if (delta >= 0) continue
+      animate(`[data-fighter="${uid}"] .battle-fighter__portrait`, [
+        { transform: "translateX(0)", filter: "brightness(1)" },
+        { transform: "translateX(-8px)", filter: "brightness(1.8)", offset: 0.22 },
+        { transform: "translateX(0)", filter: "brightness(1)" },
+      ], 260, 100)
+    }
+    return () => animations.forEach((animation) => animation.cancel())
+  }, [feedback])
+
+  const apply = (perform: (next: BattleState) => string | null, actor: number | null = null) => {
+    const next = cloneBattle(battle)
+    const message = perform(next)
+    setBattle(next)
+    setError(message)
+    if (!message) setFeedback(makeFeedback(battle, next, actor, ++nextEffect.current))
+  }
+
+  const retry = () => {
+    setBattle(createBattle(lineup))
+    setSelectedId(null)
+    setFeedback(null)
+    setError(null)
+  }
+
+  return (
+    <div className="battle-page battle-page--arena" ref={scene}>
+      <header className="client-header battle-top">
+        <BattleBack href={backTo} />
+        <div className="battle-top__turn">回合 <b>{battle.turn}</b></div>
+        <div className="battle-top__meter">
+          <span>COMBO <b>{battle.combo}</b></span>
+          <span><RiShieldLine size={15} aria-hidden /><b>{defenseLabels[battle.defenseTier]}</b></span>
+        </div>
+      </header>
+
+      <main className="battle-field">
+        <aside className="battle-intent-strip">
+          <h2>意图</h2>
+          {battle.enemy.intents.map((intent) => (
+            <div key={intent.id} className="battle-intent" style={{ "--intent": ELEMENT_COLOR[intent.element] ?? "#c4afcd" } as CSSProperties}>
+              <b>{intent.label}</b>
+              <span>{ELEMENT_LABEL[intent.element] ?? intent.element} · {enemyDamageTier(intent)}</span>
+            </div>
+          ))}
+          {battle.supports.length > 0 && <h2>支援</h2>}
+          {battle.supports.map((support) => <span className="battle-support" key={support.id}>{support.name}</span>)}
+        </aside>
+
+        <section className="battle-boss" aria-label="敌人">
+          <h1>{battle.enemy.name}</h1>
+          <Health value={battle.enemy.hp} max={battle.enemy.hpMax} label="敌人生命" type="enemy" />
+          <div className="battle-boss__shape">
+            <div className="battle-boss__body"><Ghost /></div>
+            {feedback && feedback.enemy !== 0 && <Delta key={feedback.id} value={feedback.enemy} delay={feedback.actor == null ? 0 : 104} />}
+          </div>
         </section>
 
-        <aside className="battle-side battle-side--log">
-          <div className="battle-panel battle-panel--log">
-            <div className="battle-panel__title">战斗记录</div>
-            <div className="battle-log">
-              {battle.log.map((line, index) => (
-                <div key={index}>{line}</div>
-              ))}
-            </div>
-          </div>
-          <div className="battle-panel">
-            <div className="battle-panel__title">规则摘要</div>
-            <p className="battle-note">
-              开局 2 AP，每回合 +2，未用 AP 累积，上限 7。Combo 每次命中 +1，回合结束清零。
-              防御档位独立乘算，非坦克最高 III，坦克可到 IV。
-            </p>
+        <aside className="battle-record">
+          <h2>战斗记录</h2>
+          <div className="battle-record__entries" role="log">
+            {battle.log.map((line, index) => <p key={`${index}-${line}`}>{line}</p>)}
           </div>
         </aside>
+
+        {feedback?.guard && <div key={feedback.id} className="battle-guard-flash" aria-hidden />}
+        {!active && (
+          <div className="battle-outcome" role="status">
+            <strong>{battle.phase === "won" ? "战斗胜利" : "战斗失败"}</strong>
+            <button type="button" className="client-key client-key--primary" onClick={retry}>再来一场</button>
+          </div>
+        )}
       </main>
+
+      <section className="battle-lineup" aria-label="出战卡牌">
+        <div className="battle-lineup__team">
+          <span>队伍</span>
+          <Health value={team.hp} max={team.max} label="队伍生命" type="ally" />
+        </div>
+        <div className="battle-hand">
+          {battle.cards.map((card) => {
+            const delta = feedback?.allies.find((hit) => hit.uid === card.uid)?.delta ?? 0
+            return (
+              <div className="battle-fighter" key={card.uid} data-fighter={card.uid} data-state={card.down ? "down" : card.acted ? "acted" : "ready"}>
+                <div className="battle-fighter__portrait" inert>
+                  <CardFace card={card.face} />
+                </div>
+                <Health value={card.stats.hp} max={card.stats.hpMax} label={`${card.name} 生命`} type="ally" />
+                <button
+                  type="button"
+                  className="battle-fighter__select"
+                  aria-label={card.name}
+                  aria-pressed={selected.uid === card.uid}
+                  onClick={() => setSelectedId(card.uid)}
+                />
+                {delta !== 0 && feedback && <Delta key={feedback.id} value={delta} delay={delta < 0 ? 100 : 0} />}
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
+      <footer className="battle-controls">
+        <div className="battle-controls__ap">
+          <span>AP <b>{battle.ap}</b></span>
+          <div className="battle-ap-blocks" aria-hidden>
+            {Array.from({ length: battle.apMax }, (_, index) => <i key={index} data-full={index < battle.ap} />)}
+          </div>
+        </div>
+        <div className="battle-controls__skills" aria-label="技能">
+          <div className="battle-controls__identity">
+            <b>{selected.name}</b><span>{selected.subjob.label}</span>
+            <span>ATK {number.format(selected.stats.atk)} · DEF {number.format(selected.stats.def)} · INT {number.format(selected.stats.int)}</span>
+          </div>
+          <div className="battle-skills">
+            {selected.skills.filter((skill) => !skill.passive).map((skill) => {
+              const spent = skill.once && selected.usedOnce.includes(skill.id)
+              return (
+                <button
+                  key={skill.id}
+                  className="battle-skill"
+                  type="button"
+                  title={skill.desc}
+                  disabled={!canAct || spent || battle.ap < skill.ap}
+                  style={{ "--skill": ELEMENT_COLOR[skill.element] ?? "#c4afcd" } as CSSProperties}
+                  onClick={() => apply((next) => playSkill(next, selectedIndex, skill.id), selected.uid)}
+                >
+                  <b>{skill.name}</b><span>{spent ? "已用" : `${skill.ap} AP`}</span>
+                </button>
+              )
+            })}
+          </div>
+          <div className="battle-passives">
+            {selected.skills.filter((skill) => skill.passive).map((skill) => <span key={skill.id} title={skill.desc}>{skill.name}</span>)}
+          </div>
+        </div>
+        <div className="battle-controls__end">
+          <div className="battle-defense" role="group" aria-label="防御">
+            <RiShieldLine size={17} aria-hidden />
+            {defenseLabels.slice(1).map((label, index) => {
+              const tier = index + 1
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  className="client-key"
+                  aria-label={`防御 ${label}`}
+                  aria-pressed={battle.defenseTier === tier}
+                  disabled={!active || tier <= battle.defenseTier || battle.ap < tier - battle.defenseTier || (tier === 4 && !hasTank)}
+                  onClick={() => apply((next) => raiseDefense(next, tier))}
+                >{label}</button>
+              )
+            })}
+          </div>
+          <button type="button" className="client-key client-key--primary battle-end" disabled={!active} onClick={() => apply(endTurn)}>
+            结束回合
+          </button>
+        </div>
+        {error && <p className="battle-action-error" role="alert">{error}</p>}
+      </footer>
     </div>
   )
 }

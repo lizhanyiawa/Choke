@@ -42,6 +42,8 @@
 
 .desk-topbar__actions {
   display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -61,6 +63,17 @@
 }
 .desk-button:hover {
   background: #422f38;
+}
+a.desk-button {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+.desk-button--open:not(:disabled) {
+  background: #65354e;
+}
+.desk-button--open:not(:disabled):hover {
+  background: #804662;
 }
 .desk-button:active {
   background: #2a1f24;
@@ -90,7 +103,7 @@
   position: relative;
   isolation: isolate;
   flex: 1;
-  overflow: hidden;
+  overflow: clip;
   background: #1c1216;
 }
 
@@ -151,6 +164,9 @@
 .desk-item.is-lifted {
   visibility: hidden;
 }
+.desk-item.is-returning {
+  visibility: hidden;
+}
 /* 收进抽屉：空壳留在层里（免得拖回来时重播落桌动画），看不见也点不到 */
 .desk-item.is-stowed {
   visibility: hidden;
@@ -163,6 +179,22 @@
 .desk-body {
   position: absolute;
   inset: 0;
+}
+
+.desk-item:not(.is-settling, .is-lifted, .is-collecting) > .desk-body > .obj:not([data-object="button"]),
+.desk-item--loose > .desk-body > :is(.desk-pack, .tabletop-card:not(.is-in-flight)) {
+  transition: translate 0.16s ease, scale 0.16s ease, filter 0.16s ease;
+}
+.desk-item[data-held]:not(.is-lifted, .is-priming) > .desk-body > :is(.desk-pack, .tabletop-card, .obj:not([data-object="button"])) {
+  translate: 0 2px;
+  scale: 0.983;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .desk-item--loose:not([data-held], .is-priming, .is-collecting, .is-settling):hover
+    > .desk-body > :is(.desk-pack, .tabletop-card:not(.is-in-flight)) {
+    translate: 0 -3px;
+    filter: brightness(1.06);
+  }
 }
 
 /* 拿在手里：灯在左上，抬得越高影子越往右下、越虚 */
@@ -213,24 +245,6 @@
   100% {
     scale: 1;
     filter: drop-shadow(0 0 0 transparent);
-  }
-}
-/* 接住飞进来的东西：被砸得一沉，再弹回来 */
-.desk-item.is-receiving > .desk-body {
-  animation: desk-receive 0.5s cubic-bezier(0.3, 0.7, 0.4, 1) both;
-}
-@keyframes desk-receive {
-  0% {
-    scale: 1;
-  }
-  30% {
-    scale: 1.045;
-  }
-  62% {
-    scale: 0.985;
-  }
-  100% {
-    scale: 1;
   }
 }
 .desk-toast {
@@ -307,6 +321,10 @@
   animation: desk-deal 0.64s cubic-bezier(0.16, 0.84, 0.24, 1) both;
   transform-origin: 50% 60%;
 }
+.desk-item--loose,
+.desk-item.is-collecting {
+  animation: none;
+}
 .desk-item:focus-visible {
   outline: 2px solid #ff66aa;
   outline-offset: 6px;
@@ -327,12 +345,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .desk-item,
-  .desk-item.is-settling > .desk-body,
-  .desk-item.is-receiving > .desk-body {
+  .desk-item.is-settling > .desk-body {
     animation: none;
   }
-  .obj-box__lid,
-  .obj-box__clasp {
+  .desk-item > .desk-body > :is(.obj, .desk-pack, .tabletop-card) {
     transition: none;
   }
 }

@@ -4,34 +4,6 @@
    下半部分是面板共用的控件（bk-*），所有面板只用这一套。
    ========================================================= */
 
-/* 放在 :root：卡牌详情这类弹窗是 fixed 的，也要拿到同一套颜色 */
-:root {
-  /* 书皮 */
-  --bk-cover: #4a313b;
-  --bk-cover-hi: #5c3f4b;
-  --bk-cover-lo: #2e1e25;
-  /* 书页：比桌垫暖、比物件本体暗一点的深色纸 */
-  --bk-paper: #2b2126;
-  --bk-paper-hi: #34282e;
-  /* 凸起的控件 / 凹进去的槽 */
-  --bk-raised: #3d2e35;
-  --bk-raised-hi: #4a3841;
-  --bk-edge: #1f161a;
-  --bk-well: #1c1216;
-  /* 字 */
-  --bk-ink: #f2e9ed;
-  --bk-dim: #a8979e;
-  --bk-faint: #76656c;
-  --bk-line: rgb(255 228 240 / 0.12);
-  /* 强调 */
-  --bk-osu: #ff66aa;
-  --bk-osu-soft: rgb(255 102 170 / 0.16);
-  --bk-osu-text: #ffb3d4;
-  --bk-good: #7fd6a0;
-  --bk-bad: #ff7b7b;
-  --bk-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
-}
-
 /* ---------- 书 ---------- */
 /* 位置只供书根使用，松手落回 left/top 时不让所有卡面重算继承样式。 */
 @property --bx {

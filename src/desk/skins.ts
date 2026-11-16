@@ -15,14 +15,9 @@ export const SKINS: DeskSkin[] = [
     id: "plum",
     name: "紫黑对战垫",
     // 偏冷的灰紫布面：左上受光的线性明暗 + 两层细线叠成的布纹，不加光晕和印花
-    background: [
-      "linear-gradient(165deg, rgb(255 255 255 / 0.05), transparent 46%, rgb(0 0 0 / 0.14))",
-      "repeating-linear-gradient(0deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 3px)",
-      "repeating-linear-gradient(90deg, rgb(0 0 0 / 0.07) 0 1px, transparent 1px 3px)",
-      "#2b2331",
-    ].join(", "),
+    background: "var(--client-felt)",
     blend: "normal, normal, normal, normal",
-    edge: "#3a2f42",
+    edge: "var(--client-felt-edge)",
   },
 ]
 

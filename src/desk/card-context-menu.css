@@ -1,0 +1,37 @@
+.card-context-menu {
+  position: fixed;
+  z-index: 1400;
+  display: grid;
+  gap: 2px;
+  width: min(196px, calc(100vw - 16px));
+  padding: 5px;
+  border: 1px solid var(--client-line);
+  border-radius: 9px;
+  background: var(--client-panel);
+  box-shadow: var(--client-panel-shadow), 0 10px 30px rgb(0 0 0 / 0.4);
+  color: var(--client-ink);
+  font: 650 13px/1.25 "Outfit Variable", var(--font-cn), sans-serif;
+}
+
+.card-context-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 6px 9px;
+  border-radius: 6px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card-context-menu button svg { flex: none; color: var(--client-muted); }
+.card-context-menu button:first-child svg { color: var(--client-accent); }
+.card-context-menu button:is(:hover, :focus-visible) { background: var(--bk-raised); }
+.card-context-menu button:focus-visible { outline-offset: -2px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .card-context-menu { animation: card-context-in 125ms var(--client-ease-out) backwards; }
+}
+
+@keyframes card-context-in { from { opacity: 0; translate: 0 -4px; } }

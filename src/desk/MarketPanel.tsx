@@ -2,19 +2,24 @@ import { useEffect, useState } from "react"
 
 import { CardFace } from "@/card/CardFace"
 import { RARITY_LABEL } from "@/card/data"
+import type { Rarity } from "@/card/types"
 
 import {
   buyMarketListing,
-  fetchMarketListings,
+  fetchMarketPage,
   fetchMe,
   fetchOwnListings,
   toFace,
   unlistMarketCard,
   type MarketListing,
+  type MarketSort,
   type OwnMarketListing,
 } from "./api"
 import { Pages, useBook } from "./BookPages"
 import "./market-panel.css"
+
+const PAGE_SIZE = 9
+const RARITIES = Object.keys(RARITY_LABEL) as Rarity[]
 
 export function MarketPanel({
   userId,
@@ -24,31 +29,50 @@ export function MarketPanel({
   onOpenAlbum: () => void
 }) {
   const book = useBook()
-  const [listings, setListings] = useState<MarketListing[]>([])
-  const [own, setOwn] = useState<OwnMarketListing[]>([])
-  const [coins, setCoins] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState("")
+  const [rarity, setRarity] = useState<Rarity | "">("")
+  const [sort, setSort] = useState<MarketSort>("recent")
+  const [page, setPage] = useState(0)
+  const [result, setResult] = useState<{ key: string; rows: MarketListing[]; total: number; error?: string } | null>(null)
+  const [account, setAccount] = useState<{ id: string; coins: number; own: OwnMarketListing[] } | null>(null)
   const [busy, setBusy] = useState<number | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [refresh, setRefresh] = useState(0)
+  const search = query.trim()
+  const key = JSON.stringify([search, rarity, sort, page, refresh])
 
   useEffect(() => {
     const controller = new AbortController()
-    const tasks: Promise<unknown>[] = [
-      fetchMarketListings(controller.signal).then((data) => setListings(data)),
-    ]
-    if (userId) {
-      tasks.push(fetchMe(controller.signal).then((data) => setCoins(data.coins)))
-      tasks.push(
-        fetchOwnListings(userId, controller.signal).then((data) => setOwn(data)),
-      )
+    const timer = window.setTimeout(() => {
+      fetchMarketPage({ query: search, rarity, sort, limit: PAGE_SIZE, offset: page * PAGE_SIZE }, controller.signal)
+        .then(({ rows, total }) => {
+          if (controller.signal.aborted) return
+          const last = Math.max(0, Math.ceil(total / PAGE_SIZE) - 1)
+          if (page > last) setPage(last)
+          else setResult({ key, rows, total })
+        })
+        .catch((reason: unknown) => {
+          if (!controller.signal.aborted) {
+            setResult({ key, rows: [], total: 0, error: reason instanceof Error ? reason.message : "加载市场失败" })
+          }
+        })
+    }, search ? 160 : 0)
+    return () => {
+      window.clearTimeout(timer)
+      controller.abort()
     }
-    Promise.all(tasks)
-      .catch((reason: unknown) => {
-        if (reason instanceof DOMException && reason.name === "AbortError") return
-        setMessage(reason instanceof Error ? reason.message : "加载市场失败")
+  }, [key, page, rarity, search, sort])
+
+  useEffect(() => {
+    if (!userId) return
+    const controller = new AbortController()
+    Promise.all([fetchMe(controller.signal), fetchOwnListings(userId, controller.signal)])
+      .then(([{ coins }, own]) => {
+        if (!controller.signal.aborted) setAccount({ id: userId, coins, own })
       })
-      .finally(() => setLoading(false))
+      .catch((reason: unknown) => {
+        if (!controller.signal.aborted) setMessage(reason instanceof Error ? reason.message : "加载挂单失败")
+      })
     return () => controller.abort()
   }, [userId, refresh])
 
@@ -59,7 +83,7 @@ export function MarketPanel({
     try {
       const result = await buyMarketListing(userId, listing.id)
       book.invalidate()
-      setCoins(result.coins)
+      setAccount((current) => current?.id === userId ? { ...current, coins: result.coins } : current)
       setMessage(`买到了 ${result.card.name} · 花费 ${result.price} 金币`)
       setRefresh((value) => value + 1)
     } catch (reason) {
@@ -75,6 +99,7 @@ export function MarketPanel({
     setMessage(null)
     try {
       await unlistMarketCard(userId, listing.id)
+      book.invalidate()
       setMessage(`${listing.card.name} 已下架`)
       setRefresh((value) => value + 1)
     } catch (reason) {
@@ -84,11 +109,18 @@ export function MarketPanel({
     }
   }
 
-  const ownListings = userId ? own : []
+  const current = result?.key === key ? result : null
+  const listings = current?.rows ?? []
+  const pages = Math.max(1, Math.ceil((current?.total ?? result?.total ?? 0) / PAGE_SIZE))
+  const wallet = account?.id === userId ? account : null
+  const coins = wallet?.coins
+  const ownListings = wallet?.own ?? []
 
   return (
     <Pages
       className="market-panel"
+      ready={!!current}
+      pager={pages > 1 ? { page: page + 1, pages, onPage: (next) => setPage(next - 1) } : undefined}
       left={
         <>
           <div className="bk-box market-wallet">
@@ -101,12 +133,7 @@ export function MarketPanel({
             </button>
           </div>
 
-          <p className="bk-note">
-            用金币买卖卡。上架入口在卡册的卡牌详情里。精华只用于给卡镀闪，分解闪卡会得到 3 倍精华。
-            {!userId && " 登录后才能买卖。"}
-          </p>
-
-          {message && <div className="bk-box market-message">{message}</div>}
+          {message && <div className="bk-box market-message" role="status">{message}</div>}
 
           {userId && (
             <>
@@ -143,11 +170,27 @@ export function MarketPanel({
       }
       right={
         <>
-          <span className="bk-label">正在出售{loading ? "" : ` · ${listings.length}`}</span>
-          {loading ? (
+          <div className="market-filters">
+            <input className="bk-input" placeholder="搜索玩家名" aria-label="搜索玩家名" value={query}
+              onChange={(event) => { setQuery(event.target.value); setPage(0) }} />
+            <select className="bk-select" aria-label="稀有度筛选" value={rarity}
+              onChange={(event) => { setRarity(event.target.value as Rarity | ""); setPage(0) }}>
+              <option value="">全部稀有度</option>
+              {RARITIES.map((tier) => <option key={tier} value={tier}>{RARITY_LABEL[tier]}</option>)}
+            </select>
+            <select className="bk-select" aria-label="排序" value={sort}
+              onChange={(event) => { setSort(event.target.value as MarketSort); setPage(0) }}>
+              <option value="recent">最近上架</option>
+              <option value="price-asc">价格升序</option>
+              <option value="price-desc">价格降序</option>
+            </select>
+          </div>
+          {!current ? (
             <div className="bk-empty">加载市场…</div>
+          ) : current.error ? (
+            <div className="bk-empty bk-error" role="alert">{current.error}</div>
           ) : listings.length === 0 ? (
-            <div className="bk-empty">还没有人上架。去卡册选一张卡上架吧。</div>
+            <div className="bk-empty">{search || rarity ? "没有符合条件的挂单" : "暂无在售卡牌"}</div>
           ) : (
             <div className="market-grid">
               {listings.map((listing) => {
@@ -181,7 +224,7 @@ export function MarketPanel({
                         type="button"
                         className="bk-btn bk-btn--sm bk-btn--block"
                         onClick={() => void buy(listing)}
-                        disabled={busy !== null || !userId}
+                        disabled={busy !== null || !userId || (coins != null && coins < listing.price)}
                       >
                         {busy === listing.id ? "购买中…" : "购买"}
                       </button>

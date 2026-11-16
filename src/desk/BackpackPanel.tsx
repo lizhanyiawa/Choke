@@ -270,7 +270,7 @@ export function BackpackPanel({
               onClick={() => onOpenGacha(selected.pool ?? "normal")}
               disabled={selectedCount <= 0}
             >
-              {selectedCount > 0 ? `去抽${selected.label.replace("卡包", "")}` : "没有卡包"}
+              {selectedCount > 0 ? "去选卡包" : "没有卡包"}
             </button>
           )}
 

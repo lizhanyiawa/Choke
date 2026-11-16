@@ -1,10 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 
-import { db } from "../src/db/client"
 import { cards } from "../src/db/schema"
-import { invalidateCardCache } from "../src/gacha/open"
-// PGlite 数据目录只能由一个进程打开；按 README 要求必须先停止 API，再运行导入。
 
 interface CardDefRow {
   id: string
@@ -42,37 +39,40 @@ console.log(`读取 ${rows.length} 条卡定义`)
 
 const BATCH = 500
 let done = 0
+const { db, client } = await import("../src/db/client")
 
-if (process.argv.includes("--replace")) {
-  console.log("清空 cards 表")
-  await db.delete(cards)
+try {
+  if (process.argv.includes("--replace")) {
+    console.log("清空 cards 表")
+    await db.delete(cards)
+  }
+
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const batch = rows.slice(i, i + BATCH).map((row) => ({
+      id: row.id,
+      osuId: row.osuId ?? null,
+      name: row.name,
+      rarity: row.rarity,
+      job: row.job,
+      no: row.no,
+      total: row.total,
+      country: row.country ?? null,
+      globalRank: row.globalRank ?? null,
+      pp: row.pp == null ? null : String(row.pp),
+      profileUrl: row.profileUrl ?? null,
+      art: row.art ?? null,
+      banner: row.banner ?? null,
+      skills: row.skills,
+      version: 1,
+    }))
+
+    await db.insert(cards).values(batch).onConflictDoNothing()
+
+    done += batch.length
+    console.log(`已导入 ${done}/${rows.length}`)
+  }
+} finally {
+  await client.close()
 }
 
-for (let i = 0; i < rows.length; i += BATCH) {
-  const batch = rows.slice(i, i + BATCH).map((row) => ({
-    id: row.id,
-    osuId: row.osuId ?? null,
-    name: row.name,
-    rarity: row.rarity,
-    job: row.job,
-    no: row.no,
-    total: row.total,
-    country: row.country ?? null,
-    globalRank: row.globalRank ?? null,
-    pp: row.pp == null ? null : String(row.pp),
-    profileUrl: row.profileUrl ?? null,
-    art: row.art ?? null,
-    banner: row.banner ?? null,
-    skills: row.skills,
-    version: 1,
-  }))
-
-  await db.insert(cards).values(batch).onConflictDoNothing()
-
-  done += batch.length
-  console.log(`已导入 ${done}/${rows.length}`)
-}
-
-invalidateCardCache()
 console.log("完成")
-process.exit(0)

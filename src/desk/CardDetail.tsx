@@ -3,13 +3,12 @@ import { createPortal } from "react-dom"
 
 import { CardFace } from "@/card/CardFace"
 import {
-  ELEMENT_COLOR,
-  ELEMENT_LABEL,
   RARITY_LABEL,
   battlePower,
   formatNo,
 } from "@/card/data"
 import { skillSeed, subjobFor } from "@/card/jobs"
+import { JOB_LABEL } from "@/card/cultivation"
 import {
   FOIL_COST,
 } from "@/card/economy"
@@ -39,11 +38,13 @@ interface Props {
   card: ApiUserCard
   userId: string | null
   readOnly?: boolean
+  focusMarket?: boolean
   onClose: () => void
   onChanged?: () => void
+  onPlaceOnDesk?: (row: ApiUserCard) => void
 }
 
-export function CardDetail({ card, userId, readOnly = false, onClose, onChanged }: Props) {
+export function CardDetail({ card, userId, readOnly = false, focusMarket = false, onClose, onChanged, onPlaceOnDesk }: Props) {
   const [current, setCurrent] = useState(card)
   const [fuel, setFuel] = useState<ApiUserCard[]>([])
   const [fuelOpen, setFuelOpen] = useState(false)
@@ -54,6 +55,12 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
   const [price, setPrice] = useState("30")
 
   const face = useMemo(() => toFace(current), [current])
+  const subjob = subjobFor(skillSeed(current.id), current.job)
+  const skillPreview = new URLSearchParams({
+    from: readOnly ? "codex" : "album",
+    view: "skills",
+    skill: `${subjob.id}/${face.rarity}/A1`,
+  })
 
   useEffect(() => {
     if (readOnly || !userId) return
@@ -179,17 +186,22 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
   return createPortal(
     <div className="card-detail" role="dialog" aria-modal="true" aria-label={current.name} onClick={onClose}>
       <div className="card-detail__panel" data-light onClick={(event) => event.stopPropagation()}>
-        <button type="button" className="card-detail__close" onClick={onClose} aria-label="关闭">
+        <button type="button" className="card-detail__close" onClick={onClose} aria-label="关闭" autoFocus={!focusMarket}>
           ×
         </button>
 
         <div className="card-detail__face">
           <CardFace card={face} />
+          {onPlaceOnDesk && (
+            <button className="bk-btn bk-btn--ghost card-detail__desk" type="button" onClick={() => onPlaceOnDesk(current)} disabled={busy !== null}>
+              放到牌桌
+            </button>
+          )}
         </div>
 
         <div className="card-detail__info">
           <div className="card-detail__eyebrow">
-            {RARITY_LABEL[current.rarity]} · {subjobFor(skillSeed(current.id), current.job).label}
+            {RARITY_LABEL[current.rarity]} · {JOB_LABEL[current.job]}
             {current.foil ? " · ✦ FLASH" : ""}
           </div>
           <h2 className="card-detail__name">{current.name}</h2>
@@ -283,7 +295,6 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
                   {current.foil ? "已是闪卡" : `精华镀闪 · ${FOIL_COST}`}
                 </button>
               </div>
-              {message && <p className="card-detail__message">{message}</p>}
             </div>
           )}
 
@@ -330,6 +341,7 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
                   value={price}
                   onChange={(event) => setPrice(event.target.value)}
                   aria-label="上架价格"
+                  autoFocus={focusMarket}
                 />
                 <span>金币</span>
                 <button
@@ -341,9 +353,10 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
                   {busy === "list" ? "上架中…" : "上架市场"}
                 </button>
               </div>
-              <p className="bk-note">上架后其他玩家可以购买；下架后继续留在卡册。</p>
             </div>
           )}
+
+          {message && <p className="card-detail__message" role="status">{message}</p>}
 
           <div className="card-detail__meta">
             <span>ID: {formatNo(current.no, current.total).replace("/", " / ")}</span>
@@ -354,29 +367,9 @@ export function CardDetail({ card, userId, readOnly = false, onClose, onChanged 
             )}
           </div>
 
-          <div className="card-detail__skills">
-            <div className="bk-label">技能</div>
-            {face.skills.map((skill, i) => (
-              <div className="card-detail__skill" key={i}>
-                <span
-                  className="card-detail__element"
-                  style={{ "--el": ELEMENT_COLOR[skill.element] } as CSSProperties}
-                  title={ELEMENT_LABEL[skill.element]}
-                />
-                <b>{skill.name}</b>
-                <em>{ELEMENT_LABEL[skill.element]}</em>
-                <span className="card-detail__cost">
-                  {skill.passive ? "被动" : `${skill.ap} AP${skill.mp ? ` · ${skill.mp} MP` : ""}`}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <p className="bk-note">
-            {readOnly
-              ? "图鉴数据 · 基础数值（Lv.1 / 0 命座），实际养成的卡面以卡册为准。"
-              : "当前原型：升级只消耗经验，经验来自熔入重复卡；进阶材料、金币和阀门后续接入。"}
-          </p>
+          <a className="bk-btn bk-btn--ghost card-detail__link" href={"/battle?" + skillPreview}>
+            技能预览 <i aria-hidden>›</i>
+          </a>
 
           {current.profileUrl && (
             <a className="bk-btn bk-btn--ghost card-detail__link" href={current.profileUrl} target="_blank" rel="noreferrer">

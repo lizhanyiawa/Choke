@@ -92,7 +92,7 @@ export function DragGhost({ w, h, pointer, grab, tilt, children }: Props) {
   }, [pointer, grab, tilt])
 
   return (
-    <div ref={outerRef} className="desk-ghost" style={{ width: w, height: h }}>
+    <div ref={outerRef} className="desk-ghost" aria-hidden inert style={{ width: w, height: h }}>
       <div
         ref={bodyRef}
         className="desk-ghost__body"

@@ -11,10 +11,10 @@ import {
   makeSession,
   readSession,
 } from "../auth/osu"
-import { WEB_BASE } from "../auth/env"
+import { CLIENT_ID, CLIENT_SECRET, WEB_BASE } from "../auth/env"
 import { db } from "../db/client"
 import { cards, userCards, users } from "../db/schema"
-import { invalidatePublicCardCache } from "./cards"
+import { invalidateCardCache } from "../gacha/open"
 import { heroCardDef } from "../hero"
 import { grantStarterPacks } from "../packs/inventory"
 import { heroIndex, heroPersonalBonus, heroStatsFromOsu } from "../../../../src/pool/hero"
@@ -41,15 +41,12 @@ async function claimHeroCard(
 
   const def = heroCardDef(me, pool ?? null, onboarded, personalBonusBp)
   const { id, heroIndex: _index, heroPower: _power, ...rest } = def
-  void _index
-  void _power
 
   await db
     .insert(cards)
     .values({ id, ...rest })
     .onConflictDoUpdate({ target: cards.id, set: rest })
 
-  invalidatePublicCardCache()
   const [owned] = await db
     .select({ id: userCards.id })
     .from(userCards)
@@ -60,16 +57,24 @@ async function claimHeroCard(
     await db.insert(userCards).values({ userId, cardId: id })
   }
 
+  invalidateCardCache()
 }
 
 export async function authRoutes(app: FastifyInstance) {
   app.get("/auth/osu", async (_request, reply) => {
+    if (!CLIENT_ID || !CLIENT_SECRET) {
+      return reply.redirect(new URL("/?login=unavailable", WEB_BASE).href)
+    }
     const state = createState()
     return reply.redirect(authorizeUrl(state))
   })
 
   app.get("/auth/osu/callback", async (request, reply) => {
-    const { code, state } = request.query as { code?: string; state?: string }
+    const { code, state, error } = request.query as { code?: string; state?: string; error?: string }
+    if (error === "access_denied") {
+      consumeState(state)
+      return reply.redirect(new URL("/", WEB_BASE).href)
+    }
     if (!code || !consumeState(state)) {
       return reply.code(400).send({
         ok: false,
@@ -115,7 +120,7 @@ export async function authRoutes(app: FastifyInstance) {
         maxAge: 60 * 60 * 24 * 30,
       })
 
-      return reply.redirect(`${WEB_BASE}/`)
+      return reply.redirect(`${WEB_BASE}${user.onboarded ? "/gacha" : "/intro"}`)
     } catch (error) {
       request.log.error(error)
       return reply.code(500).send({
@@ -190,7 +195,6 @@ export async function authRoutes(app: FastifyInstance) {
         .update(cards)
         .set({ heroBonus: user.heroBonus })
         .where(eq(cards.id, `hero-${user.osuId}`))
-      invalidatePublicCardCache()
     }
 
     if (!user.onboarded) {

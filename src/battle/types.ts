@@ -9,6 +9,8 @@ import {
   type SubJob,
 } from "@/card/jobs"
 import type { CardFaceData, Job, Rarity } from "@/card/types"
+import { bounded, composeAttributes, GROWTH } from "@/card/cultivation"
+import { levelPowerFactor } from "@/card/progression"
 
 export interface BattleStats {
   hpMax: number
@@ -20,6 +22,17 @@ export interface BattleStats {
   poise: number
   hit: number
   crit: number
+  critDamage: number
+}
+
+const BASE_CRITICAL: Record<Rarity, Pick<BattleStats, "crit" | "critDamage">> = {
+  C: { crit: 5, critDamage: 1.30 },
+  UC: { crit: 5.5, critDamage: 1.35 },
+  R: { crit: 6, critDamage: 1.40 },
+  E: { crit: 6.5, critDamage: 1.45 },
+  L: { crit: 7, critDamage: 1.50 },
+  Radiant: { crit: 7.5, critDamage: 1.55 },
+  Prismatic: { crit: 9, critDamage: 1.70 },
 }
 
 export interface StatusEffect {
@@ -100,39 +113,42 @@ export interface BattleState {
   selectedCard: number | null
 }
 
-function heroLevelFactor(level: number): number {
-  const lv = Math.min(Math.max(level, 1), 12)
-  return lv <= 6 ? 1 + 0.03 * (lv - 1) : 1.18 * 1.2 ** (lv - 6)
+interface BattleGrowth {
+  rarityBase: number
+  constellationBonus: number
 }
 
-function basePower(face: CardFaceData): number {
-  if (face.isHero) return 400 * heroLevelFactor(face.level) * (1 + (face.heroBonus ?? 0) / 10000)
-  const levelFactor = 1 + 0.06 * (Math.max(face.level, 1) - 1)
-  const starFactor = 1 + CONSTELLATION_BONUS[face.rarity] * face.constellation
-  return RARITY_BASE[face.rarity] * levelFactor * starFactor
+function basePower(face: CardFaceData, growth?: BattleGrowth): number {
+  if (face.isHero) return 400 * levelPowerFactor(face.level, true) * (1 + (face.heroBonus ?? 0) / 10000)
+  const levelFactor = levelPowerFactor(face.level, false)
+  const starFactor = 1 + (growth?.constellationBonus ?? CONSTELLATION_BONUS[face.rarity]) * face.constellation
+  return (growth?.rarityBase ?? RARITY_BASE[face.rarity]) * levelFactor * starFactor
 }
 
-export function statsFor(face: CardFaceData, subjob: SubJob): BattleStats {
-  const base = basePower(face)
+export function statsFor(face: CardFaceData, subjob: SubJob, growth?: BattleGrowth): BattleStats {
+  const base = basePower(face, growth)
   const scaled = base * ARCHETYPE_COEF[face.job]
   const poiseMax = Math.round(base * POISE_COEF[face.job])
-  const hpMax = Math.round(scaled * subjob.hp)
+  const composed = composeAttributes({ hp: Math.round(scaled * subjob.hp), atk: Math.round(scaled * subjob.atk),
+    def: Math.round(scaled * subjob.def), int: Math.round(scaled * subjob.int) }, face.cultivation?.mods ?? [])
+  const hpMax = composed.hp
   return {
     hpMax,
     hp: hpMax,
-    atk: Math.round(scaled * subjob.atk),
-    def: Math.round(scaled * subjob.def),
-    int: Math.round(scaled * subjob.int),
+    atk: composed.atk,
+    def: composed.def,
+    int: composed.int,
     poiseMax,
     poise: poiseMax,
     hit: 95 + (subjob.tags.includes("swift") ? 5 : 0),
-    crit: 5,
+    crit: bounded(BASE_CRITICAL[face.rarity].crit, 0, GROWTH.critCap),
+    critDamage: BASE_CRITICAL[face.rarity].critDamage,
   }
 }
 
-export function createBattleCard(face: CardFaceData, uid: number, cardId: string): BattleCard {
+export function createBattleCard(face: CardFaceData, uid: number, cardId: string, build?: BattleGrowth & { subjob?: SubJob; skills?: SkillDef[] }): BattleCard {
   const seed = skillSeed(face.id)
-  const subjob = subjobFor(seed, face.job)
+  const subjob = build?.subjob ?? subjobFor(seed, face.job)
   return {
     uid,
     cardId,
@@ -144,8 +160,8 @@ export function createBattleCard(face: CardFaceData, uid: number, cardId: string
     constellation: face.constellation,
     art: face.art,
     face,
-    stats: statsFor(face, subjob),
-    skills: skillDefsFor(seed, face.job, face.rarity),
+    stats: statsFor(face, subjob, build),
+    skills: build?.skills ?? skillDefsFor(seed, face.job, face.rarity),
     acted: false,
     down: false,
     usedOnce: [],

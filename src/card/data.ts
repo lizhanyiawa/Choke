@@ -1,4 +1,5 @@
 import { cardSkillsFor } from "./jobs"
+import { levelPowerFactor } from "./progression"
 import type { CardFaceData, CardSkill, Job, Mod, Rarity, StarState } from "./types"
 
 /** 十二种 MOD；卡面只显示前三个，多余的收进 +N */
@@ -106,7 +107,7 @@ export const ELEMENT_COLOR: Record<string, string> = {
 
 export const JOB_LABEL: Record<string, string> = {
   tank: "坦克",
-  warrior: "战士",
+  warrior: "战斗",
   mage: "法师",
   support: "辅助",
 }
@@ -136,12 +137,11 @@ export function bpColor(bp: number): string {
 /** 本体卡：lv1–6 每级 +3%，lv7–12 每级 +20% 复利，满级 ≈ 1,409 */
 export function battlePower(card: CardFaceData): number {
   if (card.isHero) {
-    const lv = Math.min(Math.max(card.level, 1), 12)
-    const factor = lv <= 6 ? 1 + 0.03 * (lv - 1) : 1.18 * 1.2 ** (lv - 6)
+    const factor = levelPowerFactor(card.level, true)
     const bonus = 1 + (card.heroBonus ?? 0) / 10000
     return Math.round(400 * factor * bonus)
   }
-  const levelFactor = 1 + 0.06 * (Math.max(card.level, 1) - 1)
+  const levelFactor = levelPowerFactor(card.level, false)
   const starFactor = 1 + CONSTELLATION_BONUS[card.rarity] * card.constellation
   return Math.round(RARITY_BASE[card.rarity] * levelFactor * starFactor)
 }
@@ -218,10 +218,6 @@ export const DEMO_CARDS: CardFaceData[] = [
     country: "KR",
     globalRank: 104,
     pp: 18670,
-    profileUrl: "https://osu.ppy.sh/users/124493",
-    art: "https://a.ppy.sh/124493",
-    banner:
-      "https://assets.ppy.sh/user-cover-presets/6/a7d51a05cb3c08a43531dfa8dc99c2fc7fe0d8cfce2756c340f11b3683b5d3bf.jpeg",
     rarity: "C",
     job: "tank",
     level: 12,
@@ -236,10 +232,6 @@ export const DEMO_CARDS: CardFaceData[] = [
     country: "US",
     globalRank: 115,
     pp: 18594,
-    profileUrl: "https://osu.ppy.sh/users/4787150",
-    art: "https://a.ppy.sh/4787150",
-    banner:
-      "https://assets.ppy.sh/user-cover-presets/7/4a0ccb7b7fdd5c4238b11f0e7c686760fe2c99c6472b19400e82d1a8ff503e31.jpeg",
     rarity: "UC",
     job: "support",
     level: 24,
@@ -254,10 +246,6 @@ export const DEMO_CARDS: CardFaceData[] = [
     country: "PL",
     globalRank: 240,
     pp: 16388,
-    profileUrl: "https://osu.ppy.sh/users/2558286",
-    art: "https://a.ppy.sh/2558286",
-    banner:
-      "https://assets.ppy.sh/user-profile-covers/2558286/96b3a5d690f24889e4c3adb3b8eb1bde1df3a60de0f2866f6d19629d255b8dc6.jpeg",
     rarity: "R",
     job: "warrior",
     level: 40,
@@ -272,10 +260,6 @@ export const DEMO_CARDS: CardFaceData[] = [
     country: "DE",
     globalRank: 53,
     pp: 20212,
-    profileUrl: "https://osu.ppy.sh/users/4504101",
-    art: "https://a.ppy.sh/4504101",
-    banner:
-      "https://assets.ppy.sh/user-profile-covers/4504101/1072f8933a2ca39f2eec43fbc9bcbdeeec11dd7288a5679c55a5c6b61b470eb8.png",
     rarity: "E",
     job: "mage",
     level: 56,
@@ -290,10 +274,6 @@ export const DEMO_CARDS: CardFaceData[] = [
     country: "AU",
     globalRank: 1,
     pp: 32269,
-    profileUrl: "https://osu.ppy.sh/users/7562902",
-    art: "https://a.ppy.sh/7562902",
-    banner:
-      "https://assets.ppy.sh/user-cover-presets/3/32ddb3eb261e38a82067f9ef4ea96c12f6abf8bd228e6413330f9d351420301b.jpeg",
     rarity: "L",
     job: "warrior",
     level: 68,
@@ -308,10 +288,6 @@ export const DEMO_CARDS: CardFaceData[] = [
     country: "FR",
     globalRank: 50458,
     pp: 6512,
-    profileUrl: "https://osu.ppy.sh/users/4452992",
-    art: "https://a.ppy.sh/4452992",
-    banner:
-      "https://assets.ppy.sh/user-profile-covers/4452992/6930dde80f0cbe68e142f403e551493b83c74f1f58e3e35f81cfc3944d24fd65.jpeg",
     rarity: "Radiant",
     job: "support",
     level: 74,
@@ -326,10 +302,6 @@ export const DEMO_CARDS: CardFaceData[] = [
     country: "JP",
     globalRank: 12000,
     pp: 9800,
-    profileUrl: "https://osu.ppy.sh/users/13211727",
-    art: "https://a.ppy.sh/13211727",
-    banner:
-      "https://assets.ppy.sh/user-profile-covers/13211727/ec423b7ed5525d44df091c164f2f3546943ae68ec5a8febd2a463c3479ab7018.png",
     rarity: "Prismatic",
     job: "mage",
     level: 80,

@@ -55,14 +55,10 @@ export function BattlePanel({
   const cards = deck.slots.flatMap((slot) => (slot.card ? [slot.card] : []))
   const totalBp = cards.reduce((sum, card) => sum + battlePower(toFace(card)), 0)
 
-  const enemy = (
+  const arena = (
     <div className="bk-box battle-enemy">
-      <span className="bk-label">练习对手</span>
-      <b className="battle-enemy__name">谱面幽灵</b>
-      <div className="bk-stat">
-        <b>24,000</b>
-        <span>敌人 HP</span>
-      </div>
+      <span className="bk-label">4 对 4</span>
+      <b className="battle-enemy__name">边线试战</b>
     </div>
   )
 
@@ -77,12 +73,7 @@ export function BattlePanel({
             </button>
           </div>
         }
-        right={
-          <>
-            {enemy}
-            <p className="bk-note">至少放 1 张卡进卡组才能出战。</p>
-          </>
-        }
+        right={arena}
       />
     )
   }
@@ -119,12 +110,8 @@ export function BattlePanel({
       }
       right={
         <>
-          {enemy}
-          <p className="bk-note">
-            开局 2 AP，靠 Combo、防御档位和技能应对敌方预告的意图。技能按 14 个子职业分池，卡组不满 7
-            张也可以出战。
-          </p>
-          <a className="bk-btn bk-btn--main bk-btn--block battle-start" href="/battle">
+          {arena}
+          <a className="bk-btn bk-btn--main bk-btn--block battle-start" href="/battle?from=lobby">
             进入战斗
           </a>
         </>

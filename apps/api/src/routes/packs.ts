@@ -5,7 +5,6 @@ import { z } from "zod"
 import { requireSelf, requireSession } from "../auth/guard"
 import { db } from "../db/client"
 import { cards, userCards, users } from "../db/schema"
-import { invalidatePublicCardCache } from "./cards"
 import { openPack } from "../gacha/open"
 import { POOL_NAMES, POOL_WEIGHTS, type PoolId } from "../gacha/pools"
 import {
@@ -191,7 +190,6 @@ export async function packRoutes(app: FastifyInstance) {
     }
 
     await db.update(cards).set({ heroBonus: user.heroBonus }).where(eq(cards.id, heroId))
-    invalidatePublicCardCache()
     await db.insert(userCards).values({ userId, cardId: heroId })
 
     return {

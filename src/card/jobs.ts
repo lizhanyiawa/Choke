@@ -171,9 +171,17 @@ function hashOf(seed: string): number {
 }
 
 export function subjobFor(seed: string, job: Job): SubJob {
-  const pool = SUBJOBS_BY_ARCHETYPE[job]
+  const pool = LEGACY_SUBJOB_MAP[job]
   return SUBJOBS[pool[hashOf(`${seed}|subjob`) % pool.length]]
 }
+
+/** Never reorder/shorten: v1 combat identities; four-v2 uses this frozen map only for archive provenance. */
+export const LEGACY_SUBJOB_MAP = Object.freeze({
+  tank: Object.freeze(["bulwark", "warden"] as const),
+  warrior: Object.freeze(["berserker", "paladin", "spellbreaker", "ranger", "assassin"] as const),
+  mage: Object.freeze(["warlock", "lifebringer", "binder", "summoner"] as const),
+  support: Object.freeze(["dancer", "healer", "bard"] as const),
+})
 
 /** 池卡/本体卡的技能种子：pool-123 / hero-123 → 123 */
 export function skillSeed(cardId: string): string {

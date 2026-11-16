@@ -1,7 +1,15 @@
 import type { Rarity } from "./types"
 
 export const LEVEL_CAP = { normal: 80, hero: 12 } as const
-export const CONSTELLATION_CAP = { normal: 6, hero: 12 } as const
+// Old values above five remain stored and retain their previous stat benefit.
+export const CONSTELLATION_CAP = { normal: 5, hero: 5 } as const
+export const LEVEL_GROWTH = { normalPerLevel: .06, heroEarly: .03, heroLateBase: 1.18, heroLateMultiplier: 1.2, heroBreak: 6 } as const
+export function levelPowerFactor(level: number, hero: boolean) {
+  const lv = Number.isFinite(level) ? Math.min(Math.max(1, level), levelCap(hero)) : 1
+  if (!hero) return 1 + LEVEL_GROWTH.normalPerLevel * (lv - 1)
+  return lv <= LEVEL_GROWTH.heroBreak ? 1 + LEVEL_GROWTH.heroEarly * (lv - 1)
+    : LEVEL_GROWTH.heroLateBase * LEVEL_GROWTH.heroLateMultiplier ** (lv - LEVEL_GROWTH.heroBreak)
+}
 
 /** 分解值 × 1.2（设计文档 §6.3） */
 export const MELT_EXP: Record<Rarity, number> = {

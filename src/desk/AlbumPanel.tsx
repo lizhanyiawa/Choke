@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState, type CSSProperties } from "react"
+import { RiAddLine, RiBook2Line, RiInformationLine, RiLayoutGridLine, RiStore2Line } from "@remixicon/react"
 
 import { CardFace } from "@/card/CardFace"
 import { RARITY_LABEL } from "@/card/data"
@@ -7,9 +8,10 @@ import type { Rarity } from "@/card/types"
 
 import { fetchUserCards, toFace, type ApiUserCard, type CardSort } from "./api"
 import { Pages, useBook, usePageCache } from "./BookPages"
+import { CardContextMenu } from "./CardContextMenu"
 import { CardDetail } from "./CardDetail"
 import { FitArea } from "./FitArea"
-import { ALBUM_HOVER_EVENT, startCardPointerDrag, toDeskCard } from "./drag"
+import { ALBUM_HOVER_EVENT, DESK_ADD_CARDS_EVENT, startCardPointerDrag, toDeskCard } from "./drag"
 import { useDeskCardIds } from "./presence"
 import { RARITY_COLOR } from "./rarity"
 import "./album-panel.css"
@@ -30,17 +32,35 @@ interface Result {
   error: string | null
 }
 
-export const AlbumPanel = memo(function AlbumPanel({ userId }: { userId: string | null }) {
+interface Props {
+  userId: string | null
+  onCollectFromDesk: (userCardId: number) => void
+  onChooseDeckSlot: (row: ApiUserCard) => void
+  onOpenPacks: () => void
+  onLogin: () => void
+}
+
+function placeCard(row: ApiUserCard) {
+  const card = toDeskCard(toFace(row), row.userCardId)
+  window.dispatchEvent(new CustomEvent(DESK_ADD_CARDS_EVENT, { detail: [card] }))
+}
+
+export const AlbumPanel = memo(function AlbumPanel({ userId, onCollectFromDesk, onChooseDeckSlot, onOpenPacks, onLogin }: Props) {
   const book = useBook()
   const [rarity, setRarity] = useState("")
   const [query, setQuery] = useState("")
   const [deferredQuery, setDeferredQuery] = useState("")
   const [sort, setSort] = useState<CardSort>("recent")
   const [page, setPage] = useState(0)
-  const [detail, setDetail] = useState<ApiUserCard | null>(null)
+  const [detail, setDetail] = useState<{ row: ApiUserCard; focusMarket?: boolean } | null>(null)
+  const [menu, setMenu] = useState<{ row: ApiUserCard; trigger: HTMLElement; x: number; y: number } | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const deskIds = useDeskCardIds()
-  const openDetail = useCallback((row: ApiUserCard) => setDetail(row), [])
+  const openDetail = useCallback((row: ApiUserCard) => setDetail({ row }), [])
+  const openMenu = useCallback((row: ApiUserCard, trigger: HTMLElement, x?: number, y?: number) => {
+    const rect = trigger.getBoundingClientRect()
+    setMenu({ row, trigger, x: x ?? rect.left + rect.width / 2, y: y ?? rect.top + rect.height / 2 })
+  }, [])
 
   useEffect(() => {
     const onHover = (event: Event) => {
@@ -90,10 +110,7 @@ export const AlbumPanel = memo(function AlbumPanel({ userId }: { userId: string 
         className={rootClass}
         left={
           <>
-            <p className="bk-note">登录后查看卡册。</p>
-            <a className="bk-btn bk-btn--main album-login" href="/auth/osu">
-              用 osu! 登录
-            </a>
+            <button className="bk-btn bk-btn--main album-login" type="button" onClick={onLogin}>登录</button>
           </>
         }
         right={<div className="bk-empty album-fill">还没有登录</div>}
@@ -110,7 +127,9 @@ export const AlbumPanel = memo(function AlbumPanel({ userId }: { userId: string 
   const empty = ready && rows !== null && rows.length === 0
 
   const slot = (row: ApiUserCard) => (
-    <AlbumSlot key={row.userCardId} row={row} onDesk={deskIds.has(row.userCardId)} onDetail={openDetail} />
+    <AlbumSlot key={row.userCardId} row={row} onDesk={deskIds.has(row.userCardId)}
+      menuOpen={book.active && index === page && menu?.row.userCardId === row.userCardId}
+      onDetail={openDetail} onMenu={openMenu} />
   )
 
   /** 一页卡位：有卡放卡，剩下的补空位；items 为 null 时（加载中）全是空位 */
@@ -161,6 +180,7 @@ export const AlbumPanel = memo(function AlbumPanel({ userId }: { userId: string 
             </div>
             <input
               className="bk-input album-head__search"
+              data-client-search
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="搜索玩家名"
@@ -222,9 +242,9 @@ export const AlbumPanel = memo(function AlbumPanel({ userId }: { userId: string 
             <div className="bk-empty album-fill">
               <span>{filtered ? "没有符合条件的卡" : "还没有卡"}</span>
               {!filtered && (
-                <a className="bk-btn bk-btn--main" href="/?panel=packs">
+                <button className="bk-btn bk-btn--main" type="button" onClick={onOpenPacks}>
                   去开包
-                </a>
+                </button>
               )}
             </div>
           ) : (
@@ -233,11 +253,13 @@ export const AlbumPanel = memo(function AlbumPanel({ userId }: { userId: string 
 
           {book.active && index === page && detail && (
             <CardDetail
-              key={detail.userCardId}
-              card={detail}
+              key={detail.row.userCardId}
+              card={detail.row}
               userId={userId}
+              focusMarket={detail.focusMarket}
               onClose={() => setDetail(null)}
               onChanged={book.invalidate}
+              onPlaceOnDesk={deskIds.has(detail.row.userCardId) ? undefined : placeCard}
             />
           )}
         </>
@@ -245,17 +267,49 @@ export const AlbumPanel = memo(function AlbumPanel({ userId }: { userId: string 
     />
   )
   }
-  return cachedPages.map(([index, result]) => renderPage(index, result))
+  const row = menu?.row
+  return (
+    <>
+      {cachedPages.map(([index, result]) => renderPage(index, result))}
+      {book.active && menu && row && (
+        <CardContextMenu
+          label={`${row.name} 快捷操作`}
+          x={menu.x}
+          y={menu.y}
+          actions={[
+            deskIds.has(row.userCardId)
+              ? { label: "收回卡册", icon: <RiBook2Line size={17} aria-hidden />, run: () => onCollectFromDesk(row.userCardId), restoreFocus: true }
+              : { label: "放到牌桌", icon: <RiLayoutGridLine size={17} aria-hidden />, run: () => placeCard(row), restoreFocus: true },
+            { label: "查看详情", icon: <RiInformationLine size={17} aria-hidden />, run: () => openDetail(row) },
+            { label: "加入卡组", icon: <RiAddLine size={17} aria-hidden />, run: () => onChooseDeckSlot(row) },
+            ...(isHeroCardId(row.id) ? [] : [{
+              label: "上架市场",
+              icon: <RiStore2Line size={17} aria-hidden />,
+              run: () => setDetail({ row, focusMarket: true }),
+            }]),
+          ]}
+          onClose={(restoreFocus) => {
+            setMenu(null)
+            if (restoreFocus) menu.trigger.focus({ preventScroll: true })
+          }}
+        />
+      )}
+    </>
+  )
 })
 
 const AlbumSlot = memo(function AlbumSlot({
   row,
   onDesk,
+  menuOpen,
   onDetail,
+  onMenu,
 }: {
   row: ApiUserCard
   onDesk: boolean
+  menuOpen: boolean
   onDetail: (row: ApiUserCard) => void
+  onMenu: (row: ApiUserCard, trigger: HTMLElement, x?: number, y?: number) => void
 }) {
   const face = toFace(row)
   return (
@@ -264,13 +318,23 @@ const AlbumSlot = memo(function AlbumSlot({
       data-user-card={row.userCardId}
       role="button"
       tabIndex={0}
+      aria-label={row.name}
+      aria-haspopup="menu"
+      aria-expanded={menuOpen}
       onPointerDown={(event) => startCardPointerDrag(event, {
         card: toDeskCard(face, row.userCardId),
         userCardId: row.userCardId,
       })}
       onClick={() => onDetail(row)}
+      onContextMenu={(event) => {
+        event.preventDefault()
+        onMenu(row, event.currentTarget, event.clientX || undefined, event.clientY || undefined)
+      }}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
+        if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
+          event.preventDefault()
+          if (!event.repeat) onMenu(row, event.currentTarget)
+        } else if (event.key === "Enter" || event.key === " ") {
           event.preventDefault()
           onDetail(row)
         }

@@ -47,6 +47,9 @@
 .card-detail__face .cf {
   width: 100%;
 }
+.card-detail__desk {
+  margin-top: 12px;
+}
 .card-detail__info {
   flex: 1;
   min-width: 0;
@@ -244,42 +247,6 @@
   padding: 3px 8px;
   border-radius: 4px;
   background: var(--bk-well);
-}
-
-.card-detail__skills {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.card-detail__skill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  border-radius: 8px;
-  background: var(--bk-well);
-}
-.card-detail__element {
-  width: 9px;
-  height: 9px;
-  flex: 0 0 9px;
-  border-radius: 50%;
-  background: var(--el);
-}
-.card-detail__skill b {
-  font-size: 14px;
-}
-.card-detail__skill em {
-  color: var(--bk-dim);
-  font-size: 12px;
-  font-style: normal;
-}
-.card-detail__cost {
-  margin-left: auto;
-  color: var(--bk-osu-text);
-  font-family: var(--bk-mono);
-  font-size: 11px;
-  white-space: nowrap;
 }
 
 .card-detail__link {

@@ -1,17 +1,22 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react"
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react"
+import { preload } from "react-dom"
 
 import { OBJECT_META, type DeskObjectId } from "./objects"
 import { POOL_META, POOL_ORDER } from "./rarity"
 import type { PackPool } from "./types"
 import { PackArt } from "./opening/PackArt"
+import pressSprite from "./tex/button-press.png"
 import "./desk-objects.css"
+
+export const DEAL_PRESS_MS = 340
 
 export interface DealButtonState {
   pool: PackPool
-  available: boolean
+  empty: boolean
+  disabled: boolean
   pressing: boolean
   onPool: (pool: PackPool) => void
-  onPressed: () => void
+  onActivate: () => void
 }
 
 interface Props {
@@ -20,14 +25,16 @@ interface Props {
   avatarUrl: string | null
   /** 是否有卡正悬在它上面（卡册收卡 / 纸盒收卡包） */
   dropping: boolean
+  open: boolean
   deal: DealButtonState
 }
 
 /** 桌上的实物。全部用 CSS 画，光从左上来；点一下翻开对应面板，按钮例外。 */
-export function DeskObject({ id, username, avatarUrl, dropping, deal }: Props) {
+export function DeskObject({ id, username, avatarUrl, dropping, open, deal }: Props) {
   const meta = OBJECT_META[id]
+  if (id === "button") preload(pressSprite, { as: "image" })
   return (
-    <div className={`obj ${dropping ? "is-dropping" : ""}`} data-object={id}>
+    <div className={`obj${dropping ? " is-dropping" : ""}${open ? " is-open" : ""}`} data-object={id}>
       {id === "codex" && (
         <div className="obj-book">
           <i className="obj-book__pages" />
@@ -154,12 +161,22 @@ export function DeskObject({ id, username, avatarUrl, dropping, deal }: Props) {
 
       {id === "button" && (
         <div
-          className={`obj-deal ${deal.available ? "" : "is-empty"}`}
-          style={{ "--pool": POOL_META[deal.pool].color } as CSSProperties}
+          className={`obj-deal ${deal.empty ? "is-empty" : ""}`}
         >
-          <div
+          <button
+            type="button"
             className={`obj-deal__button ${deal.pressing ? "is-pressing" : ""}`}
-            onAnimationEnd={deal.onPressed}
+            style={{ "--deal-press-time": `${DEAL_PRESS_MS}ms` } as CSSProperties}
+            aria-label="发卡包"
+            aria-disabled={deal.disabled || undefined}
+            data-custom-press
+            onKeyDown={(event) => {
+              if (event.repeat && (event.key === "Enter" || event.key === " ")) event.preventDefault()
+            }}
+            onClick={(event) => {
+              // 指针使用桌面的点击 / 拖动判断。键盘和辅助技术直接激活这个按钮。
+              if (event.detail === 0) deal.onActivate()
+            }}
           />
           <PoolPicker pool={deal.pool} onPool={deal.onPool} />
         </div>
@@ -171,7 +188,26 @@ export function DeskObject({ id, username, avatarUrl, dropping, deal }: Props) {
 /** 发牌按钮下的卡池下拉框：平时只显示当前卡池，点开向下展开六个卡池。 */
 function PoolPicker({ pool, onPool }: { pool: PackPool; onPool: (pool: PackPool) => void }) {
   const [open, setOpen] = useState(false)
+  const [above, setAbove] = useState(false)
   const root = useRef<HTMLDivElement>(null)
+  const menu = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    if (!open) return
+    const place = () => {
+      const picker = root.current
+      const list = menu.current
+      if (!picker || !list) return
+      const bounds = picker.closest(".desk-stage")?.getBoundingClientRect()
+      const anchor = picker.getBoundingClientRect()
+      const roomBelow = (bounds?.bottom ?? window.innerHeight) - anchor.bottom
+      const roomAbove = anchor.top - (bounds?.top ?? 0)
+      setAbove(roomBelow < list.offsetHeight + 10 && roomAbove > roomBelow)
+    }
+    place()
+    window.addEventListener("resize", place)
+    return () => window.removeEventListener("resize", place)
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -208,7 +244,7 @@ function PoolPicker({ pool, onPool }: { pool: PackPool; onPool: (pool: PackPool)
         <i className="obj-pick__arrow" />
       </button>
       {open && (
-        <div className="obj-pick__menu" role="menu" aria-label="切换卡池">
+        <div ref={menu} className="obj-pick__menu" data-side={above ? "above" : "below"} role="menu" aria-label="切换卡池">
           {POOL_ORDER.map((it) => (
             <button
               key={it}

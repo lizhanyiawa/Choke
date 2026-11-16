@@ -12,6 +12,16 @@
   line-height: 1.5;
 }
 
+.market-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.market-filters .bk-input {
+  flex: 1 1 108px;
+  min-width: 100px;
+}
+
 /* 我的上架：一行一张，左边小卡面 */
 .market-own__face {
   width: 44px;

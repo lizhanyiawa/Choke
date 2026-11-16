@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1536" fill="none">
+  <g stroke="#fff">
+    <circle cx="615" cy="644" r="190" stroke-width="16" opacity=".93"/>
+    <circle cx="615" cy="644" r="205" stroke-width="4" stroke-dasharray="310 58 75 46 220 120 332 127" opacity=".72"/>
+    <circle cx="615" cy="644" r="253" stroke-width="12" stroke-dasharray="310 142 282 104 420 331" opacity=".93"/>
+    <circle cx="615" cy="644" r="329" stroke-width="6" stroke-dasharray="488 177 407 298 277 420" opacity=".76"/>
+    <circle cx="615" cy="644" r="230" stroke-width="33" stroke-dasharray="1 5" opacity=".33"/>
+  </g>
+</svg>

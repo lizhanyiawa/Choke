@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, getTableColumns, inArray, ne, sql } from "drizzle-orm"
+import { and, asc, count, desc, eq, getTableColumns, gte, inArray, ne, sql } from "drizzle-orm"
 import type { FastifyInstance } from "fastify"
 import { z } from "zod"
 
@@ -121,10 +121,12 @@ export async function progressionRoutes(app: FastifyInstance) {
       })
     }
 
-    await db
+    const [upgraded] = await db
       .update(userCards)
-      .set({ level: target.level + 1, exp: target.exp - need })
-      .where(eq(userCards.id, userCardId))
+      .set({ level: sql`${userCards.level} + 1`, exp: sql`${userCards.exp} - ${need}` })
+      .where(and(eq(userCards.id, userCardId), eq(userCards.level, target.level), gte(userCards.exp, need)))
+      .returning({ id: userCards.id })
+    if (!upgraded) return reply.code(400).send({ ok: false, error: { code: "progress_changed", message: "培养进度已变化，请刷新后重试" } })
 
     return {
       ok: true,
@@ -174,7 +176,13 @@ export async function progressionRoutes(app: FastifyInstance) {
       })
     }
 
-    await db.transaction(async (tx) => {
+    const advanced = await db.transaction(async (tx) => {
+      const locked = await tx.select().from(userCards)
+        .where(and(eq(userCards.userId, userId), inArray(userCards.id, [userCardId, duplicate.id])))
+        .orderBy(asc(userCards.id)).for("update")
+      const current = locked.find(card => card.id === userCardId)
+      const fuel = locked.find(card => card.id === duplicate.id)
+      if (!current || !fuel || current.constellation !== target.constellation) return false
       await tx.delete(deckSlots).where(eq(deckSlots.userCardId, duplicate.id))
       await tx
         .update(marketListings)
@@ -185,7 +193,9 @@ export async function progressionRoutes(app: FastifyInstance) {
         .update(userCards)
         .set({ constellation: target.constellation + 1 })
         .where(eq(userCards.id, userCardId))
+      return true
     })
+    if (!advanced) return reply.code(400).send({ ok: false, error: { code: "progress_changed", message: "培养进度或材料已变化，请刷新后重试" } })
 
     return {
       ok: true,
@@ -262,7 +272,7 @@ export async function progressionRoutes(app: FastifyInstance) {
       await tx.delete(userCards).where(eq(userCards.id, source.id))
       await tx
         .update(userCards)
-        .set({ exp: target.exp + gained })
+        .set({ exp: sql`${userCards.exp} + ${gained}` })
         .where(eq(userCards.id, userCardId))
       return tx
         .update(users)

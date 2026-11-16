@@ -3,7 +3,7 @@ import type { CardFaceData } from "@/card/types"
 
 import type { CardData } from "./types"
 
-/** 优先使用服务端完整卡面；仅旧存档与本地原型卡使用恒定的补全结果。 */
+/** 旧桌面存档和样例卡没有完整的卡面数据。 */
 export function cardFromDesk(card: CardData): CardFaceData {
   if (card.face) return card.face
 

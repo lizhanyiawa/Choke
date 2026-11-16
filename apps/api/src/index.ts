@@ -1,26 +1,5 @@
-import cors from "@fastify/cors"
-import cookie from "@fastify/cookie"
-import Fastify from "fastify"
+import { createGameApi } from "./app"
 
-import { authRoutes } from "./routes/auth"
-import { cardRoutes } from "./routes/cards"
-import { deckRoutes } from "./routes/decks"
-import { marketRoutes } from "./routes/market"
-import { packRoutes } from "./routes/packs"
-import { progressionRoutes } from "./routes/progression"
-
-const app = Fastify({ logger: true })
-
-await app.register(cors, { origin: true, credentials: true })
-await app.register(cookie)
-await app.register(authRoutes)
-await app.register(packRoutes)
-await app.register(cardRoutes)
-await app.register(deckRoutes)
-await app.register(marketRoutes)
-await app.register(progressionRoutes)
-
-app.get("/health", async () => ({ ok: true, data: { status: "up" } }))
-
+const app = await createGameApi()
 const port = Number(process.env.PORT ?? 3100)
 await app.listen({ port, host: "0.0.0.0" })

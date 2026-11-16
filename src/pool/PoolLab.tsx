@@ -3,6 +3,8 @@ import { useMemo, useState } from "react"
 import { CardFace } from "@/card/CardFace"
 import { RARITY_LABEL } from "@/card/data"
 import type { Rarity } from "@/card/types"
+import { LabHeader } from "@/client/LabHeader"
+import { RARITY_COLOR } from "@/desk/rarity"
 
 import { defRow } from "@/card/def"
 
@@ -193,224 +195,216 @@ export function PoolLab() {
   }
 
   return (
-    <div className="lab pool-lab" data-bg="dark">
-      <header className="lab__bar">
-        <div>
-          <div className="lab__eyebrow">CHOKE! · CARD POOL</div>
-          <h1 className="lab__title">卡池实验室</h1>
-          <p className="lab__sub">
-            Mutualify 名单 → 一个 seed 定占比 → 国榜下限抬档 → 卡面随看随载
-          </p>
-        </div>
-        <div className="pool-lab__actions">
-          <label className="pool-lab__file">
-            导入 JSON
-            <input
-              type="file"
-              accept="application/json,.json"
-              onChange={(event) => onFile(event.target.files?.[0] ?? null)}
-            />
-          </label>
-          <button type="button" className="lab__toggle" onClick={() => load(JSON.stringify(SAMPLE))}>
-            载入示例
-          </button>
-        </div>
-      </header>
-
-      <section className="lab__section">
-        <div className="lab__section-head">
-          <h2>输入</h2>
-          <p>浏览器控制台导出的数组，或 /api/rankings 的原始 user</p>
-        </div>
-        <div className="pool-lab__toolbar">
-          <label className="pool-lab__field">
-            <span>seed</span>
-            <input value={seed} onChange={(event) => setSeed(event.target.value)} inputMode="numeric" />
-          </label>
-          <button type="button" className="lab__toggle" onClick={() => load(raw)} disabled={!raw.trim()}>
-            按 seed 重算
-          </button>
-          <label className="pool-lab__field pool-lab__field--grow">
-            <span>JSON</span>
-            <textarea
-              value={raw}
-              onChange={(event) => setRaw(event.target.value)}
-              placeholder='[{"osuId": 2, "username": "peppy", "country": "AU", "followerCount": 15820}]'
-              spellCheck={false}
-            />
-          </label>
-        </div>
-        {error && <p className="pool-lab__error">{error}</p>}
-      </section>
-
-      {cards && stats && (
-        <>
-          <section className="lab__section">
-            <div className="lab__section-head">
-              <h2>分配</h2>
-              <p>
-                共 {cards.length} 张 · 可抽 {stats.visible} 张 · 被国榜下限抬档{" "}
-                {cards.filter((card) => card.floor != null).length} 张
-              </p>
-            </div>
-            <div className="pool-lab__stats">
-              {RARITY_ORDER.map((rarity) => {
-                const count = stats.assigned[rarity] ?? 0
-                const share = cards.length ? (count / cards.length) * 100 : 0
-                return (
-                  <div className="pool-lab__stat" data-rarity={rarity} key={rarity}>
-                    <span className="pool-lab__stat-name">{rarity}</span>
-                    <b>{count.toLocaleString()}</b>
-                    <span className="pool-lab__stat-share">{share.toFixed(2)}%</span>
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-
-          <section className="lab__section">
-            <div className="lab__section-head">
-              <h2>卡池</h2>
-              <p>
-                第 {page + 1} / {Math.max(1, Math.ceil(cards.length / PAGE_SIZE))} 页 · 点卡看详情
-              </p>
-            </div>
-            <div className="pool-lab__grid">
-              {pageCards.map((card) => (
-                <button
-                  type="button"
-                  className="pool-lab__slot"
-                  data-hidden={card.hidden || undefined}
-                  data-active={card.osuId === selected || undefined}
-                  key={card.osuId}
-                  onClick={() => setSelected(card.osuId)}
-                >
-                  <CardFace card={faceFromPool(card)} />
-                  <span className="lab__tag">
-                    #{card.countryRank ?? "—"} {card.country} · {card.followerCount}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <div className="pool-lab__pager">
-              <button
-                type="button"
-                className="lab__toggle"
-                disabled={page === 0}
-                onClick={() => setPage((value) => Math.max(0, value - 1))}
-              >
-                上一页
-              </button>
-              <button
-                type="button"
-                className="lab__toggle"
-                disabled={(page + 1) * PAGE_SIZE >= cards.length}
-                onClick={() => setPage((value) => value + 1)}
-              >
-                下一页
-              </button>
-              <button type="button" className="lab__toggle" onClick={exportCards}>
-                导出卡定义
-              </button>
-            </div>
-          </section>
-        </>
-      )}
-
-      {selectedCard && (
-        <aside className="pool-lab__detail">
-          <div className="pool-lab__detail-head">
-            <div>
-              <div className="lab__eyebrow">#{selectedCard.osuId}</div>
-              <h2>{selectedCard.username}</h2>
-              <p className="lab__sub">
-                {selectedCard.country}
-                {selectedCard.countryRank ? ` · 国内 #${selectedCard.countryRank} / ${selectedCard.countrySize}` : ""}
-                {selectedCard.globalRank ? ` · 全球 #${selectedCard.globalRank}` : " · 无排名"}
-              </p>
-            </div>
-            <button type="button" className="lab__toggle" onClick={() => setSelected(null)}>
-              关闭
-            </button>
+    <>
+      <LabHeader title="卡池实验室">
+        <label className="pool-lab__file client-key">
+          导入 JSON
+          <input
+            type="file"
+            accept="application/json,.json"
+            onChange={(event) => onFile(event.target.files?.[0] ?? null)}
+          />
+        </label>
+        <button type="button" className="client-key" onClick={() => load(JSON.stringify(SAMPLE))}>
+          载入示例
+        </button>
+      </LabHeader>
+      <main className="lab pool-lab" data-bg="dark">
+        <section className="lab__section">
+          <div className="lab__section-head">
+            <h2>输入</h2>
+            <p>浏览器控制台导出的数组，或 /api/rankings 的原始 user</p>
           </div>
-
-          <div className="pool-lab__detail-body">
-            <div className="pool-lab__detail-card">
-              <CardFace card={faceFromPool(selectedCard)} />
-            </div>
-            <div className="pool-lab__detail-card">
-              <CardFace card={faceFromPool(selectedCard, true)} />
-              <span className="lab__tag">
-                {selectedCard.hero
-                  ? `指数 ${selectedCard.hero.index} · ${selectedCard.hero.band} · ${selectedCard.hero.power}`
-                  : "未认领 · 本体卡待定"}
-              </span>
-            </div>
-            <dl className="pool-lab__kv">
-              <dt>signal</dt>
-              <dd>{selectedCard.signal.toFixed(1)}</dd>
-              <dt>分项</dt>
-              <dd>
-                pp {fmt(selectedCard.scoreParts.pp)} · 排名 {fmt(selectedCard.scoreParts.rank)} · 粉丝{" "}
-                {fmt(selectedCard.scoreParts.fans)} · 创作 {fmt(selectedCard.scoreParts.creation)}
-              </dd>
-              <dt>卡池档</dt>
-              <dd>{RARITY_LABEL[selectedCard.rarity]}</dd>
-              <dt>国榜下限</dt>
-              <dd>{selectedCard.floor ?? "未触发"}</dd>
-              <dt>粉丝 / 谱面关注</dt>
-              <dd>
-                {selectedCard.followerCount ?? "—"}
-                {selectedCard.mappingFollowers != null ? ` / ${selectedCard.mappingFollowers}` : ""}
-              </dd>
-              <dt>ranked 谱面</dt>
-              <dd>
-                {selectedCard.rankedSetCount ?? "未确认"}
-                {selectedCard.rankedMaps != null
-                  ? ` · ranked ${selectedCard.rankedMaps} / gd ${selectedCard.guestMaps ?? 0} / loved ${selectedCard.lovedMaps ?? 0}`
-                  : ""}
-              </dd>
-              <dt>pp / 全球</dt>
-              <dd>
-                {selectedCard.pp != null ? selectedCard.pp.toFixed(0) : "—"} / {selectedCard.globalRank ?? "—"}
-              </dd>
-              <dt>banner</dt>
-              <dd>{selectedCard.coverUrl ? selectedCard.coverUrl.split("/").slice(-2).join("/") : "没有"}</dd>
-              <dt>状态</dt>
-              <dd>{selectedCard.hidden ? "已下架" : selectedCard.claimed ? "已认领" : "在池"}</dd>
-            </dl>
-          </div>
-
-          <div className="pool-lab__detail-actions">
-            <button
-              type="button"
-              className="lab__toggle"
-              onClick={() => update(selectedCard.hidden ? selectedCard : revoke(selectedCard))}
-            >
-              {selectedCard.hidden ? "恢复上架" : "本人下架"}
-            </button>
-            <a className="lab__toggle" href={selectedCard.profileUrl} target="_blank" rel="noreferrer">
-              去主页
-            </a>
-          </div>
-
-          <div className="pool-lab__claim">
+          <div className="pool-lab__toolbar">
             <label className="pool-lab__field">
-              <span>认领：粘贴 /me/osu 的 JSON</span>
+              <span>seed</span>
+              <input value={seed} onChange={(event) => setSeed(event.target.value)} inputMode="numeric" />
+            </label>
+            <button type="button" className="client-key client-key--primary" onClick={() => load(raw)} disabled={!raw.trim()}>
+              按 seed 重算
+            </button>
+            <label className="pool-lab__field pool-lab__field--grow">
+              <span>JSON</span>
               <textarea
-                value={meRaw}
-                onChange={(event) => setMeRaw(event.target.value)}
-                placeholder='{"username":"...","cover":{"url":"..."},"statistics":{"play_count":1,"total_hits":1,"level":{"current":1}}}'
+                value={raw}
+                onChange={(event) => setRaw(event.target.value)}
+                placeholder='[{"osuId": 2, "username": "peppy", "country": "AU", "followerCount": 15820}]'
                 spellCheck={false}
               />
             </label>
-            <button type="button" className="lab__toggle" onClick={onClaim} disabled={!meRaw.trim()}>
-              算本体卡
-            </button>
           </div>
-        </aside>
-      )}
-    </div>
+          {error && <p className="pool-lab__error">{error}</p>}
+        </section>
+
+        {cards && stats && (
+          <>
+            <section className="lab__section">
+              <div className="lab__section-head">
+                <h2>分配</h2>
+                <p>
+                  共 {cards.length} 张 · 可抽 {stats.visible} 张 · 被国榜下限抬档{" "}
+                  {cards.filter((card) => card.floor != null).length} 张
+                </p>
+              </div>
+              <div className="pool-lab__stats">
+                {RARITY_ORDER.map((rarity) => {
+                  const count = stats.assigned[rarity] ?? 0
+                  const share = cards.length ? (count / cards.length) * 100 : 0
+                  return (
+                    <div className="pool-lab__stat" data-rarity={rarity} key={rarity}>
+                      <span className="pool-lab__stat-name">{rarity}</span>
+                      <b style={{ color: RARITY_COLOR[rarity] }}>{count.toLocaleString()}</b>
+                      <span className="pool-lab__stat-share">{share.toFixed(2)}%</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+
+            <section className="lab__section">
+              <div className="lab__section-head">
+                <h2>卡池</h2>
+                <p>
+                  第 {page + 1} / {Math.max(1, Math.ceil(cards.length / PAGE_SIZE))} 页
+                </p>
+              </div>
+              <div className="pool-lab__grid">
+                {pageCards.map((card) => (
+                  <button
+                    type="button"
+                    className="pool-lab__slot"
+                    data-hidden={card.hidden || undefined}
+                    data-active={card.osuId === selected || undefined}
+                    key={card.osuId}
+                    onClick={() => setSelected(card.osuId)}
+                  >
+                    <CardFace card={faceFromPool(card)} />
+                    <span className="lab__tag">
+                      #{card.countryRank ?? "—"} {card.country} · {card.followerCount}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div className="pool-lab__pager">
+                <button
+                  type="button"
+                  className="client-key"
+                  disabled={page === 0}
+                  onClick={() => setPage((value) => Math.max(0, value - 1))}
+                >
+                  上一页
+                </button>
+                <button
+                  type="button"
+                  className="client-key"
+                  disabled={(page + 1) * PAGE_SIZE >= cards.length}
+                  onClick={() => setPage((value) => value + 1)}
+                >
+                  下一页
+                </button>
+                <button type="button" className="client-key client-key--primary" onClick={exportCards}>
+                  导出卡定义
+                </button>
+              </div>
+            </section>
+          </>
+        )}
+
+        {selectedCard && (
+          <aside className="pool-lab__detail">
+            <div className="pool-lab__detail-head">
+              <div>
+                <div className="lab__eyebrow">#{selectedCard.osuId}</div>
+                <h2>{selectedCard.username}</h2>
+                <p className="lab__sub">
+                  {selectedCard.country}
+                  {selectedCard.countryRank ? ` · 国内 #${selectedCard.countryRank} / ${selectedCard.countrySize}` : ""}
+                  {selectedCard.globalRank ? ` · 全球 #${selectedCard.globalRank}` : " · 无排名"}
+                </p>
+              </div>
+              <button type="button" className="client-key" onClick={() => setSelected(null)}>
+                关闭
+              </button>
+            </div>
+
+            <div className="pool-lab__detail-body">
+              <div className="pool-lab__detail-card">
+                <CardFace card={faceFromPool(selectedCard)} />
+              </div>
+              <div className="pool-lab__detail-card">
+                <CardFace card={faceFromPool(selectedCard, true)} />
+                <span className="lab__tag">
+                  {selectedCard.hero
+                    ? `指数 ${selectedCard.hero.index} · ${selectedCard.hero.band} · ${selectedCard.hero.power}`
+                    : "未认领"}
+                </span>
+              </div>
+              <dl className="pool-lab__kv">
+                <dt>signal</dt>
+                <dd>{selectedCard.signal.toFixed(1)}</dd>
+                <dt>分项</dt>
+                <dd>
+                  pp {fmt(selectedCard.scoreParts.pp)} · 排名 {fmt(selectedCard.scoreParts.rank)} · 粉丝{" "}
+                  {fmt(selectedCard.scoreParts.fans)} · 创作 {fmt(selectedCard.scoreParts.creation)}
+                </dd>
+                <dt>卡池档</dt>
+                <dd>{RARITY_LABEL[selectedCard.rarity]}</dd>
+                <dt>国榜下限</dt>
+                <dd>{selectedCard.floor ?? "未触发"}</dd>
+                <dt>粉丝 / 谱面关注</dt>
+                <dd>
+                  {selectedCard.followerCount ?? "—"}
+                  {selectedCard.mappingFollowers != null ? ` / ${selectedCard.mappingFollowers}` : ""}
+                </dd>
+                <dt>ranked 谱面</dt>
+                <dd>
+                  {selectedCard.rankedSetCount ?? "未确认"}
+                  {selectedCard.rankedMaps != null
+                    ? ` · ranked ${selectedCard.rankedMaps} / gd ${selectedCard.guestMaps ?? 0} / loved ${selectedCard.lovedMaps ?? 0}`
+                    : ""}
+                </dd>
+                <dt>pp / 全球</dt>
+                <dd>
+                  {selectedCard.pp != null ? selectedCard.pp.toFixed(0) : "—"} / {selectedCard.globalRank ?? "—"}
+                </dd>
+                <dt>banner</dt>
+                <dd>{selectedCard.coverUrl ? selectedCard.coverUrl.split("/").slice(-2).join("/") : "没有"}</dd>
+                <dt>状态</dt>
+                <dd>{selectedCard.hidden ? "已下架" : selectedCard.claimed ? "已认领" : "在池"}</dd>
+              </dl>
+            </div>
+
+            <div className="pool-lab__detail-actions">
+              <button
+                type="button"
+                className="client-key"
+                onClick={() => update(selectedCard.hidden ? selectedCard : revoke(selectedCard))}
+              >
+                {selectedCard.hidden ? "恢复上架" : "本人下架"}
+              </button>
+              <a className="client-key" href={selectedCard.profileUrl} target="_blank" rel="noreferrer">
+                去主页
+              </a>
+            </div>
+
+            <div className="pool-lab__claim">
+              <label className="pool-lab__field">
+                <span>认领：粘贴 /me/osu 的 JSON</span>
+                <textarea
+                  value={meRaw}
+                  onChange={(event) => setMeRaw(event.target.value)}
+                  placeholder='{"username":"...","cover":{"url":"..."},"statistics":{"play_count":1,"total_hits":1,"level":{"current":1}}}'
+                  spellCheck={false}
+                />
+              </label>
+              <button type="button" className="client-key" onClick={onClaim} disabled={!meRaw.trim()}>
+                算本体卡
+              </button>
+            </div>
+          </aside>
+        )}
+      </main>
+    </>
   )
 }
 

@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react"
 
+import { LabHeader } from "@/client/LabHeader"
+
 import { CardFace } from "./CardFace"
 import { DEMO_CARDS, ELEMENT_LABEL, JOB_LABEL, MOD_LIST, RARITY_LABEL } from "./data"
 import type { CardFaceData, CardSkill, Element, Job, Mod, Rarity } from "./types"
@@ -42,7 +44,7 @@ function slotsFromCard(card: CardFaceData): SkillSlot[] {
 export function CardEditor() {
   const [base, setBase] = useState<CardFaceData>(DEMO_CARDS[4])
   const [slots, setSlots] = useState<SkillSlot[]>(slotsFromCard(DEMO_CARDS[4]))
-  const [width, setWidth] = useState(420)
+  const [width, setWidth] = useState(() => Math.min(420, Math.max(240, Math.floor((window.innerHeight - 156) / 30) * 20)))
   const [guides, setGuides] = useState(false)
   const [holo, setHolo] = useState<Holo>("none")
   const [exported, setExported] = useState<string | null>(null)
@@ -105,13 +107,8 @@ export function CardEditor() {
 
   return (
     <div className="editor">
+      <LabHeader title="卡牌编辑器" />
       <aside className="editor__form">
-        <header className="editor__head">
-          <div className="editor__eyebrow">CHOKE! · CARD EDITOR</div>
-          <h1>卡牌编辑器</h1>
-          <p>左侧改，右侧实时预览。导出可以直接喂给卡池导入。</p>
-        </header>
-
         <Section title="身份">
           <Field label="卡名">
             <input value={base.name} onChange={(e) => patch({ name: e.target.value })} />
@@ -331,10 +328,10 @@ export function CardEditor() {
             </select>
           </Field>
           <div className="editor__actions">
-            <button type="button" onClick={exportJson}>
+            <button type="button" className="client-key client-key--primary" onClick={exportJson}>
               导出 JSON
             </button>
-            <label className="editor__upload">
+            <label className="editor__upload client-key">
               导入 JSON
               <input
                 type="file"
@@ -351,7 +348,7 @@ export function CardEditor() {
         <div
           className="editor__stage"
           data-holo={holo === "none" ? undefined : holo}
-          style={{ width }}
+          style={{ width, maxWidth: "100%" }}
         >
           <CardFace card={card} className={guides ? "cf--guides" : undefined} />
         </div>

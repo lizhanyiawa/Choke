@@ -3,34 +3,34 @@ import { CardFace } from "@/card/CardFace"
 
 import { cardFromDesk } from "./cardFace"
 
-import { DeskObject, type DealButtonState } from "./DeskObject"
+import { DEAL_PRESS_MS, DeskObject, type DealButtonState } from "./DeskObject"
 import { DeskDrawer, type DeskDrawerHandle } from "./DeskDrawer"
 import { DeskBook, PANEL_IDS, type DeskBookHandle, type PanelId } from "./DeskBook"
 import { DragGhost } from "./DragGhost"
-import { toFace, type ApiUserCard } from "./api"
+import { fetchCard, toFace, type ApiUserCard } from "./api"
 import {
   ALBUM_HOVER_EVENT,
   BACKPACK_HOVER_EVENT,
   DESK_ADD_CARDS_EVENT,
   DECK_ASSIGN_EVENT,
   DECK_HOVER_EVENT,
-  GACHA_OPEN_EVENT,
   PACKS_CHANGED_EVENT,
   CARD_POINTER_DROP_EVENT,
   type CardPointerDrop,
-  type GachaOpenDetail,
+  type DeckAssignment,
   toDeskCard,
 } from "./drag"
 import { InviteLetter } from "./InviteLetter"
 import { INVITE_OPEN_EVENT, readInviteStowed, saveInviteStowed } from "./invite"
 import { OBJECT_META, type DeskObjectId } from "./objects"
-import { POOL_META } from "./rarity"
+import { placeDeskItems, randomNear, scatterPackCards, stagePosition } from "./placement"
+import { POOL_META, RARITY_COLOR, SERVER_POOL } from "./rarity"
 import { DEFAULT_SKIN } from "./skins"
 import { publishDeskCardIds } from "./presence"
-import { cardsToItems, ITEM_SIZE, newId, sizeOf, useDesk } from "./store"
+import { ITEM_INSET, ITEM_SIZE, newId, sizeOf, useDesk } from "./store"
 import type { CardData, DeskItem, PackPool } from "./types"
 import { PackArt } from "./opening/PackArt"
-import { PackOpener, type OriginRect } from "./opening/PackOpener"
+import { CARD_FLIGHT_MS, PACK_BURST_MS, TabletopCard, TabletopPackBurst } from "./opening/TabletopReveal"
 import "./desk.css"
 
 /** 卡牌域很重；桌面状态变化时复用同一张卡面。 */
@@ -44,16 +44,7 @@ const DeskPack = memo(function DeskPack({ pool }: { pool: PackPool }) {
 
 
 const POOL_KEY = "choke.pool"
-
-/** 桌面卡池 → 服务端卡池 id（任务包在服务端叫 golden） */
-const SERVER_POOL: Record<PackPool, string> = {
-  normal: "normal",
-  idle: "idle",
-  quest: "golden",
-  radiant: "radiant",
-  sky: "sky",
-  prism: "prism",
-}
+const CARD_RELEASE_OFFSETS = [0, 47, 103, 154, 223]
 
 interface OpenResponse {
   ok: boolean
@@ -65,12 +56,21 @@ interface OpenResponse {
   error?: { code?: string; message?: string }
 }
 
-type CardRow = Omit<ApiUserCard, "userCardId" | "level" | "constellation" | "exp" | "foil">
+interface PackBurst {
+  pack: DeskItem
+  delay: number
+}
 
-interface CardResponse {
-  ok: boolean
-  data?: CardRow
-  error?: { message?: string }
+interface DeskReveal {
+  bursts: PackBurst[]
+  flights: Map<string, PackBurst>
+  zIndex: number
+  duration: number
+}
+
+function deskCardId(item: DeskItem, heroId?: number) {
+  if (!item.card || (item.card.isHero && heroId == null)) return undefined
+  return item.card.userCardId ?? (item.card.isHero ? heroId : undefined)
 }
 
 interface DeskUser {
@@ -103,10 +103,21 @@ interface FlightSlot {
 }
 
 /** 每个物件一个轻微的固定角度，让桌面看起来是随手摆放的 */
-function tiltOf(id: string) {
+function tiltOf({ id, tilt }: DeskItem) {
+  if (typeof tilt === "number" && Number.isFinite(tilt)) return tilt
   let h = 0
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
   return ((h % 7) - 3) * 0.8
+}
+
+function animatePackDeal(element: HTMLDivElement, distance: number) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+  element.animate({
+    translate: [`0 ${-distance}px`, "0 7px", "0 0"],
+    rotate: ["-4deg", "0.7deg", "0deg"],
+    offset: [0, 0.86, 1],
+    easing: ["cubic-bezier(.17,.55,.28,1)", "ease-out", "linear"],
+  }, { duration: 460 })
 }
 
 /** 卡只能收进卡册，卡包只能放回纸盒 */
@@ -115,17 +126,24 @@ function acceptsDrop(target: DeskObjectId | undefined, item: DeskItem) {
 }
 
 export function DeskPage() {
+  const testAccount = (window as Window & {
+    chokeDesktopTestAccount?: { enter?: string; exit?: string }
+  }).chokeDesktopTestAccount
   const { items, move, front, spawn, remove, reset, stow, unstow } = useDesk()
   const stageRef = useRef<HTMLDivElement>(null)
   const [stageSize, setStageSize] = useState({ w: 1200, h: 700 })
   const [lifted, setLifted] = useState<{ item: DeskItem; grab: { u: number; v: number } } | null>(null)
   const liftPointer = useRef({ x: 0, y: 0 })
   const [settling, setSettling] = useState<string | null>(null)
-  /** key 区分每次开包；x/y 是开完后卡片落桌的位置（桌面卡包原位，抽卡面板用桌面中央） */
-  const [opening, setOpening] = useState<{ key: string; x: number; y: number; cards: CardData[]; pool: PackPool; rect?: OriginRect } | null>(null)
+  const [openingPacks, setOpeningPacks] = useState<DeskItem[]>([])
+  const [reveal, setReveal] = useState<DeskReveal | null>(null)
+  const [isDealing, setIsDealing] = useState(false)
+  const dealingBusy = useRef(false)
+  const pendingDeals = useRef(new Set<string>())
+  const dealPressTimer = useRef<number | null>(null)
   const [pool, setPool] = useState<PackPool>(() => {
     const saved = localStorage.getItem(POOL_KEY) as PackPool | null
-    return saved && saved in POOL_META ? saved : "normal"
+    return saved && Object.hasOwn(POOL_META, saved) ? saved : "normal"
   })
   const [pressing, setPressing] = useState(false)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
@@ -147,10 +165,9 @@ export function DeskPage() {
   const flightDone = useRef<(() => void) | null>(null)
   /** 卡包正飞过来、翻盖先掀开等着的物件 */
   const [awaiting, setAwaiting] = useState<DeskObjectId | null>(null)
-  /** 刚接住东西、正在回弹的物件 */
-  const [receiving, setReceiving] = useState<DeskObjectId | null>(null)
-  const receiveTimer = useRef<number | null>(null)
+  const quickLidTimer = useRef<number | null>(null)
   const [quickTargets, setQuickTargets] = useState<Record<string, { dx: number; dy: number; index: number }> | null>(null)
+  const [returningPackIds, setReturningPackIds] = useState<ReadonlySet<string>>(() => new Set())
   const [toast, setToast] = useState<string | null>(null)
   const [user, setUser] = useState<DeskUser | null>(null)
   /** /auth/me 回来过一次（登没登录都算），邀请函等它再决定要不要弹 */
@@ -164,6 +181,14 @@ export function DeskPage() {
     return query && PANEL_IDS.includes(query) ? { panel: query, origin: null } : null
   })
   const bookRef = useRef<DeskBookHandle>(null)
+  const selectBook = useCallback((panel: PanelId | null, origin?: { x: number; y: number } | null) => {
+    setBook((current) => panel ? { panel, origin: origin === undefined ? current?.origin ?? null : origin } : null)
+    const url = new URL(window.location.href)
+    if (panel) url.searchParams.set("panel", panel)
+    else url.searchParams.delete("panel")
+    window.history.replaceState(window.history.state, "", url)
+  }, [])
+  const focusSearch = useRef(false)
   const drawerRef = useRef<DeskDrawerHandle>(null)
   /** 抽屉里留给邀请函的位置；信收没收着由桌面持有，重置桌面时一起放回来 */
   const [inviteSlot, setInviteSlot] = useState<HTMLDivElement | null>(null)
@@ -176,6 +201,7 @@ export function DeskPage() {
   const quickTimer = useRef<number | null>(null)
   const toastTimer = useRef<number | null>(null)
   const settleTimer = useRef<number | null>(null)
+  const releasePointer = useRef<(() => void) | null>(null)
   const openingBusy = useRef(false)
   const userIdRef = useRef(user?.id)
   useLayoutEffect(() => { userIdRef.current = user?.id }, [user?.id])
@@ -235,21 +261,44 @@ export function DeskPage() {
     return () => window.removeEventListener(INVITE_OPEN_EVENT, handler)
   }, [])
 
-  // 抽卡面板开出卡：合上书，卡包从面板里的卡包图长出来，走和桌面卡包一样的开包动画
   useEffect(() => {
-    const handler = (event: Event) => {
-      const { cards, pool, rect, userId } = (event as CustomEvent<GachaOpenDetail>).detail
-      if (!cards.length || userId !== userIdRef.current || openingBusy.current) {
+    if (!reveal) return
+    const timer = window.setTimeout(() => setReveal(null), reveal.duration)
+    return () => window.clearTimeout(timer)
+  }, [reveal])
+
+  useEffect(() => {
+    const shortcut = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || openingPacks.length || document.querySelector('[role="dialog"][aria-modal="true"]')) return
+      if (event.key === "Escape" && reveal) {
         event.preventDefault()
+        setReveal(null)
         return
       }
-      openingBusy.current = true
-      bookRef.current?.close()
-      setOpening({ key: newId("gacha"), x: 0.45, y: 0.3, cards, pool, rect })
+      if (reveal) return
+      if (event.key === "F10" && !event.shiftKey) {
+        event.preventDefault()
+        if (!event.repeat) window.location.assign("/developer")
+      } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
+        event.preventDefault()
+        const search = document.querySelector<HTMLInputElement>(".book input[data-client-search]:not([disabled])")
+        if (search && !search.closest("[inert]")) { search.focus(); search.select() }
+        else {
+          focusSearch.current = true
+          selectBook("codex")
+        }
+      }
     }
-    window.addEventListener(GACHA_OPEN_EVENT, handler)
-    return () => window.removeEventListener(GACHA_OPEN_EVENT, handler)
-  }, [])
+    window.addEventListener("keydown", shortcut)
+    return () => window.removeEventListener("keydown", shortcut)
+  }, [openingPacks.length, reveal, selectBook])
+
+  useEffect(() => {
+    if (book?.panel !== "codex" || !focusSearch.current) return
+    focusSearch.current = false
+    const frame = requestAnimationFrame(() => document.querySelector<HTMLInputElement>(".book .codex-panel input[data-client-search]")?.focus())
+    return () => cancelAnimationFrame(frame)
+  }, [book?.panel])
 
   const onInviteClaimed = useCallback(() => {
     refreshUser()
@@ -257,6 +306,10 @@ export function DeskPage() {
   }, [refreshUser])
 
   const logout = () => {
+    if (testAccount?.exit) {
+      window.location.replace(testAccount.exit)
+      return
+    }
     fetch("/auth/logout", { method: "POST", credentials: "include" })
       .catch(() => {})
       .finally(() => setUser(null))
@@ -274,77 +327,80 @@ export function DeskPage() {
 
   useEffect(() => {
     return () => {
-      for (const timer of [collectTimer, quickTimer, toastTimer, settleTimer, receiveTimer]) {
+      releasePointer.current?.()
+      for (const timer of [collectTimer, quickTimer, toastTimer, settleTimer, quickLidTimer, dealPressTimer]) {
         if (timer.current) window.clearTimeout(timer.current)
       }
     }
   }, [])
 
-  const showToast = useCallback((text: string) => {
+  const showToast = useCallback((text: string, duration = 1600) => {
     setToast(text)
     if (toastTimer.current) window.clearTimeout(toastTimer.current)
-    toastTimer.current = window.setTimeout(() => setToast(null), 1600)
+    toastTimer.current = window.setTimeout(() => setToast(null), duration)
   }, [])
 
-  const itemsRef = useRef(items)
   useEffect(() => {
-    itemsRef.current = items
-  }, [items])
+    const url = new URL(window.location.href)
+    if (url.searchParams.get("login") !== "unavailable") return
+    const frame = requestAnimationFrame(() => {
+      url.searchParams.delete("login")
+      window.history.replaceState(window.history.state, "", url)
+      showToast("osu! 登录未配置", 4000)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [showToast])
 
+  const itemsRef = useRef(items)
+  useLayoutEffect(() => {
+    const before = itemsRef.current
+    itemsRef.current = items
+    if (before === items || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    const existing = new Set(before.map(({ id }) => id))
+    for (const item of items) {
+      if (item.kind !== "card" || existing.has(item.id) || reveal?.flights.has(item.id)) continue
+      const body = stageRef.current?.querySelector<HTMLElement>(`[data-id="${CSS.escape(item.id)}"] > .desk-body`)
+      body?.animate([
+        { translate: "8px -19px", scale: 1.05, opacity: 0 },
+        { translate: "0 2px", scale: 0.987, opacity: 1, offset: 0.74 },
+        { translate: "0 0", scale: 1, opacity: 1 },
+      ], { duration: 240, easing: "cubic-bezier(.2,.8,.28,1)" })
+    }
+  }, [items, reveal])
+
+  const heroId = user?.hero?.userCardId
   useEffect(() => {
-    const ids = items.flatMap((item) =>
-      item.kind === "card" && typeof item.card?.userCardId === "number"
-        ? [item.card.userCardId]
-        : [],
-    )
+    const ids = items.flatMap((item) => {
+      const id = deskCardId(item, heroId)
+      return id == null ? [] : [id]
+    })
     publishDeskCardIds(ids)
-  }, [items])
+  }, [items, heroId])
 
   const spawnCards = useCallback(
     (cards: CardData[], clientX?: number, clientY?: number) => {
       if (!cards.length) return
       const stage = stageRef.current
       if (!stage) return
-      const existing = new Set(
-        itemsRef.current.flatMap((item) =>
-          item.kind === "card" && typeof item.card?.userCardId === "number"
-            ? [item.card.userCardId]
-            : [],
-        ),
-      )
-      const fresh = cards.filter(
-        (card) => card.userCardId == null || !existing.has(card.userCardId),
-      )
-      if (fresh.length === 0) return
       const rect = stage.getBoundingClientRect()
-      const size = ITEM_SIZE.card
-      const originX = clientX == null ? rect.width * 0.5 : clientX - rect.left
-      const originY = clientY == null ? rect.height * 0.42 : clientY - rect.top
-      const step = 0.06
-      const startX =
-        (originX - size.w / 2 - ((fresh.length - 1) * step * rect.width) / 2) / rect.width
-      const topZ = Math.max(0, ...itemsRef.current.map((item) => item.z)) + 1
-      const next = fresh.map((card, index) => {
-        const x = Math.min(
-          Math.max(startX + index * step, 0.02),
-          0.98 - size.w / rect.width,
-        )
-        const y = Math.min(
-          Math.max((originY - size.h / 2) / rect.height + (index % 2) * 0.012, 0.02),
-          0.98 - size.h / rect.height,
-        )
-        return {
-          id: newId("card"),
-          kind: "card" as const,
-          x,
-          y,
-          z: topZ + index,
-          card,
-        }
+      if (!rect.width || !rect.height) return
+      const near = clientX != null && clientY != null
+        ? { x: clientX - rect.left, y: clientY - rect.top }
+        : randomNear({ x: rect.width * .43, y: rect.height * .44 }, rect.width * .12, rect.height * .10)
+      const placements = cards.map((card) => ({ id: newId("card"), kind: "card" as const, card, near }))
+      spawn((current) => {
+        const existing = new Set(current.map((item) => deskCardId(item, heroId)))
+        const fresh = placements.filter(({ card }) => {
+          if (card.userCardId == null) return true
+          if (existing.has(card.userCardId)) return false
+          existing.add(card.userCardId)
+          return true
+        })
+        return placeDeskItems(fresh, current.filter((item) => !item.card?.isHero || heroId != null),
+          { w: rect.width, h: rect.height })
       })
-      spawn(next)
     },
-    [spawn],
+    [heroId, spawn],
   )
 
   useEffect(() => {
@@ -352,11 +408,10 @@ export function DeskPage() {
       const cards = (event as CustomEvent<CardData[]>).detail
       if (!Array.isArray(cards) || cards.length === 0) return
       spawnCards(cards)
-      showToast(`已发到桌面 ×${cards.length}`)
     }
     window.addEventListener(DESK_ADD_CARDS_EVENT, onAddCards)
     return () => window.removeEventListener(DESK_ADD_CARDS_EVENT, onAddCards)
-  }, [spawnCards, showToast])
+  }, [spawnCards])
 
   useEffect(() => {
     const stage = stageRef.current
@@ -410,18 +465,26 @@ export function DeskPage() {
 
   /** 东西落进 receiver：翻盖扣回去（过冲），物件被砸得一沉再弹回；receiver 收在抽屉里就是抽屉弹一下 */
   const land = (receiver: DeskObjectId) => {
-    setAwaiting(null)
-    setReceiving(receiver)
-    if (receiveTimer.current) window.clearTimeout(receiveTimer.current)
-    receiveTimer.current = window.setTimeout(() => setReceiving(null), 540)
-    if (itemsRef.current.some((it) => it.object === receiver && it.stowed)) drawerRef.current?.bump()
+    setAwaiting((current) => current === receiver ? null : current)
+    const object = stageRef.current?.querySelector<HTMLElement>(`.desk-item[data-object="${receiver}"]:not(.is-stowed) > .desk-body`)
+    if (!object) {
+      drawerRef.current?.bump()
+      return
+    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    object.animate([
+      { scale: 1, translate: "0 0" },
+      { scale: 0.978, translate: "0 3px", offset: 0.25 },
+      { scale: 1.025, translate: "0 -1px", offset: 0.57 },
+      { scale: 1, translate: "0 0" },
+    ], { duration: 430, easing: "cubic-bezier(.3,.7,.4,1)" })
   }
 
   /**
-   * 从松手的位置缩小飞到 slot，落地后把物件从桌面拿走。
+   * 从松手的位置缩小飞到 slot。已领出的卡包等服务端确认归还再移除。
    * 返回的 Promise 在落地时完成；receiver 是接住它的桌面物件：起飞时先掀开翻盖，落地时扣回并弹一下。
    */
-  const flyInto = (item: DeskItem, source: FlightSource, slot: FlightSlot, receiver?: DeskObjectId) =>
+  const flyInto = (item: DeskItem, source: FlightSource, slot: FlightSlot, receiver?: DeskObjectId, onLand?: () => void) =>
     new Promise<void>((resolve) => {
       // 上一件还在飞：让它立刻落定，不然会被这一件顶掉、永远留在桌上
       flightDone.current?.()
@@ -433,18 +496,19 @@ export function DeskPage() {
         flightDone.current = null
         if (collectTimer.current) window.clearTimeout(collectTimer.current)
         collectTimer.current = null
-        remove(item.id)
+        if (onLand) onLand()
+        else if (!item.token) remove(item.id)
         setCollecting((current) => (current?.id === item.id ? null : current))
         if (receiver) land(receiver)
         resolve()
       }
       flightDone.current = done
-      collectTimer.current = window.setTimeout(done, 430)
+      collectTimer.current = window.setTimeout(done, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 430)
     })
 
   const collectCard = (item: DeskItem, source: FlightSource, destination = albumSlot()) => {
     if (!destination) return
-    void flyInto(item, source, destination, album ? undefined : "album").then(() => showToast("已收入卡册"))
+    void flyInto(item, source, destination, "album").then(() => showToast("已收入卡册"))
   }
 
   /**
@@ -524,29 +588,34 @@ export function DeskPage() {
   const quickCollectAll = () => {
     const cardSlot = albumSlot()
     const packSlot = backpackSlot()
-    const cards = cardSlot ? items.filter((it) => it.kind === "card") : []
-    const packs = packSlot ? items.filter((it) => it.kind === "pack") : []
+    const cards = cardSlot ? items.filter((it) => it.kind === "card" && (!it.card?.isHero || heroId != null)) : []
+    const packs = packSlot ? items.filter((it) => it.kind === "pack" && !returningPackIds.has(it.id)) : []
     const flying = [...cards, ...packs]
     if (!flying.length) return
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     setQuickTargets(Object.fromEntries(flying.map((it, index) => {
       const slot = (it.kind === "pack" ? packSlot : cardSlot)!
-      return [it.id, { dx: slot.left - it.x * stageSize.w, dy: slot.top - it.y * stageSize.h, index }]
+      const position = stagePosition(it, stageSize.w, stageSize.h)
+      const x = slot.left - position.left
+      const y = slot.top - position.top
+      const angle = tiltOf(it) * Math.PI / 180
+      return [it.id, { dx: x * Math.cos(angle) + y * Math.sin(angle), dy: y * Math.cos(angle) - x * Math.sin(angle), index }]
     })))
     if (packs.length) {
       // 第一个卡包起飞时掀开翻盖（卡包排在卡后面起飞），全部落地时扣回
-      if (receiveTimer.current) window.clearTimeout(receiveTimer.current)
-      receiveTimer.current = window.setTimeout(() => setAwaiting("backpack"), cards.length * 24)
+      if (quickLidTimer.current) window.clearTimeout(quickLidTimer.current)
+      if (!reduced) quickLidTimer.current = window.setTimeout(() => setAwaiting("backpack"), cards.length * 24)
     }
     if (quickTimer.current) window.clearTimeout(quickTimer.current)
     quickTimer.current = window.setTimeout(async () => {
       // 有 token 的卡包留到服务端确认归还后再删除，避免未登录或请求失败丢失凭证。
       flying.filter((it) => it.kind !== "pack" || !it.token).forEach((it) => remove(it.id))
+      if (cards.length) land("album")
       if (packs.length) land("backpack")
-      if (cards.length && !album) drawerRef.current?.bump()
-      setQuickTargets(null)
       const parts: string[] = []
       if (cards.length) parts.push(`${cards.length} 张卡收入卡册`)
       if (!packs.length) {
+        setQuickTargets(null)
         showToast(parts.join("，"))
         return
       }
@@ -559,6 +628,7 @@ export function DeskPage() {
         return result === null || (result && !(result.ok && result.data) && result.error?.code !== "invalid_token")
       })
       packs.filter((pack) => !failed.includes(pack)).forEach((pack) => remove(pack.id))
+      setQuickTargets(null)
       const latest = [...results].reverse().find((payload) => payload?.ok && payload.data)
       if (latest?.data && userId) {
         setPackState({ userId, data: latest.data.packs })
@@ -570,7 +640,7 @@ export function DeskPage() {
       if (returned) parts.push(`${returned} 个卡包放回背包`)
       if (failed.length) parts.push(`${failed.length} 个卡包放回失败，留在桌面`)
       showToast(parts.join("，"))
-    }, 440 + flying.length * 24)
+    }, reduced ? 0 : 440 + flying.length * 24)
   }
 
   /** 快速收卡：每件从原位缩小飞向目标，依次错开 24ms */
@@ -593,15 +663,14 @@ export function DeskPage() {
     return () => animations.forEach((animation) => animation.cancel())
   }, [quickTargets])
 
-  const spawnPack = async () => {
-    const meta = POOL_META[pool]
-    if (!user) {
-      showToast("请先用 osu! 登录")
-      return
-    }
+  const spawnPack = async (selected: PackPool, userId: string) => {
+    if (dealingBusy.current || openingBusy.current || userIdRef.current !== userId) return
+    const meta = POOL_META[selected]
+    dealingBusy.current = true
+    setIsDealing(true)
     try {
       const res = await fetch(
-        `/api/users/${user.id}/packs/${SERVER_POOL[pool]}/take`,
+        `/api/users/${userId}/packs/${SERVER_POOL[selected]}/take`,
         { method: "POST", credentials: "include" },
       )
       const payload = (await res.json().catch(() => null)) as
@@ -612,30 +681,27 @@ export function DeskPage() {
         refreshPacks()
         return
       }
-      setPackState({ userId: user.id, data: payload.data.packs })
+      if (userIdRef.current !== userId) return
+      setPackState({ userId, data: payload.data.packs })
+      const id = newId("pack")
+      const stage = stageRef.current
+      const size = { w: stage?.clientWidth || stageSize.w, h: stage?.clientHeight || stageSize.h }
+      const near = randomNear({ x: size.w * .5, y: size.h * .38 }, size.w * .18, size.h * .13)
+      const { token } = payload.data
+      pendingDeals.current.add(id)
+      spawn((current) => placeDeskItems([{ id, kind: "pack", pool: selected, token, near }],
+        current.filter((item) => !item.card?.isHero || heroId != null), size))
       window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
-      const topZ = Math.max(0, ...items.map((it) => it.z)) + 1
-      const packCount = items.filter((it) => it.kind === "pack").length
-      const offset = ((packCount % 3) - 1) * 0.045
-      const pack: DeskItem = {
-        id: newId("pack"),
-        kind: "pack",
-        x: 0.3 + offset,
-        y: 0.3,
-        z: topZ,
-        pool,
-        token: payload.data.token,
-      }
-      spawn([pack])
-      showToast(`${meta.label} · 卡包已发到桌面`)
     } catch {
-      showToast("发牌失败")
+      showToast("发卡包失败")
+    } finally {
+      dealingBusy.current = false
+      setIsDealing(false)
     }
   }
 
   /**
-   * 卡包放回背包。给了 flight 就从松手的位置飞进去，请求和飞行同时进行；
-   * 不给（找不到落点）就直接拿走。item 要传拖起之前的那份：放回失败时按它的位置摆回桌面。
+   * 请求和飞行动画同时进行，归还失败时让卡包重新显现在原处。
    */
   const returnPack = async (
     item: DeskItem,
@@ -645,17 +711,14 @@ export function DeskPage() {
       showToast("请先登录，卡包留在桌面")
       return
     }
-    let landed: Promise<void>
-    if (flight) {
-      landed = flyInto(item, flight.source, flight.slot, flight.receiver)
-    } else {
-      remove(item.id)
-      landed = Promise.resolve()
-    }
+    if (returningPackIds.has(item.id)) return
+    if (item.token) setReturningPackIds((current) => new Set(current).add(item.id))
+    const landed = flight ? flyInto(item, flight.source, flight.slot, flight.receiver) : Promise.resolve()
 
     // 本地原型卡包没有预扣库存，可以直接收走。
     if (!item.token) {
-      await landed
+      if (flight) await landed
+      else remove(item.id)
       refreshPacks()
       showToast("卡包已从桌面收回")
       return
@@ -665,38 +728,48 @@ export function DeskPage() {
     const request = postPackReturn(userId, item.token)
 
     const [payload] = await Promise.all([request, landed])
+    setReturningPackIds((current) => {
+      const next = new Set(current)
+      next.delete(item.id)
+      return next
+    })
     if (payload?.ok && payload.data) {
+      remove(item.id)
       setPackState({ userId, data: payload.data.packs })
       window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
       showToast("卡包已放回背包")
       return
     }
     if (payload?.error?.code === "invalid_token") {
-      // 服务端明确拒绝：这个包已经失效，留在桌上也开不了
+      remove(item.id)
       refreshPacks()
       showToast("卡包已从桌面收回")
       return
     }
-    // 没还成：把包摆回拖起之前的位置，放到最上面
-    const topZ = Math.max(0, ...itemsRef.current.map((it) => it.z)) + 1
-    spawn([{ ...item, z: topZ }])
     refreshPacks()
     showToast("放回失败，卡包留在桌面")
   }
 
-  const startDrag = (e: ReactPointerEvent<HTMLDivElement>, item: DeskItem) => {
+  const startDrag = (e: ReactPointerEvent<HTMLDivElement>, item: DeskItem, allowTap = true) => {
+    if (e.button !== 0 || !e.isPrimary || releasePointer.current || openingBusy.current || reveal) return
     const stage = stageRef.current
     if (!stage) return
+    const handle = e.currentTarget
+    const pointerId = e.pointerId
+    e.preventDefault()
+    handle.setPointerCapture(pointerId)
+    handle.dataset.held = ""
     const rect = stage.getBoundingClientRect()
     const size = sizeOf(item)
     // 从抽屉里拿出来：按原尺寸抓在物件正中
     const fromDrawer = !!item.stowed
+    const position = stagePosition(item, rect.width, rect.height)
     const originX = fromDrawer
       ? Math.min(Math.max(e.clientX - rect.left - size.w / 2, 0), rect.width - size.w)
-      : item.x * rect.width
+      : position.left
     const originY = fromDrawer
       ? Math.min(Math.max(e.clientY - rect.top - size.h / 2, 0), rect.height - size.h)
-      : item.y * rect.height
+      : position.top
     const startX = e.clientX
     const startY = e.clientY
     const grab = {
@@ -780,7 +853,7 @@ export function DeskPage() {
     }
 
     const onMove = (ev: PointerEvent) => {
-      if (ev.pointerId !== e.pointerId) return
+      if (ev.pointerId !== pointerId) return
       const dx = ev.clientX - startX
       const dy = ev.clientY - startY
       if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return
@@ -789,50 +862,74 @@ export function DeskPage() {
         liftPointer.current = { x: rect.left + originX, y: rect.top + originY }
         setLifted({ item, grab })
       }
-      nx = Math.min(Math.max(originX + dx, 0), rect.width - size.w)
-      ny = Math.min(Math.max(originY + dy, 0), rect.height - size.h)
+      nx = Math.min(Math.max(originX + dx, 0), Math.max(0, rect.width - size.w))
+      ny = Math.min(Math.max(originY + dy, 0), Math.max(0, rect.height - size.h))
       liftPointer.current = { x: rect.left + nx, y: rect.top + ny }
 
       hitX = ev.clientX
       hitY = ev.clientY
       if (!hitFrame) hitFrame = requestAnimationFrame(updateTarget)
     }
-    const onUp = (ev: PointerEvent) => {
-      if (ev.pointerId !== e.pointerId) return
-      if (ev.type === "pointerup") onMove(ev)
-      if (hitFrame) cancelAnimationFrame(hitFrame)
-      if (moved && ev.type === "pointerup") updateTarget()
+    const release = () => {
+      releasePointer.current = null
       window.removeEventListener("pointermove", onMove)
       window.removeEventListener("pointerup", onUp)
-      window.removeEventListener("pointercancel", onUp)
+      window.removeEventListener("pointercancel", onCancel)
+      window.removeEventListener("blur", cancelDrag)
+      window.removeEventListener("keydown", onDragKey, true)
+      handle.removeEventListener("lostpointercapture", onCancel)
+      if (handle.hasPointerCapture(pointerId)) handle.releasePointerCapture(pointerId)
+      delete handle.dataset.held
+      if (hitFrame) cancelAnimationFrame(hitFrame)
+      if (drawerTimer) window.clearTimeout(drawerTimer)
+      if (drawerHot) drawerRef.current?.hint(false)
+      if (deckSlot != null) window.dispatchEvent(new CustomEvent(DECK_HOVER_EVENT, { detail: null }))
+      if (albumPanelHover) window.dispatchEvent(new CustomEvent(ALBUM_HOVER_EVENT, { detail: false }))
+      if (backpackPanelHover) window.dispatchEvent(new CustomEvent(BACKPACK_HOVER_EVENT, { detail: false }))
+    }
+    const cancelDrag = () => {
+      release()
+      setLifted(null)
+      setDropTarget(null)
+    }
+    const onCancel = (ev: PointerEvent) => {
+      if (ev.pointerId === pointerId) cancelDrag()
+    }
+    const onDragKey = (ev: KeyboardEvent) => {
+      if (ev.key !== "Escape" || !moved) return
+      ev.preventDefault()
+      ev.stopImmediatePropagation()
+      cancelDrag()
+    }
+    const onUp = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return
+      onMove(ev)
+      if (hitFrame) cancelAnimationFrame(hitFrame)
+      if (moved) updateTarget()
       const ghost = document.querySelector<HTMLElement>(".desk-ghost__body")
       const pose = ghost ? getComputedStyle(ghost) : null
       const source = {
         left: nx, top: ny,
         viewportLeft: rect.left + nx, viewportTop: rect.top + ny,
-        transform: pose?.transform ?? `rotate(${tiltOf(item.id)}deg)`,
+        transform: pose?.transform ?? `rotate(${tiltOf(item)}deg)`,
         transformOrigin: pose?.transformOrigin ?? "50% 50%",
       }
-      setLifted(null)
-      if (deckSlot != null) window.dispatchEvent(new CustomEvent(DECK_HOVER_EVENT, { detail: null }))
-      if (albumPanelHover) window.dispatchEvent(new CustomEvent(ALBUM_HOVER_EVENT, { detail: false }))
-      if (backpackPanelHover) window.dispatchEvent(new CustomEvent(BACKPACK_HOVER_EVENT, { detail: false }))
-      setDropTarget(null)
-      if (drawerTimer) window.clearTimeout(drawerTimer)
-      if (drawerHot) drawerRef.current?.hint(false)
+      cancelDrag()
       if (!moved) {
-        if (ev.type === "pointerup") void onTap(item)
-        return
-      }
-      if (ev.type === "pointercancel") {
-        if (!fromDrawer) move(item.id, nx / rect.width, ny / rect.height)
+        if (allowTap) onTap(item)
         return
       }
       if (drawerHot) {
         if (item.kind === "object" && item.object) {
-          stow(item.id)
-          drawerRef.current?.bump()
-          showToast(`${OBJECT_META[item.object].thing}收进了抽屉`)
+          const object = item.object
+          const slot = drawerSlot(object, size)
+          const putAway = () => {
+            stow(item.id)
+            drawerRef.current?.bump()
+            showToast(`${OBJECT_META[object].thing}收进了抽屉`)
+          }
+          if (slot) void flyInto(item, source, { ...slot, scale: 0.24 }, undefined, putAway)
+          else putAway()
         } else if (item.kind === "card") {
           collectCard(item, source)
         } else {
@@ -859,13 +956,25 @@ export function DeskPage() {
         return
       }
       if (deckSlot != null && assignId != null) {
-        window.dispatchEvent(
-          new CustomEvent(DECK_ASSIGN_EVENT, {
-            detail: { userCardId: assignId, slot: deckSlot },
-          }),
-        )
-        remove(item.id)
-        showToast(`已放入卡组第 ${deckSlot + 1} 槽`)
+        const slot = deckSlot
+        const cell = stage.querySelector<HTMLElement>(`.book__panel.is-active .book__spread:not([data-preload]) .deck-slot[data-slot="${slot}"]`)
+        window.dispatchEvent(new CustomEvent<DeckAssignment>(DECK_ASSIGN_EVENT, {
+          detail: {
+            userCardId: assignId,
+            slot,
+            onSaved: () => {
+              const destination = cell?.isConnected && !cell.closest("[inert]") ? cell.getBoundingClientRect() : null
+              if (destination) {
+                void flyInto(item, source, {
+                  left: destination.left + (destination.width - size.w) / 2 - rect.left,
+                  top: destination.top + (destination.height - size.h) / 2 - rect.top,
+                  scale: Math.min(destination.width / size.w, destination.height / size.h),
+                })
+              } else remove(item.id)
+              showToast(`已放入卡组第 ${slot + 1} 槽`)
+            },
+          },
+        }))
         return
       }
       if (target === "album") {
@@ -884,9 +993,13 @@ export function DeskPage() {
       if (settleTimer.current) window.clearTimeout(settleTimer.current)
       settleTimer.current = window.setTimeout(() => setSettling(null), 460)
     }
+    releasePointer.current = release
     window.addEventListener("pointermove", onMove)
     window.addEventListener("pointerup", onUp)
-    window.addEventListener("pointercancel", onUp)
+    window.addEventListener("pointercancel", onCancel)
+    window.addEventListener("blur", cancelDrag)
+    window.addEventListener("keydown", onDragKey, true)
+    handle.addEventListener("lostpointercapture", onCancel)
   }
 
   const openBook = (panel: PanelId, item: DeskItem) => {
@@ -895,145 +1008,180 @@ export function DeskPage() {
     const rect = stage?.getBoundingClientRect()
     // 收在抽屉里的物件从它那一格翻开
     const cell = item.stowed && item.object ? drawerRef.current?.targetRect(item.object) : null
-    setBook({
-      panel,
-      origin: cell
+    selectBook(panel, cell
         ? { x: cell.left + cell.width / 2, y: cell.top + cell.height / 2 }
         : rect
           ? { x: rect.left + item.x * rect.width + size.w / 2, y: rect.top + item.y * rect.height + size.h / 2 }
-          : null,
-    })
+          : null)
   }
 
-  const onTap = async (item: DeskItem) => {
-    if (item.kind === "object" && item.object) {
-      if (item.object === "button") setPressing(true)
-      else openBook(item.object, item)
+  const openDeskPacks = async (packs: DeskItem[]) => {
+    if (!packs.length || dealPressTimer.current != null || dealingBusy.current || openingBusy.current || reveal || quickTargets || collecting) return
+    if (!user) {
+      showToast("请先登录")
       return
     }
 
-    if (item.kind === "pack") {
-      if (openingBusy.current) return
-      if (!user) {
-        showToast("请先用 osu! 登录")
+    openingBusy.current = true
+    setToast(null)
+    setOpeningPacks(packs)
+    try {
+      const opened: { pack: DeskItem; results: NonNullable<OpenResponse["data"]>["results"] }[] = []
+      let inventory: Record<string, number> | undefined
+      let failure: string | undefined
+
+      for (const pack of packs) {
+        const packPool = pack.pool ?? "normal"
+        try {
+          const res = await fetch(`/api/packs/${SERVER_POOL[packPool]}/open`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ count: 5, token: pack.token }),
+          })
+          const payload = (await res.json()) as OpenResponse
+          if (!res.ok || !payload.ok || !payload.data) {
+            const code = payload.error?.code
+            if (code === "no_packs" || code === "invalid_token") {
+              remove(pack.id)
+              failure ??= "失效的桌面卡包已移除"
+            } else {
+              // 开包失败后服务端把卡包退回背包，原有 token 已经用掉。
+              if (code === "open_failed" && pack.token) remove(pack.id)
+              failure ??= payload.error?.message ?? "开包失败"
+            }
+            continue
+          }
+
+          remove(pack.id)
+          opened.push({ pack, results: payload.data.results })
+          inventory = payload.data.packs ?? inventory
+        } catch {
+          // 旧存档没有 token，请求未确认时移除桌面占位，避免再次扣库存。
+          if (!pack.token) remove(pack.id)
+          failure = "开包请求中断，可在卡册确认已获得的卡牌"
+          break
+        }
+      }
+
+      if (inventory) setPackState({ userId: user.id, data: inventory })
+      window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
+      if (!opened.length) {
+        showToast(failure ?? "开包失败")
         return
       }
 
-      const stage = stageRef.current
-      let rect: OriginRect | undefined
-      if (stage) {
-        const r = stage.getBoundingClientRect()
-        const size = ITEM_SIZE.pack
-        rect = {
-          left: r.left + item.x * r.width,
-          top: r.top + item.y * r.height,
-          width: size.w,
-          height: size.h,
-        }
-      }
-      const packPool = item.pool ?? "normal"
-
-      openingBusy.current = true
-      showToast("开包中…")
-      let showingResults = false
-      try {
-        const res = await fetch(`/api/packs/${SERVER_POOL[packPool]}/open`, {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ count: 5, token: item.token }),
-        })
-        const payload = (await res.json()) as OpenResponse
-        if (!res.ok || !payload.ok || !payload.data) {
-          if (
-            payload.error?.code === "no_packs" ||
-            payload.error?.code === "invalid_token"
-          ) {
-            remove(item.id)
-            refreshPacks()
-            showToast("这个桌面卡包已经失效，已移除")
-          } else {
-            showToast(payload.error?.message ?? "开包失败")
+      const definitions = new Map<string, ReturnType<typeof fetchCard>>()
+      const bursts = opened.map(({ pack }, index) => ({ pack, delay: Math.min(560, index * 140) }))
+      const pulls = opened.flatMap(({ pack, results }, packIndex) =>
+        results.map((result, index) => ({
+          pack,
+          result,
+          delay: bursts[packIndex].delay + 235 + (CARD_RELEASE_OFFSETS[index] ?? index * 54),
+        })),
+      )
+      const loaded = await Promise.allSettled(
+        pulls.map(async ({ pack, result, delay }) => {
+          let definition = definitions.get(result.cardId)
+          if (!definition) {
+            definition = fetchCard(result.cardId)
+            definitions.set(result.cardId, definition)
           }
-          return
-        }
-        // 服务端已核销 token，卡面加载失败也不能留下可重复开的桌面包。
-        remove(item.id)
-        if (payload.data.packs && user) {
-          setPackState({ userId: user.id, data: payload.data.packs })
-          window.dispatchEvent(new Event(PACKS_CHANGED_EVENT))
-        }
-
-        const cards: CardData[] = await Promise.all(
-          payload.data.results.map(async (result) => {
-            const detailRes = await fetch(`/api/cards/${result.cardId}`, { credentials: "include" })
-            const detail = (await detailRes.json()) as CardResponse
-            if (!detailRes.ok || !detail.ok || !detail.data) {
-              throw new Error(detail.error?.message ?? "卡牌详情加载失败")
-            }
-            const row = detail.data
-            return toDeskCard(toFace({
-              ...row,
-              userCardId: result.userCardId,
-              level: 1,
-              constellation: 0,
-              exp: 0,
-              foil: result.foil,
-            }), result.userCardId)
-          }),
-        )
-
-        if (userIdRef.current !== user.id) return
-        showingResults = true
-        setOpening({ key: item.id, x: item.x, y: item.y, cards, pool: packPool, rect })
-      } catch (err) {
-        showToast(err instanceof Error ? err.message : "开包失败")
-      } finally {
-        if (!showingResults) openingBusy.current = false
+          const face = toFace({ ...(await definition), foil: result.foil })
+          return { pack, delay, card: toDeskCard(face, result.userCardId) }
+        }),
+      )
+      const cards = loaded.flatMap((result) => result.status === "fulfilled" ? [result.value] : [])
+      if (userIdRef.current !== user.id) return
+      if (!cards.length) {
+        showToast(`已开启 ${opened.length} 包，可在卡册查看获得的卡牌`)
+        return
       }
+
+      const notices = []
+      if (failure) notices.push(`有 ${packs.length - opened.length} 包未取得结果。${failure}。`)
+      if (cards.length < pulls.length) {
+        notices.push(`另有 ${pulls.length - cards.length} 张卡可在卡册查看。`)
+      }
+      if (notices.length) showToast(notices.join(" "), 4000)
+
+      const stage = stageRef.current
+      const size = { w: stage?.clientWidth || stageSize.w, h: stage?.clientHeight || stageSize.h }
+      const openedIds = new Set(opened.map(({ pack }) => pack.id))
+      const occupied = itemsRef.current.filter((item) => !openedIds.has(item.id) && (!item.card?.isHero || heroId != null))
+      const burstZ = Math.max(0, ...itemsRef.current.map((item) => item.z)) + 1
+      const cardsByPack = new Map<string, typeof cards>()
+      for (const pull of cards) {
+        const group = cardsByPack.get(pull.pack.id)
+        if (group) group.push(pull)
+        else cardsByPack.set(pull.pack.id, [pull])
+      }
+      const flights = new Map<string, PackBurst>()
+      const landed: DeskItem[] = []
+      for (const group of cardsByPack.values()) {
+        const pack = group[0].pack
+        const spill = scatterPackCards(group.map(({ card }) => card), pack, occupied, size, burstZ + 1 + landed.length)
+        spill.forEach((item, index) => flights.set(item.id, { pack, delay: group[index].delay }))
+        landed.push(...spill)
+        occupied.push(...spill)
+      }
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        const duration = Math.max(
+          ...bursts.map(({ delay }) => delay + PACK_BURST_MS),
+          ...cards.map(({ delay }) => delay + CARD_FLIGHT_MS),
+        )
+        setReveal({ bursts, flights, duration, zIndex: burstZ })
+      }
+      spawn(landed)
+    } finally {
+      openingBusy.current = false
+      setOpeningPacks([])
     }
   }
 
-  const finishOpening = () => {
-    if (!opening) return
-    spawn(cardsToItems(opening.cards, opening.x + 0.01, opening.y + 0.02))
-    openingBusy.current = false
-    setOpening(null)
+  const packCounts = packState && packState.userId === user?.id ? packState.data : undefined
+  const deskBusy = pressing || isDealing || openingPacks.length > 0 || !!reveal || !!quickTargets || !!collecting || !!lifted
+  const poolEmpty = !!user && (packCounts?.[SERVER_POOL[pool]] ?? 0) <= 0
+  const dealDisabled = !userReady || deskBusy || poolEmpty
+  const beginDeal = () => {
+    if (dealDisabled || dealPressTimer.current != null || dealingBusy.current || openingBusy.current) return
+    if (!user) {
+      selectBook("account")
+      return
+    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      void spawnPack(pool, user.id)
+      return
+    }
+    setPressing(true)
+    dealPressTimer.current = window.setTimeout(() => {
+      dealPressTimer.current = null
+      setPressing(false)
+      void spawnPack(pool, user.id)
+    }, DEAL_PRESS_MS)
   }
 
-  const dropOpeningCard = (card: CardData) => {
-    if (!opening) return
-    const left = opening.cards.filter(
-      (item) => !(item.cardId === card.cardId && item.userCardId === card.userCardId),
-    )
-    spawnCards([card])
-    showToast(`${card.name} · 已放到桌面`)
-    if (left.length === 0) openingBusy.current = false
-    setOpening(left.length === 0 ? null : { ...opening, cards: left })
+  const onTap = (item: DeskItem) => {
+    if (item.kind === "object" && item.object) {
+      if (item.object === "button") beginDeal()
+      else openBook(item.object, item)
+      return
+    }
+    if (item.kind === "pack" && !returningPackIds.has(item.id)) void openDeskPacks([item])
   }
 
-  const quickFinishOpening = () => {
-    if (!opening) return
-    openingBusy.current = false
-    setOpening(null)
-    showToast(`已收入卡册 ×${opening.cards.length}`)
-  }
-
-  const visibleItems = items.filter((item) => !(item.card?.isHero && !user?.hero))
+  const openingIds = new Set(openingPacks.map(({ id }) => id))
+  const visibleItems = [...items.filter((item) => !openingIds.has(item.id)), ...openingPacks]
+    .filter((item) => !item.card?.isHero || heroId != null)
   const stowedItems = items.filter((item) => item.stowed)
-  const poolPacks =
-    packState && packState.userId === user?.id
-      ? (packState.data[SERVER_POOL[pool]] ?? 0)
-      : 0
+  const deskPacks = visibleItems.filter((item) => item.kind === "pack" && !returningPackIds.has(item.id))
   const deal: DealButtonState = {
     pool,
-    available: !!user && poolPacks > 0,
+    empty: poolEmpty,
+    disabled: dealDisabled,
     pressing,
     onPool: setPool,
-    onPressed: () => {
-      setPressing(false)
-      void spawnPack()
-    },
+    onActivate: beginDeal,
   }
 
   const renderItem = (item: DeskItem) => {
@@ -1044,6 +1192,7 @@ export function DeskPage() {
           username={user?.username ?? null}
           avatarUrl={user?.avatarUrl ?? null}
           dropping={dropTarget === item.object}
+          open={book?.panel === item.object}
           deal={deal}
         />
       )
@@ -1064,23 +1213,34 @@ export function DeskPage() {
         <div className="desk-topbar__main">
           <img className="desk-topbar__brand" src="/brand/choke-lockup-horizontal-light.svg" alt="Choke!" />
           <div className="desk-topbar__actions">
+            {!user && testAccount?.enter && <a className="desk-button" href={testAccount.enter}>测试账号登录</a>}
+            {deskPacks.length > 1 && (
+              <button type="button" className="desk-button desk-button--open" disabled={!user || deskBusy}
+                onClick={() => void openDeskPacks(deskPacks)}>
+                开启所有
+              </button>
+            )}
+            {reveal && (
+              <button type="button" className="desk-button" onClick={() => setReveal(null)}>跳过动画</button>
+            )}
             <button
               type="button"
               className="desk-button"
               onClick={quickCollectAll}
-              disabled={!items.some((it) => it.kind === "card" || it.kind === "pack")}
+              disabled={deskBusy || (deskPacks.length === 0 && !visibleItems.some((it) => it.kind === "card"))}
             >
               快速收卡
             </button>
             <button
               type="button"
               className="desk-button"
+              disabled={deskBusy}
               onClick={() => {
                 reset()
                 stowInvite(false)
               }}
             >
-              重置桌面
+              重置布局
             </button>
           </div>
         </div>
@@ -1104,63 +1264,104 @@ export function DeskPage() {
       >
         <div className="desk-layer">
           {visibleItems.map((item, index) => {
+            const isDealer = item.object === "button"
             const size = sizeOf(item)
+            const position = stagePosition(item, stageSize.w, stageSize.h)
             const isCollecting = collecting?.id === item.id
+            const isReturning = returningPackIds.has(item.id)
             const quickTarget = quickTargets?.[item.id]
             const flying = isCollecting || !!quickTarget
-            const dealX = stageSize.w / 2 - (item.x * stageSize.w + size.w / 2)
-            const tilt = tiltOf(item.id)
+            const dealX = stageSize.w / 2 - (position.left + size.w / 2)
+            const tilt = tiltOf(item)
+            const angle = tilt * Math.PI / 180
+            const flight = reveal?.flights.get(item.id)
+            const launch = flight && stagePosition(flight.pack, stageSize.w, stageSize.h)
+            const dx = launch ? launch.left + ITEM_SIZE.pack.w / 2 - position.left - size.w / 2 : 0
+            const dy = launch ? launch.top + ITEM_SIZE.pack.h * .15 - position.top - size.h / 2 : 0
+            const card = item.card
+            const motion = flight && launch ? {
+              x: dx * Math.cos(angle) + dy * Math.sin(angle),
+              y: dy * Math.cos(angle) - dx * Math.sin(angle),
+              rise: Math.min(72, 25 + Math.hypot(dx, dy) * .25, Math.max(8, launch.top - 16)),
+              delay: flight.delay,
+              shine: card && (card.foil || card.rarity === "Radiant" || card.rarity === "Prismatic")
+                ? RARITY_COLOR[card.rarity] : undefined,
+            } : undefined
             const style = {
-              left: isCollecting ? collecting.left : item.x * stageSize.w,
-              top: isCollecting ? collecting.top : item.y * stageSize.h,
+              left: isCollecting ? collecting.left : position.left,
+              top: isCollecting ? collecting.top : position.top,
               width: size.w,
               height: size.h,
               zIndex: flying ? 100000 : item.z,
               transform: isCollecting ? "none" : `rotate(${tilt}deg)`,
-              pointerEvents: flying ? "none" : undefined,
+              pointerEvents: flying || !!motion || openingIds.has(item.id) ? "none" : undefined,
               "--deal-x": `${dealX}px`,
               animationDelay: `${index * 40}ms`,
             } as CSSProperties
             const classes = [
               "desk-item",
+              item.kind !== "object" && "desk-item--loose",
+              openingIds.has(item.id) && "is-priming",
               (lifted?.item.id === item.id || isCollecting) && "is-lifted",
+              isReturning && "is-returning",
               item.stowed && "is-stowed",
               settling === item.id && "is-settling",
               flying && "is-collecting",
               awaiting != null && awaiting === item.object && "is-opening",
-              receiving != null && receiving === item.object && "is-receiving",
             ]
               .filter(Boolean)
               .join(" ")
             return (
               <div
                 key={item.id}
+                ref={item.kind === "pack" ? (node) => {
+                  if (node && pendingDeals.current.delete(item.id)) {
+                    animatePackDeal(node, position.top + size.h + ITEM_INSET)
+                  }
+                } : undefined}
                 className={classes}
                 style={style}
                 data-id={item.id}
+                data-kind={item.kind}
                 data-object={item.object}
                 onPointerDown={(e) => {
-                  if (e.button !== 0 || flying || item.stowed) return
-                  e.preventDefault()
-                  e.currentTarget.setPointerCapture(e.pointerId)
-                  startDrag(e, item)
+                  if (flying || item.stowed || isReturning) return
+                  const button = isDealer && e.target instanceof Element
+                    ? e.target.closest<HTMLButtonElement>(".obj-deal__button")
+                    : null
+                  if (button && e.button === 0) button.focus({ preventScroll: true })
+                  startDrag(e, item, !isDealer || !!button)
                 }}
-                tabIndex={!item.stowed && !flying && item.kind !== "card" ? 0 : undefined}
+                tabIndex={!isDealer && !item.stowed && !flying && !isReturning && item.kind !== "card" ? 0 : undefined}
                 onKeyDown={(event) => {
-                  if (event.target !== event.currentTarget || item.stowed || flying || event.repeat) return
+                  if (isDealer || event.target !== event.currentTarget || item.stowed || flying || event.repeat) return
                   if (event.key !== "Enter" && event.key !== " ") return
                   event.preventDefault()
                   void onTap(item)
                 }}
-                role={item.kind === "card" ? "group" : "button"}
-                aria-label={labelOf(item)}
+                role={isDealer || item.kind === "card" ? "group" : "button"}
+                aria-label={isDealer ? "发包装置" : labelOf(item)}
                 aria-hidden={item.stowed || undefined}
               >
                 {/* 收进抽屉的物件留着空壳不卸载，拖回桌面时不会再播一遍落桌动画；物件本身画在抽屉里 */}
-                <div className="desk-body">{item.stowed ? null : renderItem(item)}</div>
+                <div className="desk-body">
+                  {item.stowed ? null : item.kind === "card"
+                    ? <TabletopCard motion={motion}>{renderItem(item)}</TabletopCard>
+                    : renderItem(item)}
+                </div>
               </div>
             )
           })}
+          {reveal?.bursts.map(({ pack, delay }) => (
+            <TabletopPackBurst
+              key={pack.id}
+              position={stagePosition(pack, stageSize.w, stageSize.h)}
+              pool={pack.pool ?? "normal"}
+              tilt={tiltOf(pack)}
+              delay={delay}
+              zIndex={reveal.zIndex}
+            />
+          ))}
         </div>
 
         <DeskDrawer
@@ -1168,13 +1369,8 @@ export function DeskPage() {
           items={stowedItems}
           liftedId={lifted?.item.id ?? null}
           render={renderItem}
-          onItemPointerDown={(e, item) => {
-            if (e.button !== 0) return
-            e.preventDefault()
-            e.currentTarget.setPointerCapture(e.pointerId)
-            startDrag(e, item)
-          }}
-          onActivate={(item) => void onTap(item)}
+          onItemPointerDown={startDrag}
+          onActivate={onTap}
           extra={inviteStowed ? 1 : 0}
           slotRef={setInviteSlot}
         />
@@ -1186,7 +1382,7 @@ export function DeskPage() {
           stageRef={stageRef}
           onToast={showToast}
           onClaimed={onInviteClaimed}
-          onOpenBackpack={() => setBook({ panel: "backpack", origin: null })}
+          onOpenBackpack={() => selectBook("backpack", null)}
           stowed={inviteStowed}
           onStow={stowInvite}
           drawer={drawerRef}
@@ -1210,25 +1406,21 @@ export function DeskPage() {
             essence={user?.essence ?? 0}
             coins={user?.coins ?? 0}
             hero={user?.hero ?? null}
-            onSelect={(panel) => setBook((prev) => ({ panel, origin: prev?.origin ?? null }))}
-            onClose={() => setBook(null)}
+            pool={pool}
+            packCounts={packCounts}
+            onPool={setPool}
+            onCollectFromDesk={(userCardId) => {
+              items.filter((item) => deskCardId(item, heroId) === userCardId).forEach((item) => remove(item.id))
+            }}
+            testLoginHref={testAccount?.enter}
+            testExitHref={testAccount?.exit}
+            onSelect={selectBook}
+            onClose={() => selectBook(null)}
             onLogout={logout}
             onHeroClaimed={refreshUser}
           />
         )}
       </main>
-
-      {opening && (
-        <PackOpener
-          key={opening.key}
-          cards={opening.cards}
-          pool={opening.pool}
-          origin={opening.rect}
-          onDone={finishOpening}
-          onQuick={quickFinishOpening}
-          onDropCard={dropOpeningCard}
-        />
-      )}
 
       {lifted && (
         <DragGhost
@@ -1236,7 +1428,7 @@ export function DeskPage() {
           h={sizeOf(lifted.item).h}
           pointer={liftPointer}
           grab={lifted.grab}
-          tilt={tiltOf(lifted.item.id)}
+          tilt={tiltOf(lifted.item)}
         >
           {renderItem(lifted.item)}
         </DragGhost>
@@ -1247,7 +1439,7 @@ export function DeskPage() {
         if (!item) return null
         const size = sizeOf(item)
         return (
-          <div ref={collectionRef} className="desk-collection" style={{
+          <div ref={collectionRef} className="desk-collection" aria-hidden inert style={{
             left: collecting.viewportLeft,
             top: collecting.viewportTop,
             width: size.w, height: size.h,

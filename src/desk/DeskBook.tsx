@@ -25,10 +25,12 @@ import { BookContext, type BookApi } from "./BookPages"
 import { CardDragLayer } from "./DragGhost"
 import { CodexPanel } from "./CodexPanel"
 import { DeckPanel } from "./DeckPanel"
-import { GachaPanel, type PoolId } from "./GachaPanel"
+import { GachaPanel } from "./GachaPanel"
 import { MarketPanel } from "./MarketPanel"
 import { OBJECT_META } from "./objects"
-import { DESK_ADD_CARDS_EVENT, PACKS_CHANGED_EVENT } from "./drag"
+import { PACKS_CHANGED_EVENT } from "./drag"
+import { POOL_ORDER, SERVER_POOL } from "./rarity"
+import type { PackPool } from "./types"
 import "./book.css"
 
 export type PanelId = "codex" | "album" | "deck" | "backpack" | "battle" | "packs" | "market" | "about" | "account"
@@ -53,6 +55,12 @@ interface Props {
   essence?: number
   coins?: number
   hero?: ApiUserCard | null
+  pool: PackPool
+  packCounts?: Record<string, number>
+  testLoginHref?: string
+  testExitHref?: string
+  onPool: (pool: PackPool) => void
+  onCollectFromDesk: (userCardId: number) => void
   onSelect: (id: PanelId) => void
   onClose: () => void
   onLogout?: () => void
@@ -97,12 +105,18 @@ export function DeskBook({
   essence = 0,
   coins = 0,
   hero,
+  pool,
+  packCounts,
+  testLoginHref,
+  testExitHref,
+  onPool,
+  onCollectFromDesk,
   onSelect,
   onClose,
   onLogout,
   onHeroClaimed,
 }: Props) {
-  const [gachaPool, setGachaPool] = useState<PoolId>("normal")
+  const [pendingCard, setPendingCard] = useState<{ row: ApiUserCard; owner: string | null } | null>(null)
   const [leaving, setLeaving] = useState(false)
   const bookRef = useRef<HTMLElement>(null)
   const leaveTimer = useRef<number | null>(null)
@@ -141,10 +155,8 @@ export function DeskBook({
   const [revision, setRevision] = useState(0)
   const invalidate = useCallback(() => setRevision((value) => value + 1), [])
   useEffect(() => {
-    window.addEventListener(DESK_ADD_CARDS_EVENT, invalidate)
     window.addEventListener(PACKS_CHANGED_EVENT, invalidate)
     return () => {
-      window.removeEventListener(DESK_ADD_CARDS_EVENT, invalidate)
       window.removeEventListener(PACKS_CHANGED_EVENT, invalidate)
     }
   }, [invalidate])
@@ -237,7 +249,7 @@ export function DeskBook({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !document.querySelector(".card-detail")) close()
+      if (!event.defaultPrevented && event.key === "Escape" && !document.querySelector(".card-detail, .card-context-menu")) close()
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
@@ -394,26 +406,47 @@ export function DeskBook({
         )}
         {(warmed || panel === "album") && (
           <CachedPanel id="album" active={panel === "album"} api={api}>
-            <AlbumPanel userId={userId} />
+            <AlbumPanel
+              userId={userId}
+              onCollectFromDesk={onCollectFromDesk}
+              onChooseDeckSlot={(row) => {
+                setPendingCard({ row, owner: userId })
+                selectPanel("deck")
+              }}
+              onOpenPacks={() => selectPanel("packs")}
+              onLogin={() => selectPanel("account")}
+            />
           </CachedPanel>
         )}
         {(warmed || panel === "deck") && (
           <CachedPanel id="deck" active={panel === "deck"} api={api}>
-            <DeckPanel userId={userId} />
+            <DeckPanel
+              userId={userId}
+              pendingCard={pendingCard?.owner === userId ? pendingCard.row : null}
+              onClearPending={(row) => setPendingCard((current) => current?.row === row ? null : current)}
+            />
           </CachedPanel>
         )}
         {panel === "backpack" && (
           <BackpackPanel
             userId={userId}
-            onOpenGacha={(pool) => {
-              setGachaPool(pool as PoolId)
+            onOpenGacha={(serverPool) => {
+              onPool(POOL_ORDER.find((id) => SERVER_POOL[id] === serverPool) ?? "normal")
               selectPanel("packs")
             }}
             onHeroClaimed={onHeroClaimed}
           />
         )}
         {panel === "battle" && <BattlePanel userId={userId} onOpenDeck={() => selectPanel("deck")} />}
-        {panel === "packs" && <GachaPanel userId={userId} initialPool={gachaPool} />}
+        {panel === "packs" && (
+          <GachaPanel
+            userId={userId}
+            pool={pool}
+            packCounts={packCounts}
+            onPool={onPool}
+            onLogin={() => selectPanel("account")}
+          />
+        )}
         {panel === "market" && <MarketPanel userId={userId} onOpenAlbum={() => selectPanel("album")} />}
         {panel === "about" && <AboutPanel />}
         {panel === "account" && (
@@ -425,6 +458,8 @@ export function DeskBook({
             essence={essence}
             coins={coins}
             hero={hero}
+            testLoginHref={testLoginHref}
+            testExitHref={testExitHref}
             onLogout={onLogout}
             onOpenBackpack={() => selectPanel("backpack")}
           />

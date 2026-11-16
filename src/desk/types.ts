@@ -1,8 +1,7 @@
-import type { CardFaceData } from "@/card/types"
-
+import type { CardFaceData, Rarity } from "@/card/types"
 import type { DeskObjectId } from "./objects"
 
-export type Rarity = "C" | "UC" | "R" | "E" | "L" | "Radiant" | "Prismatic"
+export type { Rarity }
 
 export type ItemKind = "pack" | "card" | "object"
 
@@ -13,8 +12,6 @@ export interface CardData {
   cardId?: string
   /** user_cards 实例 id；有它才能直接拖进卡组 */
   userCardId?: number
-  /** 服务端完整卡面；仅旧存档与本地原型卡缺省 */
-  face?: CardFaceData
   name: string
   mapper: string
   rarity: Rarity
@@ -24,6 +21,7 @@ export interface CardData {
   banner?: string
   foil?: boolean
   isHero?: boolean
+  face?: CardFaceData
 }
 
 export interface DeskItem {
@@ -33,14 +31,13 @@ export interface DeskItem {
   x: number
   y: number
   z: number
+  tilt?: number
   /** 单个卡包所属卡池；卡包不再叠加数量 */
   pool?: PackPool
   /** 从背包拿到桌面时的一次性 token；旧存档可能没有 */
   token?: string
   card?: CardData
-  /** kind === "object" 时是哪件物件 */
   object?: DeskObjectId
-  /** 物件收进了桌沿的抽屉：桌面上不画它，x/y 留着收起前的位置。旧存档没有这个字段 = 在桌上 */
   stowed?: boolean
 }
 

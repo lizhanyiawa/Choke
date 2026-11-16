@@ -1,8 +1,7 @@
 import { faceFromDef } from "@/card/def"
 import type { CardFaceData, CardSkill, Job, Rarity } from "@/card/types"
 
-/** `/users/:id/cards` 和 `/users/:id/deck` 共用的卡行 */
-export interface ApiUserCard {
+export interface ApiCard {
   id: string
   name: string
   rarity: Rarity
@@ -17,12 +16,16 @@ export interface ApiUserCard {
   banner: string | null
   skills: CardSkill[]
   version: number
+  heroBonus?: number
+}
+
+/** `/users/:id/cards` 和 `/users/:id/deck` 共用的卡行 */
+export interface ApiUserCard extends ApiCard {
   userCardId: number
   level: number
   constellation: number
   exp: number
   foil?: boolean
-  heroBonus?: number
   obtainedAt?: string
 }
 
@@ -46,7 +49,9 @@ export interface ApiDeck {
   updatedAt: string | null
 }
 
-export function toFace(row: ApiUserCard): CardFaceData {
+export function toFace(
+  row: ApiCard & Partial<Pick<ApiUserCard, "level" | "constellation" | "foil">>,
+): CardFaceData {
   return faceFromDef(
     {
       id: row.id,
@@ -70,11 +75,15 @@ export function toFace(row: ApiUserCard): CardFaceData {
   )
 }
 
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
+export async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { credentials: "include", ...init })
   const data = await res.json()
   if (!data.ok) throw new Error(data.error?.message ?? "请求失败")
   return data.data as T
+}
+
+export function fetchCard(cardId: string): Promise<ApiCard> {
+  return request<ApiCard>(`/api/cards/${encodeURIComponent(cardId)}`)
 }
 
 export function fetchUserCards(
@@ -242,8 +251,23 @@ export interface OwnMarketListing {
   card: ApiUserCard
 }
 
-export function fetchMarketListings(signal?: AbortSignal): Promise<MarketListing[]> {
-  return request<MarketListing[]>("/api/market/listings", { signal })
+export type MarketSort = "recent" | "price-asc" | "price-desc"
+
+export function fetchMarketPage(filters: {
+  query: string
+  rarity: Rarity | ""
+  sort: MarketSort
+  limit: number
+  offset: number
+}, signal?: AbortSignal): Promise<{ rows: MarketListing[]; total: number }> {
+  const params = new URLSearchParams({
+    sort: filters.sort,
+    limit: String(filters.limit),
+    offset: String(filters.offset),
+  })
+  if (filters.query) params.set("q", filters.query)
+  if (filters.rarity) params.set("rarity", filters.rarity)
+  return request(`/api/market/search?${params}`, { signal })
 }
 
 export function fetchOwnListings(

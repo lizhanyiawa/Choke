@@ -1,0 +1,55 @@
+:root {
+  --client-ease-out: cubic-bezier(.18, .76, .27, 1);
+  --client-press-scale: .955;
+  --client-rebound-scale: 1.018;
+}
+
+:where(.developer-tools__entry, .edge-prep__member, .edge-prep__skill, .edge-card, .edge-preview__row) {
+  --client-press-scale: .985;
+  --client-rebound-scale: 1.007;
+}
+
+:where(button, a[class][href]):not(:disabled, [aria-disabled="true"], [data-custom-press]):active {
+  filter: brightness(.89);
+}
+
+:where(button, a[class][href]):focus-visible {
+  outline: 2px solid var(--client-accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(button, a[class][href]) {
+    transition: filter 120ms ease, background-color 150ms ease, color 150ms ease;
+  }
+
+  :where(button, a[class][href]):not(:disabled, [aria-disabled="true"], [data-custom-press]):active {
+    scale: var(--client-press-scale);
+    translate: 0 2px;
+    transition: scale 45ms ease-out, translate 45ms ease-out, filter 45ms ease-out;
+  }
+
+  :where(
+    .battle-lobby, .battle-field, .edge-prep__shell, .edge-preview__layout, .edge-storyboard,
+    .edge-shell, .edge-sparring, .developer-tools__body, .lab, .editor__form, .editor__preview, .pool-lab__detail
+  ) {
+    animation: client-scene-in 220ms var(--client-ease-out) backwards;
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  :where(.client-key, .desk-button):not(:disabled, [aria-disabled="true"], :active):hover {
+    translate: 0 -1px;
+  }
+
+  .backpack-pack {
+    transition: translate 170ms var(--client-ease-out), filter 160ms ease;
+  }
+
+  .backpack-pack:not(.is-empty):hover:not(:active) {
+    translate: 0 -3px;
+    filter: brightness(1.045);
+  }
+}
+
+@keyframes client-scene-in { from { opacity: .38; translate: 0 7px; } }

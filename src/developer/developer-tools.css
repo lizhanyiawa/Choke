@@ -1,0 +1,56 @@
+.developer-tools {
+  min-height: 100dvh;
+  background: var(--client-bg);
+  color: var(--client-ink);
+  font-family: var(--client-font);
+}
+.developer-tools__mode { justify-self: end; color: var(--bk-osu-text); font-size: 12px; }
+.developer-tools__body {
+  display: grid;
+  grid-template-columns: minmax(215px, 4fr) minmax(260px, 6fr);
+  gap: 14px;
+  max-width: 1040px;
+  margin-inline: auto;
+  padding: clamp(14px, 3.8vw, 36px) clamp(12px, 3vw, 30px);
+}
+.developer-tools__entries { align-self: start; display: flex; flex-direction: column; gap: 4px; padding: 8px; }
+.developer-tools__entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  min-height: 43px;
+  padding: 8px 11px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--client-ink);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.developer-tools__entry + .developer-tools__entry { border-top-color: var(--client-line); }
+.developer-tools__entry:is(:hover, :focus-visible) { background: var(--bk-raised); }
+.developer-tools__entry :is(svg, kbd) { color: var(--client-muted); }
+.developer-tools__entry:is(:hover, :focus-visible) svg { color: var(--bk-osu-text); }
+.developer-tools__entry kbd { font: 11px var(--bk-mono); }
+.developer-tools__bench {
+  align-self: start;
+  display: grid;
+  gap: 16px;
+  padding: clamp(14px, 2.5vw, 24px);
+}
+.developer-tools__status { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.developer-tools__status > span { color: var(--client-muted); font-size: 13px; }
+.developer-tools__status b { color: var(--client-ink); margin-inline-start: 4px; }
+.developer-tools__status b[data-online="true"] { color: var(--bk-good); }
+.developer-tools__status .client-key { min-height: 31px; padding: 4px 12px; }
+.developer-tools__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin: 0; }
+.developer-tools__stats > div { min-width: 0; padding: 10px; border: 1px solid var(--client-line); border-radius: 8px; background: var(--client-bg); box-shadow: var(--client-well-shadow); }
+.developer-tools__stats dt { color: var(--client-muted); font-size: 11px; }
+.developer-tools__stats dd { margin: 3px 0 0; font: 700 clamp(12px, 1.9vw, 18px) var(--bk-mono); overflow-wrap: anywhere; }
+.developer-tools__actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.developer-tools__actions .client-key { min-height: 34px; padding-inline: 11px; }
+.developer-tools__error { margin: 0; color: var(--bk-bad); font-size: 13px; }
+@media (max-width: 630px) {
+  .developer-tools__body { grid-template-columns: minmax(0, 1fr); }
+}
