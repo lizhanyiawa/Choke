@@ -91,6 +91,25 @@
   display: flex;
   gap: 8px;
 }
+/* 界面大小：− 百分比 + 三个按钮拼成一组 */
+.desk-zoom {
+  display: flex;
+  gap: 2px;
+}
+.desk-zoom .desk-button {
+  padding: 0 10px;
+  border-radius: 0;
+}
+.desk-zoom .desk-button:first-child {
+  border-radius: 8px 0 0 8px;
+}
+.desk-zoom .desk-button:last-child {
+  border-radius: 0 8px 8px 0;
+}
+.desk-zoom .desk-button:nth-child(2) {
+  min-width: 56px;
+  font-variant-numeric: tabular-nums;
+}
 
 .desk-button {
   height: 32px;

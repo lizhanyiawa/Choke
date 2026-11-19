@@ -16,8 +16,9 @@ export const DeskCard = memo(function DeskCard({
   card: CardData
   hero: ApiUserCard | null
 }) {
+  // 桌上的卡都在屏幕里；拿起时拖拽影子会新画一张，懒加载会让头像空一下
   return (
-    <GameCardFace card={card.isHero && hero ? toFace(hero) : cardFromDesk(card)} />
+    <GameCardFace card={card.isHero && hero ? toFace(hero) : cardFromDesk(card)} eager />
   )
 })
 

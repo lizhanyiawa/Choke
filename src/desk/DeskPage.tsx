@@ -54,6 +54,8 @@ import { publishDeskCardIds } from "./presence"
 import { cardsToItems, ITEM_SIZE, newId, sizeOf, useDesk } from "./store"
 import type { CardData, DeskItem, PackPool } from "./types"
 import { DeskCard, DeskPack, LevelMeter } from "./DeskBits"
+import { useTheme } from "@/components/theme-provider"
+import { UI_SCALE_STEPS, useUiScale } from "./ui-scale"
 import {
   POOL_KEY,
   SERVER_POOL,
@@ -68,9 +70,12 @@ import {
 } from "./desk-page-model"
 import { PackOpener, type OriginRect } from "./opening/PackOpener"
 import "./desk.css"
+import "./light.css"
 
 export function DeskPage() {
   const { items, move, front, spawn, remove, reset, stow, unstow, refreshFaces } = useDesk()
+  const { resolvedTheme, setTheme } = useTheme()
+  const { step: uiStep, setStep: setUiStep } = useUiScale()
   const stageRef = useRef<HTMLDivElement>(null)
   const [stageSize, setStageSize] = useState({ w: 1200, h: 700 })
   const [lifted, setLifted] = useState<{
@@ -1445,13 +1450,55 @@ export function DeskPage() {
           <div className="desk-topbar__brand-group">
             <img
               className="desk-topbar__brand"
-              src="/brand/choke-lockup-horizontal-light.svg"
+              src={
+                resolvedTheme === "light"
+                  ? "/brand/choke-lockup-horizontal.svg"
+                  : "/brand/choke-lockup-horizontal-light.svg"
+              }
               alt="Choke!"
             />
             {user && <LevelMeter level={progress.level} exp={progress.exp} />}
           </div>
-          {user && (
-            <div className="desk-topbar__actions">
+          <div className="desk-topbar__actions">
+            <div className="desk-zoom" role="group" aria-label="界面大小">
+              <button
+                type="button"
+                className="desk-button"
+                onClick={() => setUiStep(UI_SCALE_STEPS[UI_SCALE_STEPS.indexOf(uiStep) - 1])}
+                disabled={uiStep === UI_SCALE_STEPS[0]}
+                aria-label="界面缩小"
+              >
+                −
+              </button>
+              <button
+                type="button"
+                className="desk-button"
+                onClick={() => setUiStep(1)}
+                title="界面大小（已按窗口自动适配），点一下恢复 100%"
+              >
+                {Math.round(uiStep * 100)}%
+              </button>
+              <button
+                type="button"
+                className="desk-button"
+                onClick={() => setUiStep(UI_SCALE_STEPS[UI_SCALE_STEPS.indexOf(uiStep) + 1])}
+                disabled={uiStep === UI_SCALE_STEPS[UI_SCALE_STEPS.length - 1]}
+                aria-label="界面放大"
+              >
+                +
+              </button>
+            </div>
+            <button
+              type="button"
+              className="desk-button"
+              onClick={() => setTheme(resolvedTheme === "light" ? "dark" : "light")}
+              aria-label={resolvedTheme === "light" ? "切换到暗色" : "切换到亮色"}
+              title={resolvedTheme === "light" ? "切换到暗色" : "切换到亮色"}
+            >
+              {resolvedTheme === "light" ? "☾ 暗色" : "☀ 亮色"}
+            </button>
+            {user && (
+            <>
               <button
                 type="button"
                 className="desk-button"
@@ -1472,8 +1519,9 @@ export function DeskPage() {
               >
                 重置桌面
               </button>
-            </div>
-          )}
+            </>
+            )}
+          </div>
         </div>
       </header>
 

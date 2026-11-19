@@ -1,0 +1,259 @@
+/* =========================================================
+   亮色主题：<html class="light"> 时覆盖桌面、抽屉、面板（书页）、桌上实物和新手引导。
+   整体是暖米色书桌：布垫是中间调，实物用各自的皮革 / 木头色，书页是暖白纸；
+   书封用深可可色皮革，品牌粉只留给按钮、选中和强调字。战斗页固定暗色，不受影响。
+   暗色的取值仍在各自的 css 里；这里只写亮色差异。
+   ========================================================= */
+
+/* ---------- 面板（书页）共用色板 ---------- */
+:root.light {
+  --bk-cover: #5e4232;
+  --bk-cover-hi: #74543f;
+  --bk-cover-lo: #3f2b20;
+  --bk-paper: #f8f4ee;
+  --bk-paper-hi: #fdfaf6;
+  --bk-raised: #efe8df;
+  --bk-raised-hi: #e6ddd2;
+  --bk-edge: #d6cabc;
+  --bk-well: #ebe3d9;
+  --bk-ink: #2b231e;
+  --bk-dim: #6b5f55;
+  --bk-faint: #a0958a;
+  --bk-line: rgb(70 50 35 / 0.12);
+  --bk-osu-soft: rgb(255 102 170 / 0.14);
+  --bk-osu-text: #c8337a;
+  --bk-good: #2f9a5c;
+  --bk-bad: #d64545;
+}
+
+/* ---------- 房间、顶栏 ---------- */
+.light .desk-root {
+  --d-ink: #2b231e;
+  --d-ink-dim: #6b5f55;
+  --d-line: rgb(70 50 35 / 0.12);
+  background: #ebe5dd;
+}
+.light .desk-topbar,
+.light .desk-stage {
+  background: #ebe5dd;
+}
+.light .desk-level {
+  background: #f4efe9;
+  color: #5c5047;
+}
+.light .desk-level b {
+  color: #c8337a;
+}
+.light .desk-level__track {
+  background: #dcd3c9;
+}
+.light .desk-level em {
+  color: #8c8076;
+}
+.light .desk-button {
+  background: #d9d0c6;
+}
+.light .desk-button:hover {
+  background: #cec4b9;
+}
+.light .desk-button:active {
+  background: #c3b8ac;
+}
+.light .desk-button[aria-pressed="true"] {
+  background: var(--d-osu);
+  color: #fff;
+}
+
+/* ---------- 对战垫：米色布面，比房间暗一档，把深色/彩色物件托出来 ---------- */
+.light .desk-stage::before {
+  border-color: #8c7f71;
+  outline-color: rgb(255 250 244 / 0.55);
+  background:
+    linear-gradient(165deg, rgb(255 255 255 / 0.14), transparent 46%, rgb(40 30 20 / 0.08)),
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.06) 0 1px, transparent 1px 4px),
+    #c9bdae;
+  box-shadow:
+    inset 0 0 0 1px rgb(40 30 20 / 0.12),
+    inset 0 2px 0 rgb(40 30 20 / 0.08),
+    0 3px 0 #6e6256;
+}
+.light .desk-stage::after {
+  color: #fff;
+}
+.light .desk-toast {
+  background: rgb(250 246 240 / 0.96);
+  box-shadow: 0 8px 24px rgb(50 35 25 / 0.2);
+}
+.light .desk-card-drop {
+  background: rgb(255 102 170 / 0.12);
+  color: #c8337a;
+}
+
+/* ---------- 抽屉：和布垫同一块料 ---------- */
+.light .desk-drawer {
+  --dr-felt: #c9bdae;
+  --desk-edge: #8c7f71;
+}
+.light .desk-drawer__well {
+  outline-color: rgb(255 250 244 / 0.5);
+  box-shadow: 0 -10px 26px rgb(50 35 25 / 0.2), inset 0 0 0 1px rgb(40 30 20 / 0.12);
+}
+.light .desk-drawer__empty,
+.light .desk-drawer__tag,
+.light .desk-drawer__label {
+  color: rgb(60 45 35 / 0.72);
+}
+.light .desk-drawer__cell {
+  background: rgb(40 30 20 / 0.06);
+  box-shadow: inset 0 2px 5px rgb(40 30 20 / 0.22), inset 0 -1px 0 rgb(255 255 255 / 0.25);
+}
+.light .desk-drawer__cell:hover,
+.light .desk-drawer__cell:focus-visible {
+  background: rgb(255 102 170 / 0.14);
+}
+.light .desk-drawer__cell:hover .desk-drawer__tag,
+.light .desk-drawer__cell:focus-visible .desk-drawer__tag {
+  color: #c8337a;
+}
+.light .desk-drawer__front {
+  outline-color: rgb(255 250 244 / 0.45);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), inset 0 0 0 1px rgb(40 30 20 / 0.12),
+    0 -2px 6px rgb(50 35 25 / 0.18);
+}
+.light .desk-drawer__label b {
+  background: rgb(255 255 255 / 0.25);
+  color: #fff;
+}
+
+/* ---------- 书：书脊阴影用暖棕，不要中性灰 ---------- */
+.light .book__page--left {
+  background:
+    linear-gradient(to left, rgb(90 60 40 / 0.16), rgb(90 60 40 / 0.05) 18px, transparent 42px),
+    var(--bk-paper);
+}
+.light .book__page--right {
+  background:
+    linear-gradient(to right, rgb(90 60 40 / 0.16), rgb(90 60 40 / 0.05) 18px, transparent 42px),
+    var(--bk-paper);
+}
+.light .bk-row:hover {
+  background: rgb(90 60 40 / 0.05);
+}
+.light .bk-row.is-on {
+  background: var(--bk-osu-soft);
+}
+.light .bk-bar {
+  box-shadow: inset 0 1px 1px rgb(40 30 20 / 0.2);
+}
+.light .bk-slot {
+  background: var(--bk-well);
+  box-shadow: none;
+  outline: 1.5px dashed rgb(90 60 40 / 0.25);
+  outline-offset: -1.5px;
+}
+/* 粉底 / 红底上的字：暗色版用深色纸色，亮色下换白字 */
+.light .bk-btn--main,
+.light .book__close:hover,
+.light .card-detail__close:hover,
+.light .deck-slot__remove:hover,
+.light .deck-slot__flag {
+  color: #fff;
+}
+.light .bk-btn--main {
+  background: #e8509a;
+}
+.light .bk-btn--main:hover:not(:disabled) {
+  background: #f0609f;
+}
+/* Prismatic 的色点是近白色，浅纸上加一圈描边 */
+.light .bk-chip > i,
+.light .gacha-odds i {
+  box-shadow: 0 0 0 1px rgb(40 30 20 / 0.18);
+}
+
+/* ---------- 新手引导 ---------- */
+.light .tut-layer,
+.light .tut-dialog__text {
+  color: #2b231e;
+}
+.light .tut-dialog__box {
+  background: linear-gradient(155deg, #fdfaf6, #f2ebe2 62%), #f8f4ee;
+  box-shadow:
+    0 22px 44px -18px rgb(50 35 25 / 0.4),
+    inset 0 1px 0 rgb(255 255 255 / 0.8);
+}
+.light .tut-portrait__placeholder {
+  background:
+    linear-gradient(160deg, rgb(255 102 170 / 0.12), transparent 58%),
+    rgb(250 246 240 / 0.92);
+  color: #c8337a;
+}
+.light .tut-dialog__speaker,
+.light .tut-dialog__hint {
+  color: #c8337a;
+}
+.light .tut-dialog__hint.is-warn {
+  color: #b7791f;
+}
+.light .tut-dialog__step {
+  color: #8c8076;
+}
+.light .tut-dialog__skip,
+.light .tut-skip__no {
+  border-color: rgb(70 50 35 / 0.18);
+  background: rgb(90 60 40 / 0.04);
+  color: #5c5047;
+}
+.light .tut-dialog__skip:hover,
+.light .tut-skip__no:hover {
+  color: #c8337a;
+}
+.light .tut-skip {
+  background: linear-gradient(160deg, #fdfaf6, #f2ebe2), #f8f4ee;
+}
+.light .tut-skip b {
+  color: #c8337a;
+}
+.light .tut-skip p {
+  color: #6b5f55;
+}
+
+/* ---------- 桌上的实物：像书桌上的真皮/木头文具，每样东西一种颜色；字、纸、金属沿用暗色版 ---------- */
+.light .obj {
+  filter: drop-shadow(0 1px 0 rgb(40 25 20 / 0.35)) drop-shadow(0 12px 18px rgb(40 25 20 / 0.3));
+}
+.light .obj[data-object="codex"] {
+  --o-stock: #7d2f4c;
+  --o-stock-hi: #93405f;
+  --o-deep: #4f1a2f;
+}
+.light .obj[data-object="album"] {
+  --o-stock: #a8734a;
+  --o-stock-hi: #ba8559;
+  --o-deep: #6b4529;
+}
+.light .obj[data-object="packs"] {
+  --o-stock: #33405c;
+  --o-stock-hi: #435072;
+  --o-deep: #1d2639;
+}
+.light .obj[data-object="gacha"] {
+  --o-stock: #4a3f52;
+  --o-stock-hi: #5c5066;
+  --o-deep: #2c2532;
+}
+.light .obj[data-object="deck"] {
+  --o-stock: #5b4134;
+  --o-stock-hi: #6d5042;
+  --o-deep: #38271f;
+}
+.light .obj[data-object="battle"] {
+  --o-stock: #2f3a3c;
+  --o-stock-hi: #3e4b4e;
+  --o-deep: #1a2224;
+}
+.light .obj[data-object="market"] {
+  --o-stock: #b8915f;
+  --o-stock-hi: #c9a36f;
+  --o-deep: #7a5d39;
+}

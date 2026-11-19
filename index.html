@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/choke.svg" />
@@ -9,6 +9,17 @@
       name="description"
       content="Choke! — osu! 二次创作的 PVP / PVE 双轨制节奏卡牌对战游戏。"
     />
+    <script>
+      // 首帧前按 ThemeProvider 的规则设好主题，避免亮色用户先闪一下暗色
+      ;(() => {
+        const saved = localStorage.getItem("theme")
+        const dark =
+          /battle(-sim)?\/*$/.test(location.pathname) ||
+          saved === "dark" ||
+          (saved !== "light" && matchMedia("(prefers-color-scheme: dark)").matches)
+        document.documentElement.classList.add(dark ? "dark" : "light")
+      })()
+    </script>
     <title>Choke! — 节奏卡牌对决</title>
   </head>
   <body>
