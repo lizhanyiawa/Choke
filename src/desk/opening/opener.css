@@ -21,7 +21,7 @@
   /* clip 而不是 hidden：包身掉出屏幕时会撑出滚动区，hidden 仍会被点击/聚焦滚走 */
   overflow: clip;
   color: var(--op-ink);
-  font-family: "Outfit Variable", "Outfit", sans-serif;
+  font-family: "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
   user-select: none;
 }
 /* 全翻完：结果排回到正中 */

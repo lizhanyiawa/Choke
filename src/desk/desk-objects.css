@@ -28,7 +28,7 @@
   position: absolute;
   inset: 0;
   color: var(--o-ink);
-  font-family: "Outfit Variable", "Outfit", sans-serif;
+  font-family: "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
   filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.7)) drop-shadow(0 10px 16px rgb(0 0 0 / 0.5));
   transition: scale 0.16s ease, filter 0.16s ease;
 }
