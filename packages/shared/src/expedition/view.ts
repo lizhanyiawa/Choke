@@ -98,7 +98,7 @@ export interface ExpeditionView {
   status: ExpeditionStatus
   mapId: string
   map: MapDef
-  /** 按展开后的地图节点 id 查找详情 */
+  /** 只含当前格、前方一步、身后一步的详情；更远的格子服务端不下发 */
   nodePreviews: Record<string, ExpeditionNodePreview>
   seed: string
   allocation: ExpeditionAllocation

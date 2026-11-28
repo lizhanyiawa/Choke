@@ -290,6 +290,7 @@ await test("通关：剧情标记决定走哪条路，血量跨战斗保留，�
   assert.equal(view.pool.length, 8)
   assert.equal(view.battle, null)
   assert.ok(view.story)
+  assert.deepEqual(Object.keys(view.nodePreviews), ["n1", "n2"], "只下发当前格和前方一步的详情")
 
   assert.equal((await move(me.id, "n2")).status, 400, "剧情没看完不能走")
   assert.equal((await story(me.id, [])).status, 400, "选项数量对不上")

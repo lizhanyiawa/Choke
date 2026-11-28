@@ -185,6 +185,7 @@ export async function marketRoutes(app: FastifyInstance) {
   })
 
   app.get("/market/listings/page", async (request, reply) => {
+    if (!requireSession(request, reply)) return
     const parsed = pageQuery.safeParse(request.query)
     if (!parsed.success) {
       return reply.code(400).send({ ok: false, error: { code: "bad_request", message: "市场筛选参数不合法" } })

@@ -203,14 +203,25 @@ function nodePreview(nodeId: string, node: MapNode): ExpeditionNodePreview {
   return preview
 }
 
+/** 玩家现在看得见详情的格子：当前格、前方一步、身后一步。更远的不下发，免得从接口里提前看到 */
+function previewWindow(nodes: Record<string, MapNode>, position: string): Set<string> {
+  const visible = new Set<string>([position])
+  for (const next of nodes[position]?.next ?? []) visible.add(next)
+  for (const [nodeId, node] of Object.entries(nodes)) {
+    if (node.next.includes(position)) visible.add(nodeId)
+  }
+  return visible
+}
+
 async function buildView(exec: Exec, exp: ExpRow): Promise<ExpeditionView> {
   const battles = await loadBattles(exec, exp.id)
   const node = exp.map.nodes[exp.position]
   const current = battles.find((battle) => battle.nodeId === exp.position)
 
   const nodePreviews: ExpeditionView["nodePreviews"] = {}
-  for (const [nodeId, mapNode] of Object.entries(exp.map.nodes)) {
-    nodePreviews[nodeId] = nodePreview(nodeId, mapNode)
+  for (const nodeId of previewWindow(exp.map.nodes, exp.position)) {
+    const mapNode = exp.map.nodes[nodeId]
+    if (mapNode) nodePreviews[nodeId] = nodePreview(nodeId, mapNode)
   }
   const currentPreview = nodePreviews[exp.position]
 

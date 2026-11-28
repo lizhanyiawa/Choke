@@ -398,6 +398,8 @@ await test("碎片+金币「逢 5 自选」洗技能：单卡独立计数、严�
 await test("市场列表需登录才能查看", async () => {
   const anon = await app.inject({ method: "GET", url: "/market/listings" })
   assert.equal(anon.statusCode, 401)
+  const anonPage = await app.inject({ method: "GET", url: "/market/listings/page" })
+  assert.equal(anonPage.statusCode, 401, "分页接口和整表接口一样要登录")
 })
 
 await test("批量分解：合并产出同品质碎片与闪卡精华、拦截本体卡", async () => {

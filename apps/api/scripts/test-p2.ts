@@ -19,6 +19,7 @@ const { COOKIE_NAME, makeSession } = await import("../src/auth/osu")
 const { handleError } = await import("../src/error-handler")
 
 const { progressionRoutes } = await import("../src/routes/progression")
+const { cardRoutes } = await import("../src/routes/cards")
 const { constellationCap } = await import("@choke/shared/progression")
 const { resonanceAttributeOf } = await import("@choke/shared/resonance")
 
@@ -27,6 +28,7 @@ app.setErrorHandler(handleError)
 await app.register(cookie)
 
 await app.register(progressionRoutes)
+await app.register(cardRoutes)
 await app.ready()
 
 let passed = 0
