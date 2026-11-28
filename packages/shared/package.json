@@ -24,6 +24,7 @@
     "./lineup": "./src/lineup.ts",
     "./reset": "./src/reset.ts",
     "./presence": "./src/presence.ts",
+    "./chat-flair": "./src/chat-flair.ts",
     "./quests": "./src/quests.ts",
     "./quest-content": "./src/quest-content.ts",
     "./osu-daily": "./src/osu-daily.ts",
