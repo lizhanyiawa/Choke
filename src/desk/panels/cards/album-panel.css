@@ -176,7 +176,7 @@
   filter: grayscale(0.7);
 }
 .album-slot.is-selected {
-  box-shadow: 0 0 0 3px var(--bk-osu, #ff66aa);
+  box-shadow: 0 0 0 3px var(--bk-osu, var(--brand-pink));
 }
 .album-slot__check {
   position: absolute;
@@ -196,7 +196,7 @@
   pointer-events: none;
 }
 .album-slot.is-selected .album-slot__check {
-  background: var(--bk-osu, #ff66aa);
+  background: var(--bk-osu, var(--brand-pink));
   border-color: #fff;
   color: #fff;
 }

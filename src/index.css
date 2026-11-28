@@ -21,10 +21,11 @@
 }
 
 @theme {
-    /* Choke! 色彩矩阵 */
+    /* Choke! 色彩矩阵；品牌粉以 Design/brand/README.md 为准，全站只在这里写一次 */
+    --brand-pink: #d9488a;
     --color-choke: #18171c;
     --color-choke-void: #0d0c11;
-    --color-choke-pink: #ed5f9f;
+    --color-choke-pink: var(--brand-pink);
     --color-choke-blue: #1d5db5;
     --color-choke-cyan: #7cc4ff;
 
@@ -120,7 +121,7 @@
     --card-foreground: #f5f2f7;
     --popover: #1e1c24;
     --popover-foreground: #f5f2f7;
-    --primary: #ed5f9f;
+    --primary: var(--brand-pink);
     --primary-foreground: #22101a;
     --secondary: #26242e;
     --secondary-foreground: #f5f2f7;
@@ -131,7 +132,7 @@
     --destructive: oklch(0.704 0.191 22.216);
     --border: rgb(255 255 255 / 10%);
     --input: rgb(255 255 255 / 14%);
-    --ring: #ed5f9f;
+    --ring: var(--brand-pink);
     --chart-1: oklch(0.823 0.12 346.018);
     --chart-2: oklch(0.656 0.241 354.308);
     --chart-3: oklch(0.592 0.249 0.584);
@@ -164,7 +165,7 @@
     background-color: #18171c;
     }
   ::selection {
-    background: color-mix(in srgb, #ed5f9f 34%, transparent);
+    background: color-mix(in srgb, var(--brand-pink) 34%, transparent);
     color: #fff;
     }
 }

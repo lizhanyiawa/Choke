@@ -4,7 +4,7 @@
   --d-ink: #f2e9ed;
   --d-ink-dim: #9e8e95;
   --d-line: rgb(255 228 240 / 0.09);
-  --d-osu: #ff66aa;
+  --d-osu: var(--brand-pink);
   position: fixed;
   inset: 0;
   display: flex;
@@ -65,7 +65,7 @@
   white-space: nowrap;
 }
 .desk-level b {
-  color: #ffb3d4;
+  color: color-mix(in srgb, var(--brand-pink) 55%, #fff);
   font-size: 11px;
   letter-spacing: 0.02em;
 }
@@ -362,8 +362,8 @@
   gap: 4px;
   border: 3px dashed var(--d-osu);
   border-radius: 20px;
-  background: rgba(255, 102, 170, 0.08);
-  color: #ffb3d4;
+  background: color-mix(in srgb, var(--brand-pink) 8%, transparent);
+  color: color-mix(in srgb, var(--brand-pink) 55%, #fff);
   pointer-events: none;
   visibility: hidden;
 }

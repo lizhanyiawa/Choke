@@ -11,7 +11,7 @@
   --d-ink: #f2e9ed;
   --d-ink-dim: #9e8e95;
   --d-line: rgb(255 228 240 / 0.09);
-  --d-osu: #ff66aa;
+  --d-osu: var(--brand-pink);
   --fl-bg: #1c1216;
   --fl-rail: #231a1f;
   --fl-btn: #34272d;
@@ -105,12 +105,12 @@
   background: var(--fl-btn);
 }
 .fl-nav[aria-current="page"] {
-  background: rgb(255 102 170 / 0.18);
-  color: #ffb3d4;
+  background: color-mix(in srgb, var(--brand-pink) 18%, transparent);
+  color: color-mix(in srgb, var(--brand-pink) 55%, #fff);
   box-shadow: inset 2px 0 0 var(--d-osu);
 }
 .light .fl-nav[aria-current="page"] {
-  color: #c8337a;
+  color: color-mix(in srgb, var(--brand-pink) 85%, #000);
 }
 .fl-nav__text {
   display: flex;
@@ -374,7 +374,7 @@ button.fl-pill[aria-expanded="true"] {
 }
 /* 一页里最要紧的那一张 */
 .fl-card--accent {
-  box-shadow: inset 0 0 0 1px rgb(255 102 170 / 0.55);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-pink) 55%, transparent);
 }
 .fl-card__head {
   display: flex;
@@ -567,11 +567,11 @@ button.fl-pill[aria-expanded="true"] {
   cursor: pointer;
 }
 .fl-tab[aria-current="page"] {
-  color: #ffb3d4;
+  color: color-mix(in srgb, var(--brand-pink) 55%, #fff);
   box-shadow: inset 0 2px 0 var(--d-osu);
 }
 .light .fl-tab[aria-current="page"] {
-  color: #c8337a;
+  color: color-mix(in srgb, var(--brand-pink) 85%, #000);
 }
 .fl-tab__dot {
   position: absolute;

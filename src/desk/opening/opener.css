@@ -14,7 +14,7 @@
   --op-ink: #f2e9ed;
   --op-ink-dim: #cbbdc4;
   --op-surface: #3a2c33;
-  --op-osu: #ff66aa;
+  --op-osu: var(--brand-pink);
   position: fixed;
   inset: 0;
   z-index: 80;
@@ -406,9 +406,9 @@
 .cb__frame {
   position: absolute;
   inset: 5cqw;
-  border: max(0.7cqw, 1px) solid rgb(255 102 170 / 0.8);
+  border: max(0.7cqw, 1px) solid color-mix(in srgb, var(--brand-pink) 80%, transparent);
   border-radius: 2.4cqw;
-  outline: max(0.5cqw, 1px) solid rgb(255 102 170 / 0.38);
+  outline: max(0.5cqw, 1px) solid color-mix(in srgb, var(--brand-pink) 38%, transparent);
   outline-offset: 1.2cqw;
   background: rgb(0 0 0 / 0.16);
 }
@@ -442,7 +442,7 @@
   content: "";
   width: 9cqw;
   height: max(0.5cqw, 1px);
-  background: rgb(255 102 170 / 0.55);
+  background: color-mix(in srgb, var(--brand-pink) 55%, transparent);
 }
 /* 最后一个字母后面带着一格字距，把右边那道线拉回来对称 */
 .cb__word::after {
@@ -508,13 +508,13 @@
   cursor: default;
 }
 .op__btn--main {
-  --btn-edge: #b03a72;
+  --btn-edge: color-mix(in srgb, var(--brand-pink) 80%, #000);
   background: var(--op-osu);
   color: #1c1216;
   font-weight: 800;
 }
 .op__btn--main:hover:not(:disabled) {
-  background: #ff80b9;
+  background: color-mix(in srgb, var(--brand-pink) 70%, #fff);
 }
 
 /* 拖放框：梅子色托盘 + 虚线边；有卡被拖起时整框变粉 */
@@ -544,7 +544,7 @@
 .op__drop.is-active {
   border-style: solid;
   border-color: var(--op-osu);
-  background: rgb(255 102 170 / 0.16);
+  background: color-mix(in srgb, var(--brand-pink) 16%, transparent);
   color: var(--op-ink);
   scale: 1.03;
 }
@@ -557,7 +557,7 @@
   text-indent: 0.12em;
 }
 .op__drop.is-active b {
-  color: #ffb3d4;
+  color: color-mix(in srgb, var(--brand-pink) 55%, #fff);
 }
 .op__drop span {
   font-size: 11px;
@@ -804,7 +804,7 @@
   z-index: 4;
   padding: 2px 6px;
   border-radius: 999px;
-  background: rgb(255 102 170 / 0.92);
+  background: color-mix(in srgb, var(--brand-pink) 92%, transparent);
   color: #fff;
   font-size: 10px;
   font-weight: 700;

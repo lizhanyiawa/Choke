@@ -18,7 +18,7 @@ const FILL_MATRIX = {
 }
 
 const PALETTE = {
-  boss: { from: "#9e1c3a", mid: "#e84568", to: "#ff8ab5", track: "#181014", glow: "#ff66aa" },
+  boss: { from: "#9e1c3a", mid: "#e84568", to: "#ff8ab5", track: "#181014", glow: "#d9488a" },
   party: { from: "#7af4ff", mid: "#2b92e8", to: "#14458a", track: "#141016", glow: "#5cc8ff" },
 }
 
@@ -111,7 +111,7 @@ export function BentGauge({ side, polygon, pct, fillX, fillWidth }: Props) {
       {/* 平涂梅子色边框 + 细高光线 */}
       <polygon points={polygon} fill="none" stroke="#1c1216" strokeWidth="5" strokeLinejoin="bevel" />
       <polygon points={polygon} fill="none" stroke="#6e4b5b" strokeWidth="2.2" strokeLinejoin="bevel" />
-      <polygon points={polygon} fill="none" stroke="#ffb3d4" strokeOpacity="0.38" strokeWidth="0.8" strokeLinejoin="bevel" />
+      <polygon points={polygon} fill="none" stroke="#f09bc2" strokeOpacity="0.38" strokeWidth="0.8" strokeLinejoin="bevel" />
     </svg>
   )
 }

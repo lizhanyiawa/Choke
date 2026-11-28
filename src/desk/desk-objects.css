@@ -20,7 +20,7 @@
   --o-paper-dim: #8a7a81;
   /* 线、强调、金属 */
   --o-line: rgb(255 228 240 / 0.26);
-  --o-osu: #ff66aa;
+  --o-osu: var(--brand-pink);
   --o-metal: linear-gradient(135deg, #eceef1, #7d828a 50%, #cfd2d7);
   /* 本体切边：顶上受光、一圈细线、底下暗边 */
   --o-edge: inset 0 1px 0 rgb(255 255 255 / 0.13), inset 0 0 0 1px rgb(255 228 240 / 0.08),
@@ -36,7 +36,7 @@
 /* 有东西悬在上面：物件微微抬起，周围亮一圈 osu! 粉 */
 .obj.is-dropping {
   scale: 1.05;
-  filter: drop-shadow(0 0 1px rgb(255 102 170 / 0.95)) drop-shadow(0 0 14px rgb(255 102 170 / 0.45))
+  filter: drop-shadow(0 0 1px color-mix(in srgb, var(--brand-pink) 95%, transparent)) drop-shadow(0 0 14px color-mix(in srgb, var(--brand-pink) 45%, transparent))
     drop-shadow(6px 12px 12px rgb(0 0 0 / 0.45));
 }
 
@@ -101,12 +101,12 @@
   border: 1px solid var(--o-osu);
   border-radius: 2px;
   opacity: 0.7;
-  box-shadow: 0 0 0 3px var(--o-stock), 0 0 0 4px rgb(255 102 170 / 0.45);
+  box-shadow: 0 0 0 3px var(--o-stock), 0 0 0 4px color-mix(in srgb, var(--brand-pink) 45%, transparent);
 }
 .obj-book__cover b {
   position: relative;
   padding-left: 8px;
-  background: linear-gradient(160deg, #ffb3d4, #ff66aa 55%, #ff8cc0);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--brand-pink) 55%, #fff), var(--brand-pink) 55%, color-mix(in srgb, var(--brand-pink) 70%, #fff));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -252,14 +252,14 @@
   top: -8px;
   width: 40%;
   height: 18px;
-  background: rgb(255 102 170 / 0.8);
+  background: color-mix(in srgb, var(--brand-pink) 80%, transparent);
   rotate: -4deg;
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
 }
 /* 标题下一道粉色荧光笔 */
 .obj-note__paper b {
   padding: 0 3px 1px 1px;
-  background: linear-gradient(180deg, transparent 60%, rgb(255 102 170 / 0.38) 60% 94%, transparent 94%);
+  background: linear-gradient(180deg, transparent 60%, color-mix(in srgb, var(--brand-pink) 38%, transparent) 60% 94%, transparent 94%);
   font-size: 26px;
   font-weight: 800;
   font-style: italic;
@@ -610,7 +610,7 @@
 }
 .obj-stand__front b {
   position: relative;
-  background: linear-gradient(160deg, #ffb3d4, #ff66aa 55%, #ff8cc0);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--brand-pink) 55%, #fff), var(--brand-pink) 55%, color-mix(in srgb, var(--brand-pink) 70%, #fff));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -662,7 +662,7 @@
 }
 /* 队长位 */
 .obj-tray__slot:nth-child(1) {
-  --c: #ff66aa;
+  --c: var(--brand-pink);
   --peek: 8px;
   box-shadow: inset 2px 3px 4px rgb(0 0 0 / 0.7), 0 0 0 1.5px var(--o-osu);
 }
@@ -722,7 +722,7 @@
   pointer-events: none;
 }
 .obj-mat__zone {
-  --z: 255 102 170;
+  --z: 217 72 138;
   --tilt: -8deg;
   position: relative;
   border-radius: 6px;
@@ -878,8 +878,8 @@
   background: var(--o-stock-hi);
 }
 .obj-pick__item[aria-checked="true"] {
-  background: rgb(255 102 170 / 0.16);
-  color: #ffb3d4;
+  background: color-mix(in srgb, var(--brand-pink) 16%, transparent);
+  color: color-mix(in srgb, var(--brand-pink) 55%, #fff);
 }
 /* 菜单打开时把整个按钮抬到最上层，免得被旁边的物件盖住 */
 .desk-item:has(.obj-pick.is-open) {
@@ -912,7 +912,7 @@
   rotate: -7deg;
   background: repeating-linear-gradient(
     45deg,
-    #ff66aa 0 9px,
+    var(--brand-pink) 0 9px,
     #d94b88 9px 18px
   );
   color: #1c1216;
@@ -930,14 +930,14 @@
   position: absolute;
   bottom: 7px;
   padding: 3px 9px;
-  border: 1px solid rgb(255 102 170 / 0.65);
+  border: 1px solid color-mix(in srgb, var(--brand-pink) 65%, transparent);
   border-radius: 999px;
   background: rgb(24 15 19 / 0.94);
-  color: #ffb3d4;
+  color: color-mix(in srgb, var(--brand-pink) 55%, #fff);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.04em;
-  box-shadow: 0 0 12px rgb(255 102 170 / 0.22);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--brand-pink) 22%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {

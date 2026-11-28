@@ -4,7 +4,7 @@
   --line: rgb(237 234 229 / 0.12);
   --ink: #edeae5;
   --dim: rgb(237 234 229 / 0.55);
-  --accent: #ed5f9f;
+  --accent: var(--brand-pink);
   display: grid;
   grid-template-columns: 380px minmax(0, 1fr);
   height: 100vh;

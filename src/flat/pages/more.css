@@ -18,7 +18,7 @@
   background: var(--bk-paper-hi);
 }
 .more-entry[aria-current="page"] {
-  box-shadow: inset 0 0 0 1px rgb(255 102 170 / 0.55);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-pink) 55%, transparent);
 }
 .more-entry[data-locked] {
   cursor: not-allowed;

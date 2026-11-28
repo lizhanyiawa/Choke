@@ -1,5 +1,5 @@
 .fl-deck {
-  --deck-accent: #ffb3d4;
+  --deck-accent: color-mix(in srgb, var(--brand-pink) 55%, #fff);
   --deck-success: #7fd6a0;
   --deck-danger: #ff9c9c;
   --deck-selected: #482738;

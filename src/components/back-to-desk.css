@@ -30,7 +30,7 @@
   transition: translate var(--ui-fast) var(--ui-ease-out);
 }
 .back-to-desk:hover {
-  background: #ff66aa;
+  background: var(--brand-pink);
   color: #1c1216;
 }
 .back-to-desk:hover span {
@@ -52,7 +52,7 @@
     0 8px 18px rgb(60 40 25 / 0.22);
 }
 .light .back-to-desk:hover {
-  background: #ff66aa;
+  background: var(--brand-pink);
   color: #1c1216;
 }
 
