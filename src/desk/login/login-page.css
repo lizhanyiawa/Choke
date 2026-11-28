@@ -8,7 +8,7 @@
   padding: 32px 20px;
   background: #1c1216;
   color: var(--bk-ink);
-  font-family: "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Outfit Variable", "Outfit", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 .light .login-page {
   background: #ebe5dd;

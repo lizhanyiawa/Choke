@@ -6,7 +6,7 @@
   padding: 28px clamp(16px, 4vw, 48px) 56px;
   background: #1c1216;
   color: var(--bk-ink);
-  font-family: "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Outfit Variable", "Outfit", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 .light .admin-page {
   background: #ebe5dd;

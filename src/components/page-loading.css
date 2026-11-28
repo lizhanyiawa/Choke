@@ -9,7 +9,7 @@
   gap: 18px;
   background: #1c1216;
   color: #a8979e;
-  font-family: "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Outfit Variable", "Outfit", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
   animation: ui-fade-in 240ms 120ms both;
 }
 .light .page-loading {

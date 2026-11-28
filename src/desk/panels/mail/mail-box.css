@@ -57,7 +57,7 @@
   border-radius: 14px;
   background: var(--bk-paper);
   color: var(--bk-ink);
-  font-family: "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Outfit Variable", "Outfit", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
   box-shadow:
     0 0 0 4px var(--bk-cover),
     0 6px 0 4px var(--bk-cover-lo),

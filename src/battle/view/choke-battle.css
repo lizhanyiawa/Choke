@@ -14,7 +14,7 @@
   font-family:
     "Outfit Variable",
     "Outfit",
-    "PingFang SC",
+    "Noto Sans SC Variable", "PingFang SC",
     "Microsoft YaHei",
     "Noto Sans SC",
     system-ui,
@@ -224,7 +224,7 @@
   top: 0.2cqw;
   left: 1.5cqw;
   z-index: 3;
-  font-family: "Fredoka Variable", "Fredoka", "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Fredoka Variable", "Fredoka", "Outfit Variable", "Outfit", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 13.6cqw;
   font-weight: 900;
   letter-spacing: -0.04em;

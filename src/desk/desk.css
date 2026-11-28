@@ -11,7 +11,7 @@
   flex-direction: column;
   background: #1c1216;
   color: var(--d-ink);
-  font-family: "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Outfit Variable", "Outfit", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
   overflow: hidden;
   user-select: none;
 }
@@ -376,7 +376,7 @@
   letter-spacing: 0.24em;
 }
 .desk-card-drop b {
-  font-family: "Fredoka Variable", "Fredoka", "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Fredoka Variable", "Fredoka", "Outfit Variable", "Outfit", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 28px;
 }
 

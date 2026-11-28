@@ -13,7 +13,7 @@
     radial-gradient(52% 60% at 50% 38%, rgb(120 42 78 / 0.34), transparent 72%),
     var(--bk-well);
   color: var(--bk-ink);
-  font-family: "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Outfit Variable", "Outfit", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 .choke-gate {
   width: min(460px, 100%);
