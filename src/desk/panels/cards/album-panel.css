@@ -139,14 +139,22 @@
   border: 1px solid rgb(255 255 255 / 0.1);
   font-size: 12px;
 }
+/* 按钮排一行，说明文字、提示、确认条各占一行排在后面 */
 .album-batch-bar__info {
-  flex: 1 1 120px;
-  color: var(--bk-muted, #b8aeb4);
+  order: 1;
+  flex: 1 1 100%;
+  color: var(--bk-dim);
 }
 .album-batch-bar__notice {
+  order: 2;
   width: 100%;
   font-size: 12px;
   color: var(--bk-osu-text, #ff9ac2);
+}
+.album-batch-bar__note,
+.album-batch-bar .confirm-bar {
+  order: 2;
+  flex: 1 1 100%;
 }
 .album-batch-bar__danger {
   border-color: rgb(239 68 68 / 0.65);
@@ -168,7 +176,7 @@
   filter: grayscale(0.7);
 }
 .album-slot.is-selected {
-  box-shadow: 0 0 0 3px var(--bk-osu, #ff66aa);
+  box-shadow: 0 0 0 3px var(--bk-osu, var(--brand-pink));
 }
 .album-slot__check {
   position: absolute;
@@ -188,7 +196,7 @@
   pointer-events: none;
 }
 .album-slot.is-selected .album-slot__check {
-  background: var(--bk-osu, #ff66aa);
+  background: var(--bk-osu, var(--brand-pink));
   border-color: #fff;
   color: #fff;
 }

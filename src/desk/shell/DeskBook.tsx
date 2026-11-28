@@ -550,13 +550,7 @@ export function DeskBook({
           {panel === "packs" && (
             <GachaPanel userId={userId} initialPool={gachaPool} />
           )}
-          {panel === "market" && (
-            <MarketPanel
-              key={userId ?? "guest"}
-              userId={userId}
-              onOpenAlbum={() => selectPanel("album")}
-            />
-          )}
+          {panel === "market" && <MarketPanel userId={userId} />}
           {panel === "about" && <AboutPanel />}
           {panel === "account" && (
             <AccountPanel

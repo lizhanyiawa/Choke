@@ -21,6 +21,7 @@ import { TUTORIAL_ENCOUNTER_ID, type EncounterSpec, type EncounterSummary } from
 import type { BattleState } from "@choke/shared/battle/types"
 import { randomSeed } from "@choke/shared/rng"
 import { playSfx } from "@/audio/sfx"
+import { DESK_BATTLE_EXIT } from "./host"
 import { ClassicStage, ModernStage, readBattleUiMode, saveBattleUiMode, type BattleUiMode } from "./stages"
 import type { BattleHostHooks } from "./host"
 import "./battle-gate.css"
@@ -66,6 +67,8 @@ export function BattlePage() {
   const [uiMode, setUiMode] = useState(() => readBattleUiMode(searchParams))
   useEffect(() => saveBattleUiMode(uiMode), [uiMode])
   const tutorialMode = searchParams.get("tutorial") === "1"
+  const fromDeck = !tutorialMode && searchParams.get("from") === "deck"
+  const exit = fromDeck ? { href: "/deck", label: "卡组" } : DESK_BATTLE_EXIT
   const [stageId, setStageId] = useState<string | null>(searchParams.get("stage"))
   const [encounters, setEncounters] = useState<EncounterSummary[] | null>(null)
   const [encounter, setEncounter] = useState<EncounterSpec | null>(null)
@@ -175,7 +178,7 @@ export function BattlePage() {
             用 osu! 登录
           </a>
           <GuestLoginButton className="choke-gate__guest" label="以游客身份进入" />
-          <a href="/">回桌面</a>
+          <a href="/home">回桌面</a>
         </div>
       </Gate>
     )
@@ -187,7 +190,7 @@ export function BattlePage() {
           <button type="button" onClick={() => window.location.reload()}>
             再试一次
           </button>
-          <a href="/">回桌面</a>
+          <a href={exit.href}>返回{exit.label}</a>
         </div>
       </Gate>
     )
@@ -209,10 +212,10 @@ export function BattlePage() {
 
   if (cards.length === 0) {
     return (
-      <Gate tag="CHOKE! · BATTLE" title="卡组里还没有卡" text="回桌面，把卡拖进卡组；至少 1 张就能出战。">
+      <Gate tag="CHOKE! · BATTLE" title="卡组里还没有卡" text="至少上阵 1 张卡才能出战。">
         <div className="choke-gate__actions">
-          <a href="/?panel=deck">去组卡</a>
-          <a href="/">回桌面</a>
+          <a href={fromDeck ? exit.href : "/home?panel=deck"}>去组卡</a>
+          {!fromDeck && <a href="/home">回桌面</a>}
         </div>
       </Gate>
     )
@@ -248,7 +251,7 @@ export function BattlePage() {
     return (
       <Gate tag="TUTORIAL · CLEARED" title="教学战已经完成了" text="回桌面继续教程结算吧。">
         <div className="choke-gate__actions">
-          <a href="/">回桌面</a>
+          <a href="/home">回桌面</a>
         </div>
       </Gate>
     )
@@ -348,6 +351,7 @@ export function BattlePage() {
         onEndTurn={finishTurn}
         onRestart={start}
         onSwitchUi={switchUi}
+        exit={exit}
       />
     </Suspense>
   )

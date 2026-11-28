@@ -36,7 +36,7 @@ import { ELEMENT_COLOR, ELEMENT_LABEL, JOB_LABEL, battlePower } from "@/card/dat
 import { pointerCommand, useSkillRows } from "../useSkillRows"
 import { usePlaybackSpeed } from "../usePlaybackSpeed"
 import { useAutoEndTurn } from "../useAutoEndTurn"
-import { tutorialBattleHint, type BattleHostHooks } from "../host"
+import { DESK_BATTLE_EXIT, tutorialBattleHint, type BattleExit, type BattleHostHooks } from "../host"
 import { impact, reducedImpactMotion, sustainHurtTint } from "../impact"
 import type { CardFaceData, Element } from "@/card/types"
 
@@ -92,6 +92,7 @@ interface Props {
   onSwitchUi?: () => void
   /** 嵌在别的流程里时由宿主接管退出和结算按钮；不传是独立战斗页 */
   host?: BattleHostHooks
+  exit?: BattleExit
 }
 
 function bossBgStyle(background: string): CSSProperties {
@@ -201,11 +202,13 @@ function SupportKindIcon({ unit }: { unit: SideSupportUnit }) {
 /** 退出按钮：独立战斗页是回桌面的链接；被宿主嵌入时换成宿主给的文字和动作 */
 function ExitLink({
   host,
+  exit,
   className,
   sfx,
   children,
 }: {
   host?: BattleHostHooks
+  exit: BattleExit
   className: string
   sfx?: string
   children: ReactNode
@@ -218,7 +221,7 @@ function ExitLink({
     )
   }
   return (
-    <a className={className} href="/" data-sfx={sfx}>
+    <a className={className} href={exit.href} data-sfx={sfx}>
       {children}
     </a>
   )
@@ -243,6 +246,7 @@ export function BattleStage({
   onRestart,
   onSwitchUi,
   host,
+  exit = DESK_BATTLE_EXIT,
 }: Props) {
   const [hoveredIntent, setHoveredIntent] = useState<EnemyIntent | null>(null)
   const [previewAp, setPreviewAp] = useState(0)
@@ -745,9 +749,9 @@ export function BattleStage({
                   <span>新版界面</span>
                 </button>
               )}
-              <ExitLink host={host} className="choke-tool-btn" sfx="close">
+              <ExitLink host={host} exit={exit} className="choke-tool-btn" sfx="close">
                 <FiChevronLeft aria-hidden />
-                <span>桌面</span>
+                <span>{exit.label}</span>
               </ExitLink>
             </div>
 
@@ -919,8 +923,8 @@ export function BattleStage({
                   <span>{label}</span>
                 </button>
               </div>
-              <ExitLink host={host} className="choke-btn-menu">
-                桌面
+              <ExitLink host={host} exit={exit} className="choke-btn-menu">
+                {exit.label}
               </ExitLink>
             </aside>
             <div className="choke-party-grid">
@@ -1077,9 +1081,9 @@ export function BattleStage({
                 <span>重开</span>
               </button>
             )}
-            <ExitLink host={host} className="choke-tool-btn" sfx="close">
+            <ExitLink host={host} exit={exit} className="choke-tool-btn" sfx="close">
               <FiChevronLeft aria-hidden />
-              <span>桌面</span>
+              <span>{exit.label}</span>
             </ExitLink>
           </div>
 
@@ -1377,8 +1381,8 @@ export function BattleStage({
               )}
             </div>
 
-            <ExitLink host={host} className="choke-btn-menu" sfx="close">
-              桌面
+            <ExitLink host={host} exit={exit} className="choke-btn-menu" sfx="close">
+              {exit.label}
             </ExitLink>
           </aside>
 
@@ -1615,7 +1619,7 @@ export function BattleStage({
                     <button type="button" onClick={() => begin(onRestart)} data-sfx="none">
                       再来一场
                     </button>
-                    <a href="/">返回桌面</a>
+                    <a href={exit.href}>返回{exit.label}</a>
                   </>
                 )}
               </div>

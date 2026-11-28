@@ -1,0 +1,42 @@
+/* 「更多」页：入口排成卡片格 */
+
+.more-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.more-entry {
+  gap: 6px;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--ui-fast);
+}
+.more-entry:hover {
+  background: var(--bk-paper-hi);
+}
+.more-entry[aria-current="page"] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-pink) 55%, transparent);
+}
+.more-entry[data-locked] {
+  cursor: not-allowed;
+}
+.more-entry[data-locked] b {
+  color: var(--bk-dim);
+}
+.more-entry__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 899px) {
+  .more-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}

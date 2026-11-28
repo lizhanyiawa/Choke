@@ -1,17 +1,18 @@
-import { and, desc, eq, getTableColumns, gt, gte, lte, sql } from "drizzle-orm"
+import { and, asc, count, desc, eq, getTableColumns, gt, gte, ilike, lte, sql, type SQL } from "drizzle-orm"
 import type { FastifyInstance } from "fastify"
 import { z } from "zod"
 
 import {
-  MARKET_DEPOSIT_RATE,
   MARKET_LISTING_TTL_MS,
-  MARKET_LIST_TAX_RATE,
   MARKET_PRICE_BAND_RATIO,
   MARKET_TRADE_TAX_RATE,
+  marketListingFees,
 } from "@choke/shared/economy"
+import { RARITIES } from "@choke/shared/types"
 
 import { MARKET_MAX_PRICE } from "../shared/cards"
 import { requireSelf, requireSession } from "../auth/guard"
+import { CARD_TYPES } from "../card-types"
 import { db } from "../db/client"
 import { EXPEDITION_LOCK_MESSAGE, anyLocked } from "../expedition/locks"
 import { cards, deckSlots, marketListings, userCards, users } from "../db/schema"
@@ -20,8 +21,7 @@ import { recordQuestEvent } from "../quest-events"
 import { TxAbort, lockUser, runTx, type Tx } from "../tx"
 import { requireFeature } from "../unlocks"
 
-const cardColumns = {
-  ...getTableColumns(cards),
+const instanceColumns = {
   userCardId: userCards.id,
   level: userCards.level,
   constellation: userCards.constellation,
@@ -31,9 +31,62 @@ const cardColumns = {
   skillRefs: userCards.skillRefs,
   foil: userCards.foil,
 }
+const cardColumns = { ...getTableColumns(cards), ...instanceColumns }
+const listingCardColumns = {
+  id: cards.id,
+  name: cards.name,
+  rarity: cards.rarity,
+  job: cards.job,
+  no: cards.no,
+  total: cards.total,
+  country: cards.country,
+  globalRank: cards.globalRank,
+  pp: cards.pp,
+  profileUrl: cards.profileUrl,
+  art: cards.art,
+  banner: cards.banner,
+  version: cards.version,
+  pulled: cards.pulled,
+  ...instanceColumns,
+}
+
+const publicListingColumns = {
+  id: marketListings.id,
+  price: marketListings.price,
+  sellerId: marketListings.sellerId,
+  sellerName: users.username,
+  sellerPublicId: users.publicId,
+  createdAt: marketListings.createdAt,
+  card: listingCardColumns,
+}
+
+function publicListingQuery(where: SQL | undefined) {
+  return db.select(publicListingColumns)
+    .from(marketListings)
+    .innerJoin(userCards, eq(userCards.id, marketListings.userCardId))
+    .innerJoin(cards, eq(cards.id, userCards.cardId))
+    .innerJoin(users, eq(users.id, marketListings.sellerId))
+    .where(where)
+}
+
+function listingExpiry(createdAt: Date) {
+  return new Date(createdAt.getTime() + MARKET_LISTING_TTL_MS).toISOString()
+}
+
+function activeListingFilters() {
+  return [eq(marketListings.status, "active"), gt(marketListings.createdAt, new Date(Date.now() - MARKET_LISTING_TTL_MS))]
+}
 
 const paramsSchema = z.object({ userId: z.string() })
 const listingParams = z.object({ userId: z.string(), listingId: z.coerce.number().int().positive() })
+const pageQuery = z.object({
+  q: z.string().trim().max(64).optional(),
+  rarity: z.enum(RARITIES).optional(),
+  type: z.enum([CARD_TYPES.pool, CARD_TYPES.mirror]).optional(),
+  sort: z.enum(["new", "asc", "desc"]).default("new"),
+  limit: z.coerce.number().int().min(1).max(60).default(16),
+  offset: z.coerce.number().int().min(0).default(0),
+})
 
 async function loadCard(userId: string, userCardId: number, executor: Tx | typeof db = db) {
   const [row] = await executor
@@ -127,59 +180,39 @@ export async function marketRoutes(app: FastifyInstance) {
     const viewer = requireSession(request, reply)
     if (!viewer) return
     await expireStaleListings()
-    const expireBefore = new Date(Date.now() - MARKET_LISTING_TTL_MS)
-    const rows = await db
-      .select({
-        listingId: marketListings.id,
-        price: marketListings.price,
-        sellerId: marketListings.sellerId,
-        sellerName: users.username,
-        sellerPublicId: users.publicId,
-        createdAt: marketListings.createdAt,
-        ...cardColumns,
-      })
-      .from(marketListings)
-      .innerJoin(userCards, eq(userCards.id, marketListings.userCardId))
-      .innerJoin(cards, eq(cards.id, userCards.cardId))
-      .innerJoin(users, eq(users.id, marketListings.sellerId))
-      .where(and(eq(marketListings.status, "active"), gt(marketListings.createdAt, expireBefore)))
-      .orderBy(desc(marketListings.id))
-      .limit(80)
+    const rows = await publicListingQuery(and(...activeListingFilters())).orderBy(desc(marketListings.id)).limit(80)
+    return { ok: true, data: rows.map(({ createdAt, ...listing }) => ({ ...listing, expiresAt: listingExpiry(createdAt) })) }
+  })
 
-    return {
-      ok: true,
-      data: rows.map((row) => ({
-        id: row.listingId,
-        price: row.price,
-        sellerId: row.sellerId,
-        sellerName: row.sellerName,
-        sellerPublicId: row.sellerPublicId,
-        card: {
-          id: row.id,
-          name: row.name,
-          rarity: row.rarity,
-          job: row.job,
-          no: row.no,
-          total: row.total,
-          country: row.country,
-          globalRank: row.globalRank,
-          pp: row.pp,
-          profileUrl: row.profileUrl,
-          art: row.art,
-          banner: row.banner,
-          skillRefs: row.skillRefs,
-          version: row.version,
-          userCardId: row.userCardId,
-          level: row.level,
-          constellation: row.constellation,
-          exp: row.exp,
-          serial: row.serial,
-          rollBp: row.rollBp,
-          pulled: row.pulled,
-          foil: row.foil,
-        },
-      })),
+  app.get("/market/listings/page", async (request, reply) => {
+    if (!requireSession(request, reply)) return
+    const parsed = pageQuery.safeParse(request.query)
+    if (!parsed.success) {
+      return reply.code(400).send({ ok: false, error: { code: "bad_request", message: "市场筛选参数不合法" } })
     }
+    const { q, rarity, type, sort, limit, offset } = parsed.data
+    await expireStaleListings()
+    const filters = activeListingFilters()
+    if (q) filters.push(ilike(cards.name, `%${q.replace(/[\\%_]/g, "\\$&")}%`))
+    if (rarity) filters.push(eq(cards.rarity, rarity))
+    if (type) filters.push(eq(cards.cardType, type))
+    const where = and(...filters)
+    const stable = desc(marketListings.id)
+    const order = sort === "asc" ? [asc(marketListings.price), stable] : sort === "desc" ? [desc(marketListings.price), stable] : [stable]
+    const [rows, [totals]] = await Promise.all([
+      publicListingQuery(where).orderBy(...order).limit(limit).offset(offset),
+      db.select({ total: count() }).from(marketListings)
+        .innerJoin(userCards, eq(userCards.id, marketListings.userCardId))
+        .innerJoin(cards, eq(cards.id, userCards.cardId))
+        .innerJoin(users, eq(users.id, marketListings.sellerId))
+        .where(where),
+    ])
+    return { ok: true, data: {
+      rows: rows.map(({ createdAt, ...listing }) => ({ ...listing, expiresAt: listingExpiry(createdAt) })),
+      total: totals?.total ?? 0,
+      limit,
+      offset,
+    } }
   })
 
   app.get("/users/:userId/market/listings", async (request, reply) => {
@@ -190,46 +223,21 @@ export async function marketRoutes(app: FastifyInstance) {
     await expireStaleListings()
     const rows = await db
       .select({
-        listingId: marketListings.id,
+        id: marketListings.id,
         price: marketListings.price,
-        ...cardColumns,
+        deposit: marketListings.deposit,
+        createdAt: marketListings.createdAt,
+        card: listingCardColumns,
       })
       .from(marketListings)
       .innerJoin(userCards, eq(userCards.id, marketListings.userCardId))
       .innerJoin(cards, eq(cards.id, userCards.cardId))
-      .where(and(eq(marketListings.sellerId, userId), eq(marketListings.status, "active")))
+      .where(and(eq(marketListings.sellerId, userId), ...activeListingFilters()))
       .orderBy(desc(marketListings.id))
 
     return {
       ok: true,
-      data: rows.map((row) => ({
-        id: row.listingId,
-        price: row.price,
-        card: {
-          id: row.id,
-          name: row.name,
-          rarity: row.rarity,
-          job: row.job,
-          no: row.no,
-          total: row.total,
-          country: row.country,
-          globalRank: row.globalRank,
-          pp: row.pp,
-          profileUrl: row.profileUrl,
-          art: row.art,
-          banner: row.banner,
-          skillRefs: row.skillRefs,
-          version: row.version,
-          userCardId: row.userCardId,
-          level: row.level,
-          constellation: row.constellation,
-          exp: row.exp,
-          serial: row.serial,
-          rollBp: row.rollBp,
-          pulled: row.pulled,
-          foil: row.foil,
-        },
-      })),
+      data: rows.map(({ createdAt, ...listing }) => ({ ...listing, expiresAt: listingExpiry(createdAt) })),
     }
   })
 
@@ -251,9 +259,7 @@ export async function marketRoutes(app: FastifyInstance) {
       })
     }
 
-    const listTax = Math.max(1, Math.floor(body.data.price * MARKET_LIST_TAX_RATE))
-    const deposit = Math.max(1, Math.floor(body.data.price * MARKET_DEPOSIT_RATE))
-    const upfrontTotal = listTax + deposit
+    const { listTax, deposit, upfrontTotal } = marketListingFees(body.data.price)
     const listedResult = await runTx(reply, async (tx) => {
       await lockUser(tx, userId)
 

@@ -17,14 +17,18 @@ const { db } = await import("../src/db/client")
 const { users, cards, userCards, heroResonance } = await import("../src/db/schema")
 const { COOKIE_NAME, makeSession } = await import("../src/auth/osu")
 const { handleError } = await import("../src/error-handler")
+
 const { progressionRoutes } = await import("../src/routes/progression")
+const { cardRoutes } = await import("../src/routes/cards")
 const { constellationCap } = await import("@choke/shared/progression")
 const { resonanceAttributeOf } = await import("@choke/shared/resonance")
 
 const app = Fastify()
 app.setErrorHandler(handleError)
 await app.register(cookie)
+
 await app.register(progressionRoutes)
+await app.register(cardRoutes)
 await app.ready()
 
 let passed = 0
@@ -104,6 +108,23 @@ await test("本体卡命座上限 8 与吞噬镜像共鸣（职业/MOD映射、�
     .insert(userCards)
     .values({ userId, cardId: "mirror-101", serial: 2 })
     .returning()
+
+  // 卡册按类型筛选：吞噬界面靠它列出手上的镜像卡
+  const listOf = async (type: string) => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/users/${userId}/cards?type=${type}&limit=60`,
+      headers: authHeaders(userId),
+    })
+    assert.equal(res.statusCode, 200)
+    return res.json().data as { total: number; rows: { id: string; cardType: string }[] }
+  }
+  const mirrors = await listOf("mirror")
+  assert.equal(mirrors.total, 5)
+  assert.ok(mirrors.rows.every((row) => row.cardType === "mirror"))
+  const heroes = await listOf("hero")
+  assert.deepEqual(heroes.rows.map((row) => row.id), [heroId])
+  assert.equal((await listOf("pool")).total, 0)
 
   // 前 3 张 ATK 镜像卡正常提供共鸣
   for (let i = 0; i < 3; i += 1) {

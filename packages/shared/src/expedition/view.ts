@@ -1,8 +1,8 @@
 import type { BattleAction } from "../battle/actions"
-import type { EncounterSpec } from "../battle/content"
+import type { EncounterSpec, EncounterSummary } from "../battle/content"
 import type { ExpeditionAllocation } from "../expedition-points"
 import type { CardFaceData } from "../types"
-import type { EventOption, MapDef, Reward, StoryLine } from "./content"
+import type { EventOption, MapDef, MapNode, Reward, StoryLine } from "./content"
 import type { DifficultyStatus } from "./difficulty"
 
 /** 接口返回的出征视图：前端只靠它画界面，规则全在服务端 */
@@ -16,6 +16,8 @@ export type ExpeditionEnd = "cleared" | "early" | "abandoned" | "expired"
 export interface ExpeditionPoolCard {
   userCardId: number
   face: CardFaceData
+  /** 出征开始时该卡的当前经验快照；旧记录缺省时前端按 0 展示 */
+  exp?: number
 }
 
 export type BattleStatus = "preparing" | "fighting" | "won" | "lost"
@@ -53,6 +55,24 @@ export interface ExpeditionEventView {
   options: EventOption[]
 }
 
+/** 地图每个格子的公开详情，与是否已到达或处理完无关 */
+export interface ExpeditionNodePreview {
+  nodeId: string
+  title: string
+  type: MapNode["type"]
+  hint?: string
+  threat?: number
+  /** hp 是未按威胁档位放大的基础生命；弱点只包含公开属性 */
+  encounter?: Pick<
+    EncounterSummary,
+    "name" | "title" | "tier" | "element" | "weaknesses" | "hp" | "summary"
+  >
+  event?: ExpeditionEventView
+  story?: ExpeditionStoryView
+  /** 只提示奖励何时确定，不包含掉落结果 */
+  rewardHint?: string
+}
+
 /** 通关目标在结算时的达成情况 */
 export interface ObjectiveResult {
   text: string
@@ -78,6 +98,8 @@ export interface ExpeditionView {
   status: ExpeditionStatus
   mapId: string
   map: MapDef
+  /** 只含当前格、前方一步、身后一步的详情；更远的格子服务端不下发 */
+  nodePreviews: Record<string, ExpeditionNodePreview>
   seed: string
   allocation: ExpeditionAllocation
   pool: ExpeditionPoolCard[]

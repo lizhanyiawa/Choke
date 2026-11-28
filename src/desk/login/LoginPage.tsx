@@ -31,7 +31,7 @@ export function LoginPage() {
         <footer className="login-foot">
           <GuestLoginButton className="bk-btn bk-btn--ghost login-big" label="先以游客试玩" />
           <p className="bk-note login-hint">游客可以开包和战斗，但不能用市场；邮箱或 osu! 账号才可以交易。</p>
-          <a className="login-back" href="/">
+          <a className="login-back" href="/home">
             <span aria-hidden>‹</span> 返回桌面
           </a>
         </footer>

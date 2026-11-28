@@ -1,0 +1,196 @@
+.fl-deck {
+  --deck-accent: color-mix(in srgb, var(--brand-pink) 55%, #fff);
+  --deck-success: #7fd6a0;
+  --deck-danger: #ff9c9c;
+  --deck-selected: #482738;
+  --deck-line: #47373f;
+}
+.light .fl-deck {
+  --deck-accent: #893058;
+  --deck-success: #226943;
+  --deck-danger: #a83939;
+  --deck-selected: #f6dce8;
+  --deck-line: #d9cfc4;
+}
+.fl-deck__head, .fl-deck__summary, .fl-deck__failure, .fl-deck__dialog-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fl-deck__head h1 { font-size: 27px; letter-spacing: 0; }
+.fl-deck h2 { margin: 0; font-size: 18px; line-height: 1.2; }
+.fl-deck__battle, .fl-deck__control, .fl-deck__cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--deck-line, var(--bk-line));
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.fl-deck__battle {
+  min-width: 136px;
+  min-height: 40px;
+  margin-inline-start: auto;
+  border-color: transparent;
+  background: var(--d-osu);
+  color: #291421;
+  font-size: 14px;
+}
+.fl-deck__control:enabled:hover, .fl-deck__cancel:enabled:hover { background: var(--fl-btn, var(--bk-paper)); }
+.fl-deck button:disabled { cursor: not-allowed; }
+.fl-deck__battle:disabled, .fl-deck__control:disabled, .fl-deck__cancel:disabled { opacity: .5; }
+.fl-deck__danger { color: var(--deck-danger, #db6666); }
+.fl-card.fl-deck__formation { gap: 14px; padding: 14px 22px 24px; }
+.fl-deck__summary { flex-wrap: wrap; gap: 6px 16px; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--d-ink-dim); }
+.fl-deck__summary h2 { color: var(--d-ink); }
+.fl-deck__summary strong, .fl-deck__target { color: var(--fl-info); }
+.fl-deck__saved { margin-inline-start: auto; color: var(--deck-success); }
+.fl-deck__saved[data-failed] { color: var(--deck-danger); }
+.fl-deck__clear { min-width: 104px; color: var(--d-ink); }
+.fl-deck__slots { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; }
+.fl-deck__slot { min-width: 0; width: min(100%, 112px); }
+.fl-deck__slot-label { display: block; margin: 0 0 6px 1px; color: var(--d-ink-dim); font-size: 13px; }
+.fl-deck__slot[data-selected] .fl-deck__slot-label { color: var(--deck-accent); font-weight: 700; }
+.fl-deck__face.fl-library-tile { width: 100%; }
+.fl-deck__face:disabled { opacity: 1; }
+.fl-deck__face.fl-deck__empty {
+  display: flex;
+  aspect-ratio: 2 / 3;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px dashed var(--deck-line);
+  border-radius: 8px;
+  background: var(--fl-bg);
+  color: var(--d-ink-dim);
+  font-size: 12px;
+}
+.fl-deck__face.fl-deck__empty[aria-pressed="true"] { border-color: var(--d-osu); background: var(--deck-selected); color: var(--deck-accent); }
+.fl-deck__slot-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.fl-deck__slot-actions button { min-height: 32px; padding-inline: 0; font-size: 12px; }
+.fl-deck__candidates { display: flex; flex-direction: column; gap: 12px; }
+.fl-deck__library { display: contents; }
+.fl-deck__target { font-size: 13px; }
+.fl-deck__cancel { margin-inline-start: auto; padding-inline: 4px; border-color: transparent; color: var(--deck-accent); }
+.fl-deck__candidate-grid .fl-deck__face { width: min(100%, var(--owned-tile-width)); justify-self: center; }
+.fl-deck__candidate-grid .cfb2 { content-visibility: auto; }
+.fl-deck__candidate-space { aspect-ratio: 2 / 3; }
+.fl-deck .fl-library-pager [aria-disabled="true"] { cursor: wait; opacity: .55; }
+.fl-deck__assigned { position: absolute; inset: auto 3px 3px auto; padding: 2px 5px; border-radius: 4px; background: #21171b; color: #f2e9ed; font-size: 11px; }
+.fl-deck__failure { flex-wrap: wrap; color: var(--deck-danger); font-size: 13px; }
+.fl-deck__dialog-actions { justify-content: end; }
+.fl-deck__sheet-actions { display: grid; gap: 8px; }
+.fl-deck__sheet-actions > button { min-height: 44px; }
+.fl-deck__phone { display: none; }
+
+.fl-deck__filters { display: contents; }
+@media (min-width: 900px) and (max-height: 900px) {
+  .fl-page.fl-deck { gap: 10px; padding-block: 10px; }
+  .fl-card.fl-deck__formation { gap: 8px; padding-block: 9px 11px; }
+  .fl-deck__slot { width: min(100%, 76px); }
+  .fl-deck__slot-actions { margin-top: 4px; gap: 4px; }
+  .fl-deck__candidates { gap: 8px; }
+}
+
+@media (min-width: 1200px) {
+  .flat-main .fl-page.fl-deck { height: auto; min-height: 100%; max-width: 1180px; gap: 14px; padding: 18px 24px 32px; }
+  .fl-deck__head h1 { font-size: 22px; }
+  .fl-deck:has(.fl-deck__preview .bk-btn--main) .fl-deck__battle {
+    border-color: var(--deck-line);
+    background: var(--bk-paper);
+    color: var(--d-ink);
+  }
+
+  /* 阵容：左边七个竖版卡槽，右边一栏汇总 */
+  .fl-card.fl-deck__formation {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    grid-template-areas: "slots summary";
+    gap: 0 24px;
+    padding: 16px 20px;
+  }
+  .fl-deck__slots { grid-area: slots; gap: 10px; }
+  .fl-deck__slot { width: 100%; }
+  .fl-deck__slot-label { margin-bottom: 5px; font-size: 12px; }
+  .fl-deck__slot-name { display: block; margin-top: 5px; overflow: hidden; color: var(--d-ink-dim); font-size: 12px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+  .fl-deck__face.fl-deck__empty .fl-deck__slot-name { margin: 0; }
+  .fl-deck__summary {
+    grid-area: summary;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 6px;
+    padding-left: 24px;
+    border-left: 1px solid var(--bk-line);
+  }
+  .fl-deck__summary h2 { font-size: 15px; }
+  .fl-deck__summary strong { font-size: 20px; line-height: 1.2; }
+  .fl-deck__saved { margin: 4px 0 0; font-size: 12px; }
+  .fl-deck__summary .fl-deck__clear { align-self: flex-start; min-height: 32px; min-width: 84px; margin-top: 8px; }
+
+  /* 候选：左边筛选 + 六列卡格，右边预览。页面自然滚动，不再靠容器高度硬算 */
+  .fl-deck__candidates { display: grid; flex: none; grid-template-columns: minmax(0, 1fr) 248px; align-items: start; gap: 20px; }
+  .fl-deck__library { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .flat-main .fl-deck .fl-owned-results { flex: none; gap: 10px; }
+  .fl-deck__filters {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+    gap: 8px 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--bk-line);
+  }
+  .fl-deck__filters > :not(.fl-deck__head, .fl-library-rarity) { grid-column: 1 / -1; }
+  .fl-deck__filters > .fl-library-toolbar { grid-row: 1; }
+  .fl-deck__filters > .fl-deck__head { grid-area: 2 / 1; }
+  .fl-deck__filters > .fl-library-rarity { grid-area: 2 / 2; padding-bottom: 0; border-bottom: 0; }
+  .fl-deck__candidate-grid.fl-library-grid { --library-columns: 6; --library-row-gap: 12px; --library-column-gap: 10px; }
+  .fl-deck__candidate-grid.fl-library-grid .fl-deck__face { width: 100%; justify-self: stretch; }
+
+  .fl-deck__preview { position: sticky; top: 12px; align-self: start; gap: 12px; padding: 16px; }
+  .fl-deck__preview-card { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+  .fl-deck__preview-face { width: min(100%, 132px); }
+  .fl-deck__preview-card > div:last-child { width: 100%; }
+  .fl-deck__preview-name { overflow-wrap: anywhere; font-size: 16px; }
+  .fl-deck__preview-stats { display: grid; gap: 4px; margin: 8px 0 0; font-size: 13px; text-align: start; }
+  .fl-deck__preview-stats > div { display: flex; justify-content: space-between; gap: 4px; }
+  .fl-deck__preview-stats dt { color: var(--d-ink-dim); }
+  .fl-deck__preview-stats dd { margin: 0; font-weight: 700; }
+  .fl-deck__preview-skills { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+  .fl-deck__preview-skills > li { display: flex; justify-content: space-between; gap: 6px; padding: 5px 8px; border-radius: 6px; background: var(--bk-well); font-size: 12px; }
+  .fl-deck__preview-skills small { flex: none; color: var(--d-ink-dim); }
+}
+
+@media (max-width: 619px) {
+  .fl-deck__wide, .fl-deck__slot-actions { display: none; }
+  .fl-deck__phone { display: inline-flex; align-items: center; }
+  .fl-deck__head h1 { font-size: 24px; }
+  .fl-deck__candidates h2 { font-size: 16px; }
+  .fl-deck__battle { min-width: 0; min-height: 44px; padding-inline: 4px; background: transparent; color: var(--deck-accent); }
+  .fl-deck.fl-page { gap: 10px; }
+  .fl-card.fl-deck__formation { gap: 8px; padding: 10px 12px 12px; }
+  .fl-deck__summary { gap: 4px 8px; font-size: 12px; }
+  .fl-deck__slots { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 12px; }
+  .fl-deck__slot { width: min(100%, 70px); justify-self: center; }
+  .fl-deck__slot-label { margin-bottom: 4px; font-size: 11px; }
+  .fl-deck__clear { align-self: center; min-width: 0; min-height: 44px; padding-inline: 3px; }
+  .fl-deck__cancel { min-width: 44px; min-height: 44px; }
+  .fl-deck__target { flex: 1; }
+  .fl-deck__head:has(.fl-deck__cancel) .fl-deck__target { display: none; }
+  .fl-deck__dialog-actions button, .fl-deck__failure button { min-height: 44px; }
+}
+
+@media (min-width: 620px) and (max-width: 1120px) {
+  .fl-deck__slots { gap: 8px; }
+}
+
+

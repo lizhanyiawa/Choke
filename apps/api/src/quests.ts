@@ -90,6 +90,7 @@ export async function getQuests(userId: string, now = Date.now()): Promise<Quest
       id: questId,
       name: def.name,
       desc: def.desc,
+      event: def.event,
       ...(def.group ? { group: def.group } : {}),
       target: def.target,
       progress,

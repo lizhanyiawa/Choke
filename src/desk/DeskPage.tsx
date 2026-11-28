@@ -70,6 +70,7 @@ import { GiSpeaker, GiSpeakerOff } from "react-icons/gi"
 import { getSfxVolume, playSfx, setSfxVolume } from "@/audio/sfx"
 import { useTheme } from "@/components/theme-provider"
 import { UI_SCALE_STEPS, useUiScale } from "@/desk/lib/ui-scale"
+import { FLAT_ROUTES } from "@/flat/router"
 import {
   POOL_KEY,
   SERVER_POOL,
@@ -1671,6 +1672,19 @@ export function DeskPage() {
               >
                 {confirmReset ? "确认重置" : "重置桌面"}
               </button>
+              {progress.tutorialDone && (
+                <>
+                  <a className="desk-button desk-button--link" href={FLAT_ROUTES.quests}>
+                    任务
+                  </a>
+                  <a className="desk-button desk-button--link" href={FLAT_ROUTES.shop}>
+                    商店
+                  </a>
+                  <a className="desk-button desk-button--link" href={FLAT_ROUTES.home}>
+                    回新版
+                  </a>
+                </>
+              )}
             </>
             )}
           </div>

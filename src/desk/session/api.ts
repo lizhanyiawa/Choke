@@ -1,8 +1,9 @@
 import { faceFromDef, type CardDef } from "@/card/def"
 import type { CardFaceData, CardSkillRef, Element as CardElement, Job, Rarity } from "@/card/types"
 import type { EncounterSpec, EncounterSummary } from "@choke/shared/battle/content"
+
 import type { ItemId, ItemStack } from "@choke/shared/items"
-import type { MailView } from "@choke/shared/mail"
+import type { MailAttachmentLine, MailView } from "@choke/shared/mail"
 import type { LedgerKind, LedgerPage } from "@choke/shared/ledger"
 import type { OsuDailyCheckResult, OsuDailyView } from "@choke/shared/osu-daily"
 import type { QuestsOverview } from "@choke/shared/quests"
@@ -46,8 +47,8 @@ export interface ApiUserCard {
 export type CardSort = "recent" | "rarity" | "pp" | "level" | "name"
 export type SortOrder = "asc" | "desc"
 
-export interface CardPage {
-  rows: ApiUserCard[]
+export interface CardPage<T = ApiUserCard> {
+  rows: T[]
   total: number
   limit: number
   offset: number
@@ -95,9 +96,13 @@ export function toFace(row: ApiUserCard): CardFaceData {
   })
 }
 
-/** 图鉴里的卡定义（没有实例状态）转卡面：1 级、0 命座 */
-export function defToFace(row: ApiCardDef): CardFaceData {
-  return faceFromDef(toCardDef(row))
+/** 图鉴按基础数值显示；扁平页可以附上玩家的一个实际技能配置。 */
+export function defToFace(row: ApiCardDef, preview?: OwnedCodexPreview | null): CardFaceData {
+  return faceFromDef(toCardDef(row), preview ? {
+    skillRefs: preview.skillRefs,
+    serial: preview.serial || undefined,
+    pulled: row.pulled,
+  } : undefined)
 }
 
 const REQUEST_TIMEOUT_MS = 15_000
@@ -113,24 +118,33 @@ export async function request<T>(url: string, init?: RequestInit): Promise<T> {
     if (timeout.aborted) throw new ApiError("请求超时，请稍后再试", "timeout")
     throw new ApiError("网络不通，请检查连接", "network")
   }
-  let data: { ok?: boolean; data?: unknown; error?: { message?: string; code?: string } }
+  let data: { ok?: boolean; data?: unknown; error?: ErrorBody }
   try {
     data = await res.json()
   } catch {
     throw new ApiError(res.ok ? "服务器返回了无法识别的内容" : `服务暂时不可用（${res.status}）`, "bad_response")
   }
-  if (!res.ok || !data.ok) throw new ApiError(data.error?.message ?? "请求失败", data.error?.code)
+  if (!res.ok || !data.ok) {
+    const body: ErrorBody = data.error ?? {}
+    const { message, code, ...extra } = body
+    throw new ApiError(message ?? "请求失败", code, extra)
+  }
   return data.data as T
 }
+
+type ErrorBody = { message?: string; code?: string } & Record<string, unknown>
 
 /** 带机器码的接口错误，调用方可以按 code 分支处理（例如 NO_PACK）。 */
 export class ApiError extends Error {
   code?: string
+  /** 服务端错误里 code、message 以外的字段：need、coins、cooldownSeconds、remaining、feature…… */
+  extra: Record<string, unknown>
 
-  constructor(message: string, code?: string) {
+  constructor(message: string, code?: string, extra: Record<string, unknown> = {}) {
     super(message)
     this.name = "ApiError"
     this.code = code
+    this.extra = extra
   }
 }
 
@@ -143,6 +157,7 @@ export function fetchUserCards(
     cardType?: "pool" | "hero" | "mirror"
     foil?: boolean
     q?: string
+    country?: string
     sort?: CardSort
     order?: SortOrder
     page?: number
@@ -150,9 +165,11 @@ export function fetchUserCards(
     signal?: AbortSignal
     /** 只取这些 user_cards 实例 */
     ids?: number[]
+    /** 只取这一类卡：公共卡 / 本体卡 / 镜像卡 */
+    type?: "pool" | "hero" | "mirror"
   } = {},
 ): Promise<CardPage> {
-  const { rarity, job, minLevel, cardType, foil, q, sort = "recent", order, page = 0, limit = 24, signal, ids } = params
+  const { rarity, job, minLevel, cardType, foil, q, country, sort = "recent", order, page = 0, limit = 24, signal, ids, type } = params
   const search = new URLSearchParams({
     sort,
     limit: String(limit),
@@ -164,8 +181,10 @@ export function fetchUserCards(
   if (cardType) search.set("cardType", cardType)
   if (foil !== undefined) search.set("foil", String(foil))
   if (q) search.set("q", q)
+  if (country) search.set("country", country)
   if (order) search.set("order", order)
   if (ids?.length) search.set("ids", ids.join(","))
+  if (type) search.set("type", type)
   return request<CardPage>(`/api/users/${userId}/cards?${search.toString()}`, { signal })
 }
 
@@ -223,6 +242,17 @@ export function allocateExpPool(
   })
 }
 
+export interface AscendResult {
+  card: ApiUserCard
+  consumedUserCardId: number
+  /** 以下只有本体卡吞噬镜像卡时才有 */
+  constellation?: number
+  resonance?: ResonanceRecord[]
+  summary?: ResonanceSummary
+  /** 这次新增的共鸣；属性或总槽位已满时为 null（只升命座） */
+  addedResonance?: ResonanceRecord | null
+  capped?: boolean
+}
 export function ascendCard(
   userId: string,
   userCardId: number,
@@ -495,17 +525,55 @@ export interface MarketListing {
   sellerId: string
   sellerName: string
   sellerPublicId: number | null
+  expiresAt: string
   card: ApiUserCard
 }
 
 export interface OwnMarketListing {
   id: number
   price: number
+  deposit: number
+  expiresAt: string
   card: ApiUserCard
 }
 
 export function fetchMarketListings(signal?: AbortSignal): Promise<MarketListing[]> {
   return request<MarketListing[]>("/api/market/listings", { signal })
+}
+
+export type MarketSort = "new" | "asc" | "desc"
+export type MarketCardType = "pool" | "mirror"
+
+export function fetchMarketPage({ q, rarity, type, sort, limit, offset, signal }: {
+  q: string
+  rarity: Rarity | ""
+  type: MarketCardType | ""
+  sort: MarketSort
+  limit: number
+  offset: number
+  signal?: AbortSignal
+}): Promise<CardPage<MarketListing>> {
+  const query = new URLSearchParams({ sort, limit: String(limit), offset: String(offset) })
+  if (q) query.set("q", q)
+  if (rarity) query.set("rarity", rarity)
+  if (type) query.set("type", type)
+  return request(`/api/market/listings/page?${query}`, { signal })
+}
+
+export interface MarketPriceBand {
+  avgPrice: number
+  minPrice: number
+  maxPrice: number
+  sampleCount: number
+}
+
+export interface MarketHistory {
+  priceBand: MarketPriceBand | null
+  sales: { id: number; cardId: string; price: number }[]
+}
+
+export function fetchMarketHistory(cardId: string, signal?: AbortSignal): Promise<MarketHistory> {
+  return request(`/api/market/history?${new URLSearchParams({ cardId })}`, { signal })
 }
 
 export function fetchOwnListings(
@@ -519,7 +587,7 @@ export function listMarketCard(
   userId: string,
   userCardId: number,
   price: number,
-): Promise<{ id: number; price: number; card: ApiUserCard }> {
+): Promise<{ id: number; price: number; coins: number; listTax: number; deposit: number; card: ApiUserCard }> {
   return request(`/api/users/${userId}/market/list`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -530,7 +598,7 @@ export function listMarketCard(
 export function unlistMarketCard(
   userId: string,
   listingId: number,
-): Promise<{ id: number }> {
+): Promise<{ id: number; depositRefunded: number; coins?: number }> {
   return request(`/api/users/${userId}/market/listings/${listingId}`, {
     method: "DELETE",
   })
@@ -568,6 +636,7 @@ export interface OpenPackCard {
   foil: boolean
   serial: number
   pulled: number
+  rollBp?: number
   /** 这张卡掷出的技能；技能挂在卡实例上 */
   skillRefs: CardSkillRef[]
 }
@@ -611,6 +680,11 @@ export function openPack(
 
 /* ============================ 卡牌详情 / 图鉴 ============================ */
 
+export interface OwnedCodexPreview {
+  skillRefs: CardSkillRef[]
+  serial: number
+}
+
 export interface ApiCardDef {
   id: string
   cardType?: "pool" | "hero" | "mirror"
@@ -628,6 +702,7 @@ export interface ApiCardDef {
   version: number
   pulled?: number
   owned?: boolean
+  ownedPreview?: OwnedCodexPreview | null
 }
 
 export function fetchCardDetail(id: string, signal?: AbortSignal): Promise<ApiCardDef> {
@@ -640,7 +715,14 @@ export function fetchCardCountries(
   return request(`/api/cards/countries`, { signal })
 }
 
-export function fetchUserCodexStats(userId: string, signal?: AbortSignal): Promise<unknown> {
+export interface CodexStats {
+  total: number
+  owned: number
+  byRarity: Record<string, { total: number; owned: number }>
+  countries: { code: string; total: number; owned: number }[]
+}
+
+export function fetchUserCodexStats(userId: string, signal?: AbortSignal): Promise<CodexStats> {
   return request(`/api/users/${userId}/codex/stats`, { signal })
 }
 
@@ -656,7 +738,7 @@ export function fetchCodexPage(
     offset?: number
     signal?: AbortSignal
   } = {},
-): Promise<CardPage & { ownedTotal?: number }> {
+): Promise<CardPage<ApiCardDef> & { ownedTotal?: number }> {
   const { userId, rarity, q, country, sort = "rarity", owned, limit = 24, offset = 0, signal } = params
   const search = new URLSearchParams({ sort, limit: String(limit), offset: String(offset) })
   if (rarity) search.set("rarity", rarity)
@@ -666,7 +748,7 @@ export function fetchCodexPage(
   const url = userId
     ? `/api/users/${userId}/codex?${search.toString()}`
     : `/api/cards?${search.toString()}`
-  return request<CardPage & { ownedTotal?: number }>(url, { signal })
+  return request<CardPage<ApiCardDef> & { ownedTotal?: number }>(url, { signal })
 }
 
 /* ============================ 教程进度 ============================ */
@@ -700,28 +782,37 @@ export function skipTutorialRemote(userId: string): Promise<ServerProgress> {
   return request(`/api/users/${userId}/tutorial/skip`, { method: "POST" })
 }
 
+
 /* ============================ 签到 / 任务 ============================ */
 
 export function fetchQuests(userId: string, signal?: AbortSignal): Promise<QuestsOverview> {
   return request<QuestsOverview>(`/api/users/${userId}/quests`, { signal })
 }
 
-export function signIn(
-  userId: string,
-): Promise<{ day: number; rewards: { label: string; count: number }[] }> {
+export function signIn(userId: string): Promise<{ day: number; rewards: MailAttachmentLine[] }> {
   return request(`/api/users/${userId}/sign-in`, { method: "POST" })
 }
 
 export function claimAllQuests(
   userId: string,
-): Promise<{ claimed: string[]; rewards: { label: string; count: number }[] }> {
+): Promise<{ claimed: string[]; rewards: MailAttachmentLine[] }> {
   return request(`/api/users/${userId}/quests/claim-all`, { method: "POST" })
 }
 
+/** 领一条完成了的任务 */
+export function claimQuest(
+  userId: string,
+  questId: string,
+): Promise<{ questId: string; rewards: MailAttachmentLine[] }> {
+  return request(`/api/users/${userId}/quests/${encodeURIComponent(questId)}/claim`, { method: "POST" })
+}
+
+/** 今天的推荐谱面和通过状态 */
 export function fetchOsuDaily(userId: string, signal?: AbortSignal): Promise<OsuDailyView> {
   return request<OsuDailyView>(`/api/users/${userId}/osu-daily`, { signal })
 }
 
+/** 去 osu! 查今天有没有打过推荐谱面；有冷却，太快会报 cooldown（extra.cooldownSeconds） */
 export function checkOsuDaily(userId: string): Promise<OsuDailyCheckResult> {
   return request<OsuDailyCheckResult>(`/api/users/${userId}/osu-daily/check`, { method: "POST" })
 }
@@ -776,6 +867,7 @@ export function fetchRecycleQuota(userId: string, signal?: AbortSignal): Promise
   return request<RecycleQuota>(`/api/users/${userId}/cards/recycle`, { signal })
 }
 
+/** 把卡卖给 NPC 换金币；每天有张数上限，本体卡不收 */
 export function recycleCardsBatch(userId: string, userCardIds: number[]): Promise<RecycleResult> {
   return request<RecycleResult>(`/api/users/${userId}/cards/recycle`, {
     method: "POST",
@@ -783,6 +875,8 @@ export function recycleCardsBatch(userId: string, userCardIds: number[]): Promis
     body: JSON.stringify({ userCardIds }),
   })
 }
+
+export const recycleCards = recycleCardsBatch
 
 export interface SkillRerollCandidate {
   id: string
@@ -897,4 +991,56 @@ export function fetchLedger(
   if (options.before) query.set("before", String(options.before))
   const suffix = query.size > 0 ? `?${query}` : ""
   return request<LedgerPage>(`/api/users/${userId}/ledger${suffix}`, { signal: options.signal })
+}
+
+/* ============================ 商店 ============================ */
+
+export type ShopSection = "supply" | "gamble" | "pity"
+
+export interface ShopCost {
+  coins?: number
+  items?: ItemStack[]
+}
+
+export type ShopReward =
+  | { kind: "fixed"; items?: ItemStack[]; packs?: { pool: string; count: number }[] }
+  | { kind: "gamble"; pool: { weight: number; items: ItemStack[] }[] }
+
+export interface ShopItemView {
+  id: string
+  name: string
+  summary: string
+  section: ShopSection
+  period: "daily" | "weekly" | "monthly"
+  limit: number
+  /** 这个周期里已经买了几次 */
+  used: number
+  remaining: number
+  /** 限购下一次重置的时间戳（毫秒） */
+  nextResetAt: number
+  cost: ShopCost
+  reward: ShopReward
+}
+
+export function fetchShop(userId: string, signal?: AbortSignal): Promise<{ items: ShopItemView[] }> {
+  return request<{ items: ShopItemView[] }>(`/api/users/${userId}/shop`, { signal })
+}
+
+export interface ShopBuyResult {
+  itemId: string
+  count: number
+  used: number
+  remaining: number
+  coins: number
+  items: ItemWallet
+  /** 这次实际拿到的东西；盲盒开出什么看这里 */
+  granted: { items: ItemStack[]; packs: { pool: string; count: number }[] }
+}
+
+export function buyShopItem(userId: string, itemId: string, count = 1): Promise<ShopBuyResult> {
+  return request<ShopBuyResult>(`/api/users/${userId}/shop/buy`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ itemId, count }),
+  })
 }

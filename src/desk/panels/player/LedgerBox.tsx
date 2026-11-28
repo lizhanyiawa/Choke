@@ -118,7 +118,8 @@ export function LedgerBox({ userId }: { userId: string }) {
 
   return (
     <>
-      <button type="button" className="desk-button" onClick={openPanel} title="货币、道具、卡包、卡牌的增减记录">
+      <button type="button" className="desk-button desk-ledger-button" onClick={openPanel} title="货币、道具、卡包、卡牌的增减记录">
+        <GiNotebook className="desk-ledger-button__icon" aria-hidden />
         流水
       </button>
 

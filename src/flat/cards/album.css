@@ -1,0 +1,96 @@
+.fl-album-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 14px;
+}
+
+.fl-album-actions,
+.fl-album-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.fl-album .bk-btn[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--d-osu) 20%, var(--bk-paper));
+  border-color: var(--d-osu);
+  color: var(--bk-ink);
+}
+
+.fl-album-actions > span {
+  color: var(--bk-dim);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fl-album-batch {
+  display: grid;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--bk-line);
+}
+
+.fl-album-tile {
+  position: relative;
+  justify-self: center;
+  width: min(100%, var(--owned-tile-width), var(--owned-tile-fit, 999px));
+  transition: transform .16s ease, filter .16s ease;
+}
+.fl-album-tile:hover { transform: translateY(-3px); filter: brightness(1.06); }
+
+.fl-owned-results[data-listing] { --owned-caption-height: 41px; }
+
+.fl-album-listing-label {
+  display: block;
+  margin-top: 5px;
+  color: var(--bk-dim);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.fl-album-mark {
+  position: absolute;
+  z-index: 1;
+  top: 6px;
+  right: 6px;
+  left: auto;
+  max-width: calc(100% - 12px);
+  border-radius: 6px;
+  background: var(--bk-paper);
+  color: var(--bk-ink);
+  border: 1px solid var(--d-osu);
+  padding: 2px 5px;
+  font-size: 12px;
+}
+
+.fl-album-state {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 10px;
+  min-height: 190px;
+  margin: 0;
+  color: var(--bk-dim);
+  text-align: center;
+}
+
+.fl-album-dialog-actions {
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+@media (min-width: 900px) and (max-height: 850px) {
+  .fl-page.fl-album { max-width: 1180px; gap: 10px; padding-block: 12px 8px; }
+  .fl-album-panel { gap: 8px; }
+}
+
+@media (max-width: 619px) {
+  .fl-album.fl-page { gap: 10px; }
+  .fl-album-panel { gap: 8px; }
+  .fl-album .fl-owned-results { --owned-tile-width: 95px; }
+  .fl-album-dialog-actions .bk-btn { min-height: 44px; }
+}

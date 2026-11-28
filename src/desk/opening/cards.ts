@@ -17,6 +17,7 @@ async function faceOfPulled(item: PulledCard): Promise<CardFaceData> {
     exp: 0,
     foil: item.foil,
     serial: item.serial,
+    rollBp: item.rollBp,
     skillRefs: item.skillRefs,
   }
   try {

@@ -91,6 +91,8 @@ const listeners = new Set<() => void>()
 let current: PlayerProgress = EMPTY
 let owner: string | null = null
 let loaded = false
+/** 哪个账号的进度已经从服务端取回来过；换账号时清掉 */
+let syncedOwner: string | null = null
 
 function emit() {
   for (const listener of listeners) listener()
@@ -130,6 +132,7 @@ function applyServer(ownerId: string, remote: ServerProgress) {
     ? { ...next, tutorialStep: current.tutorialStep, tutorialDone: current.tutorialDone }
     : next
   current = settled
+  syncedOwner = ownerId
   write(ownerId, next)
   emit()
 }
@@ -141,6 +144,7 @@ export async function refreshProgress(ownerId: string | null = owner) {
     const remote = await fetchProgress(ownerId)
     if (!remote || owner !== ownerId) return
     current = normalize(remote, ownerId)
+    syncedOwner = ownerId
     write(ownerId, current)
     emit()
   } catch {
@@ -152,6 +156,7 @@ function hydrate(ownerId: string | null) {
   const nextOwner = ownerId ?? null
   if (loaded && owner === nextOwner) return
   owner = nextOwner
+  syncedOwner = null
   loaded = true
   current = read(nextOwner)
   emit()
@@ -237,4 +242,13 @@ export function useTutorialProgress(ownerId: string | null) {
 
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
   return snapshot.ownerId === (ownerId ?? null) ? snapshot : EMPTY
+}
+
+/**
+ * 现在手上的进度是不是服务端给的（而不是本机缓存或默认值）。
+ * 新浏览器上缓存是空的，tutorialDone 默认 false；要按它决定去留的地方得先等这个变成 true。
+ * 和 useTutorialProgress 配合用：那边负责发起请求。
+ */
+export function useProgressSynced(ownerId: string | null): boolean {
+  return useSyncExternalStore(subscribe, () => ownerId !== null && syncedOwner === ownerId)
 }

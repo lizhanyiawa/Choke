@@ -302,6 +302,10 @@ await test("总览：成就列表和红点", async () => {
   overview = await quests.getQuests(userId, t)
   assert.equal(overview.claimable, 0)
   assert.equal(overview.quests.length, Object.keys(QUEST_CONTENT.quests).length)
+  assert.ok(
+    overview.quests.every((quest) => quest.event === defOf(quest.id).event),
+    "每条任务带上它数的事件，界面按它决定「前往」去哪",
+  )
 })
 
 // ---------- 签到 ----------

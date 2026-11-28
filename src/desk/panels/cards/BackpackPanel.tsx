@@ -1,10 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
-import { createPortal } from "react-dom"
+import { useEffect, useMemo, useState } from "react"
 
 import { playSfx } from "@/audio/sfx"
 import { GameCardFace } from "@/card/GameCardFace"
 import { RARITY_LABEL, battlePower } from "@/card/data"
-import { useModal } from "@/ui/useModal"
 
 import {
   fetchMe,
@@ -21,6 +19,7 @@ import { INVITE_OPEN_EVENT } from "@/desk/lib/invite"
 import { PackArt } from "@/desk/opening/PackArt"
 import { EVENT_POOLS } from "@/desk/lib/rarity"
 import type { PackPool } from "@/desk/lib/types"
+import { MysteryQuestionnaire } from "./MysteryQuestionnaire"
 import { useGameConfig } from "@/desk/session/useGameConfig"
 import "@/desk/panels/cards/backpack-panel.css"
 
@@ -48,21 +47,6 @@ const PACK_TAGLINE: Record<PackPool, string> = {
   starter: "一次性 · 保底至少 1 张传奇",
 }
 
-const QUESTIONS = [
-  {
-    title: "抽到一张新卡时，你最先看什么？",
-    options: ["数值和技能", "卡面好不好看", "能不能进当前卡组"],
-  },
-  {
-    title: "你更喜欢哪种战斗节奏？",
-    options: ["稳稳站场", "连击滚起来", "关键回合爆发"],
-  },
-  {
-    title: "你的本体卡想成为什么位置？",
-    options: ["主 C", "副 C / 功能位", "辅助 / 救场"],
-  },
-]
-
 export function BackpackPanel({
   userId,
   onOpenGacha,
@@ -78,22 +62,12 @@ export function BackpackPanel({
   const [onboarded, setOnboarded] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [questionStep, setQuestionStep] = useState<number | null>(null)
-  const [answers, setAnswers] = useState<string[]>([])
-  const [opening, setOpening] = useState(false)
+  const [questionnaire, setQuestionnaire] = useState(false)
   const [result, setResult] = useState<ApiUserCard | null>(null)
   const [dropHover, setDropHover] = useState(false)
   const [revision, setRevision] = useState(0)
   /** 没点过就默认选第一个有库存的 */
   const [picked, setPicked] = useState<string | null>(null)
-  const modalRef = useRef<HTMLDivElement>(null)
-
-  useModal(modalRef, {
-    active: questionStep !== null,
-    onClose: () => {
-      if (!opening) setQuestionStep(null)
-    },
-  })
 
   useEffect(() => {
     const offHover = onDeskHover("backpack", (value) => setDropHover(Boolean(value)))
@@ -159,31 +133,22 @@ export function BackpackPanel({
   const isMystery = selected.id === MYSTERY_ID
   const showHero = isMystery && heroFace
 
-  async function submitAnswers() {
-    if (!userId || opening) return
-    setOpening(true)
+  async function submitAnswers(answers: string[]) {
+    if (!userId) return
+    const data = await openMysteryPack(userId, answers)
+    setResult(data.hero)
+    setHero(data.hero)
+    setInventory((current) =>
+      current
+        ? { ...current, heroClaimed: true, packs: { ...current.packs, ...data.packs } }
+        : current,
+    )
     setError(null)
-    try {
-      const data = await openMysteryPack(userId, answers)
-      setResult(data.hero)
-      setHero(data.hero)
-      setInventory((current) =>
-        current
-          ? { ...current, heroClaimed: true, packs: { ...current.packs, ...data.packs } }
-          : current,
-      )
-      setQuestionStep(null)
-      // 开完留在神秘卡包这一栏，右页直接看到本体卡
-      setPicked(MYSTERY_ID)
-      playSfx("success")
-      emitDeskData("packs")
-      onHeroClaimed?.()
-    } catch (reason) {
-      playSfx("error")
-      setError(reason instanceof Error ? reason.message : "开启神秘卡包失败")
-    } finally {
-      setOpening(false)
-    }
+    // 开完留在神秘卡包这一栏，右页直接看到本体卡
+    setPicked(MYSTERY_ID)
+    playSfx("success")
+    emitDeskData("packs")
+    onHeroClaimed?.()
   }
 
   if (!userId) {
@@ -204,8 +169,6 @@ export function BackpackPanel({
       />
     )
   }
-
-  const step = questionStep
 
   if (!inventory) {
     return (
@@ -323,7 +286,7 @@ export function BackpackPanel({
             </div>
           </div>
 
-          {error && step === null && (
+          {error && !questionnaire && (
             <p className="bk-note bk-error" role="alert">
               {error}
             </p>
@@ -346,12 +309,11 @@ export function BackpackPanel({
                 className="bk-btn bk-btn--main bk-btn--block"
                 onClick={() => {
                   playSfx("click")
-                  setAnswers([])
                   setError(null)
-                  setQuestionStep(0)
+                  setQuestionnaire(true)
                   setResult(null)
                 }}
-                disabled={selectedCount <= 0 || opening}
+                disabled={selectedCount <= 0 || questionnaire}
               >
                 {selectedCount > 0 ? "开启神秘卡包" : "没有神秘卡包"}
               </button>
@@ -367,87 +329,12 @@ export function BackpackPanel({
             </button>
           )}
 
-          {step !== null && createPortal(
-            <div className="backpack-modal" role="dialog" aria-modal="true" aria-label="神秘卡包问卷" ref={modalRef}>
-              <div className="backpack-modal__panel">
-                <div className="backpack-modal__head">
-                  <span className="bk-label">
-                    神秘卡包 · {step + 1} / {QUESTIONS.length}
-                  </span>
-                  <button
-                    type="button"
-                    className="bk-btn bk-btn--ghost bk-btn--sm"
-                    onClick={() => setQuestionStep(null)}
-                    disabled={opening}
-                    aria-label="关闭"
-                  >
-                    ×
-                  </button>
-                </div>
-                <div
-                  className="bk-bar"
-                  style={{ "--p": ((step + 1) / QUESTIONS.length) * 100 } as CSSProperties}
-                  aria-hidden
-                >
-                  <i />
-                </div>
-                <h3>{QUESTIONS[step]?.title}</h3>
-                <div className="backpack-modal__options">
-                  {QUESTIONS[step]?.options.map((option) => (
-                    <button
-                      type="button"
-                      key={option}
-                      aria-pressed={answers[step] === option}
-                      onClick={() => {
-                        playSfx("tick")
-                        const next = answers.slice()
-                        next[step] = option
-                        setAnswers(next)
-                      }}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-                {error && (
-                  <p className="bk-note bk-error" role="alert">
-                    {error}
-                  </p>
-                )}
-                <div className="backpack-modal__actions">
-                  <button
-                    type="button"
-                    className="bk-btn bk-btn--ghost"
-                    onClick={() =>
-                      setQuestionStep((value) => (value === null ? null : Math.max(0, value - 1)))
-                    }
-                    disabled={step === 0 || opening}
-                  >
-                    上一步
-                  </button>
-                  {step < QUESTIONS.length - 1 ? (
-                    <button
-                      type="button"
-                      className="bk-btn bk-btn--main"
-                      onClick={() => setQuestionStep((value) => (value === null ? null : value + 1))}
-                      disabled={!answers[step]}
-                    >
-                      下一步
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="bk-btn bk-btn--main"
-                      onClick={() => void submitAnswers()}
-                      disabled={opening || answers.length < QUESTIONS.length || !answers[step]}
-                    >
-                      {opening ? "开启中…" : "开启卡包"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>,
-            document.body,
+          {questionnaire && (
+            <MysteryQuestionnaire
+              onSubmit={submitAnswers}
+              onClose={() => setQuestionnaire(false)}
+              onError={setError}
+            />
           )}
         </>
       }

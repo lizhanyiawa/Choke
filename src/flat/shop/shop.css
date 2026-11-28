@@ -1,0 +1,243 @@
+/* =========================================================
+   商店页：三个货架，每件商品一张卡片。
+   只写布局和这一页自己的几样东西；控件用 bk-* / fl-*，颜色全部取令牌，亮色主题跟着令牌走。
+   凡是改到共用类（fl-card、fl-chip）已有属性的地方都写成两级选择器：
+   不管这份样式排在 flat.css 前面还是后面，结果都一样。
+   ========================================================= */
+
+/* ---------- 货架 ---------- */
+.shop-shelf {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+/* 货架之间比货架里面松一点，一眼分得出三段 */
+.shop-shelf + .shop-shelf {
+  margin-top: 8px;
+}
+.shop-shelf__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+}
+.shop-shelf__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.shop-shelf__reset {
+  color: var(--bk-dim);
+  font-size: 12px;
+}
+
+/*
+ * 日常补给最多三列，其余两列；一列不窄于 264 / 300px，放不下就自动少一列。
+ * 页面有多宽由外壳决定（侧栏、最大宽度），所以按货架自己的宽度算，不另写视口断点。
+ */
+.shop-shelf__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(max(300px, (100% - 12px) / 2), 1fr));
+  gap: 12px;
+}
+.shop-shelf--supply .shop-shelf__grid {
+  grid-template-columns: repeat(auto-fill, minmax(max(264px, (100% - 24px) / 3), 1fr));
+}
+
+/* ---------- 商品卡 ---------- */
+/*
+ * 一张卡固定五行：名字、说明、产出、分隔线、价格。同一排的卡用 subgrid 共用这五行，
+ * 说明有长有短、有的卡底下多出一行「获得」时，价格和按钮照样对得齐。
+ * 不认识 subgrid 的浏览器会丢掉那一句，各卡自己排行，只是不再对齐。
+ */
+.shop-shelf__grid > .shop-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: subgrid;
+  grid-row: span 5;
+}
+.shop-shelf__grid > .shop-item > * {
+  min-width: 0;
+}
+.shop-item__name {
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+/* 售罄：整张卡调暗。「已售罄」三个字和底下那行「获得」是要看清的，保持原样 */
+.shop-item.is-sold-out {
+  background: color-mix(in srgb, var(--bk-paper) 50%, transparent);
+}
+.shop-item.is-sold-out > :not(.shop-item__tail),
+.shop-item.is-sold-out .shop-item__price {
+  opacity: 0.55;
+}
+
+/* 固定产出：一排小签。产出是数值信息，小签里的字跟着这一行用青色 */
+.shop-item__reward {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: flex-start;
+  gap: 4px 6px;
+}
+.shop-item__reward .fl-chip {
+  color: inherit;
+}
+
+/* 博弈产出：概率表 */
+.shop-odds {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.shop-odds__hint {
+  margin: 0;
+  color: var(--bk-dim);
+  font-size: 11px;
+  line-height: 1.5;
+}
+/* 卡片够宽就分两列（先竖着排满第一列），不够宽自动回到一列 */
+.shop-odds__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  columns: 168px 2;
+  column-gap: 20px;
+  font-size: 12px;
+  line-height: 20px;
+}
+.shop-odds__list > li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  break-inside: avoid;
+}
+.shop-odds__list > li > .bk-num {
+  flex: none;
+  color: var(--bk-dim);
+}
+
+/*
+ * 价格和购买一行。价格占剩下的宽度，放不下就在自己的格子里换行，两边都贴着顶：
+ * 数量一加，总价变长，「− n +」和「购买」不能跟着挪位置。
+ */
+.shop-item__foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 10px;
+}
+/* 上下各 7px：只有一行时和 34px 高的按钮对齐 */
+.shop-item__price,
+.shop-item__sold {
+  padding: 7px 0;
+  font-size: 13px;
+  line-height: 20px;
+}
+.shop-item__price {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+/* 「E 碎片 ×24」是一个整体：要换行就在「+」那里换，不从中间断开 */
+.shop-item__term {
+  display: inline-block;
+}
+.shop-item__sold {
+  color: var(--bk-dim);
+}
+.shop-item__buy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* 「购买」和「购买中…」一样宽：请求来回的那一下，左边的数量不跟着挪 */
+.shop-item__buy > .bk-btn {
+  min-width: 88px;
+}
+
+/* 数量：− n + */
+.shop-item__qty {
+  display: flex;
+  align-items: center;
+}
+.shop-item__step {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--bk-ink);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+  transition: background var(--ui-fast);
+}
+.shop-item__step:hover:not(:disabled) {
+  background: var(--fl-btn);
+}
+/* 全站的 :focus 外框被去掉了；这两个小按钮是这一页自己画的，键盘走到时要看得见 */
+.shop-item__step:focus-visible {
+  outline: 2px solid var(--bk-osu-text);
+  outline-offset: 1px;
+}
+.shop-item__step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.shop-item__count {
+  min-width: 28px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* 买不了的原因：写在按钮正下方 */
+.shop-item__why {
+  margin: 4px 0 0;
+  color: var(--bk-dim);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: right;
+}
+.shop-item__why.is-bad {
+  color: var(--bk-bad);
+}
+/* 最近一次买到了什么。动画不写 both：放完还按着的话这一行会一直单独成层，
+   WebKit 里之后页面上别处再变（钱包的数字、下面的货架挪位置）会留下没擦掉的旧画面 */
+.shop-item__gain {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  animation: ui-rise-in var(--ui-base) var(--ui-ease-out);
+}
+
+@media (max-width: 899px) {
+  .shop-shelf__grid,
+  .shop-shelf--supply .shop-shelf__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .shop-odds__list {
+    columns: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-item__gain {
+    animation: none;
+  }
+}

@@ -1,0 +1,351 @@
+/* =========================================================
+   成就页：页头的分类页签和一键领取、左栏的成就列表、右栏的签到月历。
+   推荐谱面卡的样式在它自己的文件里（首页以后也要单独用那张卡）。
+   颜色全部走 book.css / flat.css 的令牌，只有签到月历的金框是写死的。
+   要改外壳或 bk-* 已经定了的属性时，选择器都多带一个类：
+   这份样式和 flat.css、book.css 谁先加载说不准，同样权重的规则可能被盖掉。
+   ========================================================= */
+
+/* ---------- 页头与分类页签 ---------- */
+.quests-page__summary {
+  color: var(--bk-dim);
+  font-size: 13px;
+  font-weight: 600;
+}
+.quests-page__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.quests-page__tabs .bk-chip {
+  gap: 6px;
+}
+.quests-page__tabs .bk-chip[aria-selected="true"] {
+  background: var(--bk-osu-soft);
+  color: var(--bk-osu-text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bk-osu) 58%, transparent);
+}
+.quests-page__tabs .bk-chip > em {
+  color: var(--bk-dim);
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 600;
+}
+.quests-page__tabs .bk-chip[aria-selected="true"] > em {
+  color: inherit;
+  opacity: 0.78;
+}
+/* 页签上的数字是这一栏有几样可以领，用「可以领」的绿色 */
+.quests-page__tabs .bk-chip > small {
+  padding: 0 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bk-good) 16%, transparent);
+  color: var(--bk-good);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* ---------- 两栏 ---------- */
+.quests-page__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.quests-page__main,
+.quests-page__side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+/* 推荐谱面卡没有内容时什么都不渲染：空容器不能白占一格间距 */
+.quests-page__slot:empty {
+  display: none;
+}
+
+/* ---------- 成就列表 ---------- */
+/* 成就页的分栏小标题 */
+.quests-list__group {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  color: var(--bk-dim);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.quests-list__group > span {
+  font-weight: 600;
+  letter-spacing: 0;
+  opacity: 0.8;
+}
+/* 栏和栏之间比行和行之间多留一点空 */
+.quests-list__rows + .quests-list__group {
+  margin-top: 8px;
+}
+.quests-list__rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* 一条任务一行：行和行之间只画一道线，不套框 */
+.quests-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+/* 首页「今日」卡里的短行。写在下面两条前面：第一行和最后一行照样不留上下的空 */
+.quests-row.is-compact {
+  padding: 6px 0;
+}
+.quests-row:first-child {
+  padding-top: 0;
+}
+.quests-row:last-child {
+  padding-bottom: 0;
+}
+.quests-row + .quests-row {
+  border-top: 1px solid var(--bk-line);
+}
+/* 领过的整行调暗。调的是行里的东西，分隔线不跟着变淡 */
+.quests-row.is-claimed > * {
+  opacity: 0.5;
+}
+.quests-row__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.quests-row__name {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+/* 说明、奖励、活跃点排成一行，放不下就折行 */
+.quests-row__info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  color: var(--bk-dim);
+  font-size: 12px;
+}
+/* 奖励小签一个个参加这一行的折行，不整组掉到下一行 */
+.quests-row__info > .fl-chips {
+  display: contents;
+}
+.quests-row__desc {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.quests-row__points {
+  font-weight: 700;
+  white-space: nowrap;
+}
+.quests-row__progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--bk-dim);
+  font-size: 12px;
+}
+.quests-row__progress > .bk-bar {
+  flex: 1;
+  max-width: 220px;
+}
+/* 短行：名字和进度的数字排一行，说明、奖励和进度条都不放 */
+.quests-row.is-compact > .quests-row__body {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+}
+.quests-row.is-compact .quests-row__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.quests-row__count {
+  flex: none;
+  color: var(--bk-dim);
+  font-size: 12px;
+}
+.quests-row__done,
+.quests-row__wait {
+  flex: none;
+  color: var(--bk-dim);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.quests-row__done {
+  font-weight: 700;
+}
+
+/* 「前往」跳回本页签到/推荐谱面区时的短暂边框脉冲 */
+.is-slot-ping {
+  border-radius: 10px;
+  animation: quests-slot-ping 1.05s var(--ui-ease-out);
+}
+@keyframes quests-slot-ping {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bk-osu) 65%, transparent); }
+  35% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--bk-osu) 55%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.quests-row > .bk-btn {
+  flex: none;
+}
+/* 「前往」字小：行高撑到 32px，手指点得中 */
+.quests-row > .fl-link {
+  flex: none;
+  line-height: 32px;
+}
+
+/* ---------- 签到 ---------- */
+/* 月历七格一行。格子最大 40px；卡片再宽，多出来的空隙匀到格子之间 */
+.quests-signin__cal {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 40px));
+  justify-content: space-between;
+  gap: 6px;
+  max-width: 360px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* 默认是「还没到的日子」：细框、日期数字 */
+.quests-signin__day {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  color: var(--bk-dim);
+  font-family: var(--bk-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+}
+.quests-signin__day.is-signed {
+  color: var(--bk-good);
+  font-size: 15px;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+.quests-signin__day.is-today {
+  color: var(--bk-osu-text);
+  font-family: inherit;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1.5px var(--bk-osu);
+}
+/* 有特别奖励的日子：金框。整页只有这一处颜色是写死的，亮色纸面上换深一点的 */
+.quests-signin__day.is-special {
+  --gold: #d8b24e;
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px var(--gold);
+}
+.light .quests-signin__day.is-special {
+  --gold: #a97708;
+}
+/* 已经过去、没签上的 */
+.quests-signin__day.is-missed {
+  opacity: 0.45;
+}
+/* 「看整月 / 收起」只在窄屏出现 */
+.quests-signin__toggle {
+  display: none;
+  align-self: flex-start;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--bk-osu-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.quests-signin__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  color: var(--bk-dim);
+  font-size: 12px;
+}
+.quests-signin__more {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (max-width: 899px) {
+  /* 排成一列：标题和一键领取一行，然后签到、推荐谱面，再往下才是页签和它的内容。
+     页签在文档里属于页头，要挪到两张卡下面，就把页头和主体都拆开（display: contents），
+     由 .quests-page 这一个网格统一排 */
+  .fl-page.quests-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .quests-page > .fl-page__head,
+  .quests-page__body {
+    display: contents;
+  }
+  .quests-page > .fl-page__head > .fl-page__spacer {
+    display: none;
+  }
+  .quests-page__claim-all {
+    order: 1;
+  }
+  .quests-page__side {
+    order: 2;
+  }
+  .quests-page__tabs {
+    order: 3;
+  }
+  .quests-page__main {
+    order: 4;
+  }
+  .quests-page__side,
+  .quests-page__tabs,
+  .quests-page__main,
+  .quests-page > .bk-empty,
+  .quests-page > .fl-lock {
+    grid-column: 1 / -1;
+  }
+  .quests-page__main,
+  .quests-page__side {
+    gap: 12px;
+  }
+
+  /* 手指点的东西不矮于 32px */
+  .quests-page__tabs .bk-chip {
+    height: 32px;
+  }
+  .quests-row > .bk-btn--sm {
+    height: 32px;
+  }
+
+  /* 签到先只露出今天所在的那一行；「下一个特别日子」和金框说明跟着整月一起收着 */
+  .quests-signin:not(.is-open) .quests-signin__day:not(.is-today-row),
+  .quests-signin:not(.is-open) .quests-signin__more {
+    display: none;
+  }
+  .quests-signin__toggle {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-slot-ping {
+    animation: none;
+  }
+}

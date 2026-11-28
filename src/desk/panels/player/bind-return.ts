@@ -1,5 +1,5 @@
 /**
- * 绑定 osu! 走完授权后，服务端把浏览器带回 `/?bind=linked|choose|error&reason=…`。
+ * 绑定 osu! 走完授权后，服务端把浏览器带回 `/home?bind=linked|choose|error&reason=…`。
  * 页面一加载就把结果记下来并从地址栏抹掉（刷新不会重复提示），账号面板打开时取一次。
  */
 export interface BindReturn {

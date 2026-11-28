@@ -49,3 +49,10 @@ export const MARKET_DEPOSIT_RATE = 0.05
 export const MARKET_TRADE_TAX_RATE = 0.05
 export const MARKET_LISTING_TTL_MS = 7 * 24 * 60 * 60 * 1000
 export const MARKET_PRICE_BAND_RATIO = 0.4
+
+/** 确认价格时的两笔预扣，和服务端实际结算使用同一套舍入规则。 */
+export function marketListingFees(price: number) {
+  const listTax = Math.max(1, Math.floor(price * MARKET_LIST_TAX_RATE))
+  const deposit = Math.max(1, Math.floor(price * MARKET_DEPOSIT_RATE))
+  return { listTax, deposit, upfrontTotal: listTax + deposit }
+}

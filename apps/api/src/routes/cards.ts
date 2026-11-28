@@ -16,6 +16,8 @@ import {
 import type { FastifyInstance } from "fastify"
 import { z } from "zod"
 
+import { JOB_ORDER } from "@choke/shared/skills"
+
 import { requireSelf } from "../auth/guard"
 import { CARD_TYPES } from "../card-types"
 import { db } from "../db/client"
@@ -35,6 +37,11 @@ END`
 
 const SORTS = ["recent", "rarity", "pp", "name"] as const
 const USER_CARD_SORTS = ["recent", "rarity", "pp", "level", "name"] as const
+
+/** 玩家名按字面包含查找，不把名字里的下划线当通配符。 */
+function namePattern(query: string) {
+  return `%${query.replace(/[\\%_]/g, "\\$&")}%`
+}
 
 interface PublicCardsPayload {
   rows: (typeof cards.$inferSelect)[]
@@ -215,7 +222,7 @@ export async function cardRoutes(app: FastifyInstance) {
         })
         .from(userCards)
         .innerJoin(cards, eq(cards.id, userCards.cardId))
-        .where(eq(userCards.userId, userId))
+        .where(and(eq(userCards.userId, userId), eq(cards.cardType, CARD_TYPES.pool)))
         .groupBy(cards.rarity, cards.country),
     ])
 
@@ -280,7 +287,7 @@ export async function cardRoutes(app: FastifyInstance) {
     const baseFilters = [eq(cards.cardType, CARD_TYPES.pool)]
     if (query.rarity) baseFilters.push(eq(cards.rarity, query.rarity))
     if (query.country) baseFilters.push(eq(cards.country, query.country))
-    if (query.q) baseFilters.push(ilike(cards.name, `%${query.q}%`))
+    if (query.q) baseFilters.push(ilike(cards.name, namePattern(query.q)))
 
     const filters = [...baseFilters]
     if (query.owned === "owned") filters.push(isNotNull(ownedCards.cardId))
@@ -305,7 +312,7 @@ export async function cardRoutes(app: FastifyInstance) {
         .from(cards)
         .leftJoin(ownedCards, eq(ownedCards.cardId, cards.id))
         .where(where)
-        .orderBy(...orderBy)
+        .orderBy(...orderBy, asc(cards.id))
         .limit(query.limit)
         .offset(query.offset),
       db
@@ -320,10 +327,23 @@ export async function cardRoutes(app: FastifyInstance) {
         .where(and(...baseFilters, isNotNull(ownedCards.cardId))),
     ])
 
+    // 技能属于实例：只给本页已收集的卡取一份实际技能，不把多张同名卡算进图鉴。
+    const ownedIds = rows.filter((row) => row.owned).map((row) => row.id)
+    const previews = ownedIds.length ? await db
+      .selectDistinctOn([userCards.cardId], {
+        cardId: userCards.cardId,
+        skillRefs: userCards.skillRefs,
+        serial: userCards.serial,
+      })
+      .from(userCards)
+      .where(and(eq(userCards.userId, userId), inArray(userCards.cardId, ownedIds)))
+      .orderBy(asc(userCards.cardId), desc(userCards.obtainedAt), desc(userCards.id)) : []
+    const previewById = new Map(previews.map(({ cardId, skillRefs, serial }) => [cardId, { skillRefs, serial }]))
+
     return {
       ok: true,
       data: {
-        rows,
+        rows: rows.map((row) => ({ ...row, ownedPreview: previewById.get(row.id) ?? null })),
         total: Number(total),
         ownedTotal: Number(ownedTotal),
         limit: query.limit,
@@ -346,29 +366,39 @@ export async function cardRoutes(app: FastifyInstance) {
     const userId = requireSelf(request, reply, params.userId)
     if (!userId) return
 
-    const query = z
+    const parsed = z
       .object({
         rarity: z.string().optional(),
-        job: z.enum(["tank", "warrior", "mage", "support"]).optional(),
+        q: z.string().trim().max(64).optional(),
+        country: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/).optional(),
+        job: z.enum(JOB_ORDER).optional(),
         minLevel: z.coerce.number().int().min(1).max(200).optional(),
-        q: z.string().optional(),
+        foil: z.enum(["1", "0", "true", "false"]).optional(),
         sort: z.enum(USER_CARD_SORTS).default("recent"),
         order: z.enum(["asc", "desc"]).optional(),
         limit: z.coerce.number().int().min(1).max(60).default(24),
         offset: z.coerce.number().int().min(0).default(0),
         ids: z.string().optional(),
-        cardType: z.enum(["pool", "hero", "mirror"]).optional(),
-        foil: z.enum(["true", "false"]).optional(),
+        cardType: z.enum([CARD_TYPES.pool, CARD_TYPES.hero, CARD_TYPES.mirror]).optional(),
+        type: z.enum([CARD_TYPES.pool, CARD_TYPES.hero, CARD_TYPES.mirror]).optional(),
       })
-      .parse(request.query)
+      .safeParse(request.query)
+    if (!parsed.success) {
+      return reply.code(400).send({
+        ok: false,
+        error: { code: "bad_request", message: "卡册筛选参数不合法", details: parsed.error.flatten() },
+      })
+    }
+    const query = parsed.data
 
     const filters = [eq(userCards.userId, userId)]
     if (query.rarity) filters.push(eq(cards.rarity, query.rarity))
+    if (query.q) filters.push(ilike(cards.name, namePattern(query.q)))
+    if (query.country) filters.push(eq(cards.country, query.country))
     if (query.job) filters.push(eq(cards.job, query.job))
     if (query.minLevel) filters.push(gte(userCards.level, query.minLevel))
-    if (query.cardType) filters.push(eq(cards.cardType, query.cardType))
-    if (query.foil) filters.push(eq(userCards.foil, query.foil === "true"))
-    if (query.q) filters.push(ilike(cards.name, `%${query.q}%`))
+    if (query.cardType ?? query.type) filters.push(eq(cards.cardType, (query.cardType ?? query.type)!))
+    if (query.foil !== undefined) filters.push(eq(userCards.foil, query.foil === "1" || query.foil === "true"))
     // 按实例 id 刷新桌面卡面快照；所有筛选仍限制在当前用户名下。
     if (query.ids) {
       const ids = query.ids.split(",").map(Number).filter((id) => Number.isInteger(id) && id > 0)
@@ -412,7 +442,7 @@ export async function cardRoutes(app: FastifyInstance) {
       .from(userCards)
       .innerJoin(cards, eq(cards.id, userCards.cardId))
       .where(where)
-      .orderBy(...orderBy)
+      .orderBy(...orderBy, desc(userCards.id))
       .limit(query.limit)
       .offset(query.offset)
 

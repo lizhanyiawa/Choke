@@ -1,0 +1,1629 @@
+.xp-fight-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bk-well);
+}
+
+/* 出征推进页：顶部单行战术 HUD + 左 2.5D 立体圆台视野迷雾画布 + 右 356px 常驻战术指挥侧栏 + 底部 108px 紧凑队伍条 */
+.flat-main:has(> .xp-run) {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.xp-run {
+  --xp-node-battle: color-mix(in srgb, var(--fl-info) 78%, var(--bk-ink));
+  --xp-node-danger: color-mix(in srgb, var(--bk-bad) 88%, var(--bk-ink));
+  --xp-node-boss: color-mix(in srgb, var(--fl-coin) 84%, var(--bk-osu));
+  --xp-node-event: color-mix(in srgb, var(--bk-osu) 66%, var(--fl-info));
+  --xp-node-rest: color-mix(in srgb, var(--bk-good) 82%, var(--bk-ink));
+  --xp-node-treasure: color-mix(in srgb, var(--fl-coin) 82%, var(--bk-ink));
+  --xp-node-story: color-mix(in srgb, var(--fl-info) 60%, var(--bk-osu));
+  --xp-node-branch: color-mix(in srgb, var(--bk-ink) 62%, var(--bk-dim));
+  --xp-node-empty: color-mix(in srgb, var(--bk-dim) 74%, var(--bk-well));
+  --xp-node-past: color-mix(in srgb, var(--bk-dim) 64%, var(--bk-well));
+  --xp-road: color-mix(in srgb, var(--bk-line) 74%, var(--bk-dim));
+  --xp-road-past: color-mix(in srgb, var(--bk-dim) 50%, var(--bk-well));
+  --xp-stage-bg: color-mix(in srgb, var(--bk-well) 82%, var(--bk-paper));
+  --xp-stage-fog: color-mix(in srgb, var(--bk-well) 92%, #0c070b);
+  --xp-pedestal-surface: color-mix(in srgb, var(--bk-paper) 74%, var(--bk-well));
+  --xp-pedestal-wall: color-mix(in srgb, var(--bk-well) 88%, #090508);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+  overflow: hidden;
+  /* 独立绘制边界：悬停/推进只在本屏内重绘，不牵动外壳与整窗（窗口半透明时整窗重绘会露块） */
+  isolation: isolate;
+  contain: paint;
+  color: var(--bk-ink);
+  background: var(--bk-paper);
+  animation: ui-fade-in var(--ui-base) var(--ui-ease-out);
+}
+
+.light .flat-app .xp-run {
+  --xp-node-battle: color-mix(in srgb, var(--fl-info) 74%, var(--bk-ink));
+  --xp-node-danger: color-mix(in srgb, var(--bk-bad) 80%, var(--bk-ink));
+  --xp-node-boss: color-mix(in srgb, var(--fl-coin) 74%, var(--bk-ink));
+  --xp-node-event: color-mix(in srgb, var(--bk-osu-text) 62%, var(--fl-info));
+  --xp-node-rest: color-mix(in srgb, var(--bk-good) 70%, var(--bk-ink));
+  --xp-node-treasure: color-mix(in srgb, var(--fl-coin) 74%, var(--bk-ink));
+  --xp-node-story: color-mix(in srgb, var(--fl-info) 62%, var(--bk-ink));
+  --xp-node-branch: color-mix(in srgb, var(--bk-ink) 66%, var(--bk-dim));
+  --xp-node-empty: color-mix(in srgb, var(--bk-dim) 64%, var(--bk-paper));
+  --xp-node-past: color-mix(in srgb, var(--bk-dim) 56%, var(--bk-paper));
+  --xp-road: color-mix(in srgb, var(--bk-dim) 56%, var(--bk-line));
+  --xp-road-past: color-mix(in srgb, var(--bk-dim) 42%, var(--bk-well));
+  --xp-stage-bg: color-mix(in srgb, var(--bk-well) 56%, var(--bk-paper));
+  --xp-stage-fog: color-mix(in srgb, var(--bk-well) 86%, var(--bk-paper));
+  --xp-pedestal-surface: color-mix(in srgb, var(--bk-paper) 92%, var(--bk-well));
+  --xp-pedestal-wall: color-mix(in srgb, var(--bk-line) 76%, var(--bk-dim));
+}
+
+/* ==================== 顶部单行战术 HUD ==================== */
+.xp-run__top {
+  position: relative;
+  z-index: 35;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 58px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--bk-line);
+  background: var(--bk-paper);
+}
+
+.xp-run__heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.xp-run__title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.xp-run__title > b {
+  overflow: hidden;
+  color: var(--bk-ink);
+  font-size: 15px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xp-run__step {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bk-raised);
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+  color: var(--bk-dim);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.xp-run__eyebrow {
+  color: var(--bk-dim);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.xp-run__stars {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.xp-run__stars small {
+  color: var(--bk-dim);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.xp-threat {
+  flex: none;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 3px 10px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  background: var(--bk-well);
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+}
+
+.xp-threat__row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.xp-threat__tier {
+  color: var(--bk-ink);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.xp-threat__tier strong {
+  color: var(--bk-bad);
+  font-size: 13px;
+}
+
+.xp-threat__value {
+  color: var(--bk-dim);
+  font-size: 10px;
+}
+
+.xp-threat__steps {
+  display: grid;
+  grid-template-columns: repeat(5, 16px);
+  gap: 3px;
+}
+
+.xp-threat__steps > i {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bk-paper);
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+}
+
+.xp-threat__steps > i[data-on="true"] {
+  background: color-mix(in srgb, var(--bk-bad) 62%, var(--bk-well));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bk-bad) 48%, transparent);
+}
+
+.xp-threat__steps > i[data-current="true"] {
+  background: var(--bk-bad);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--bk-bad) 45%, transparent);
+}
+
+.xp-threat__mult {
+  grid-column: 1 / -1;
+  color: var(--bk-dim);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.xp-threat__mult b {
+  color: var(--fl-coin);
+  font-weight: 700;
+}
+
+.xp-run__hp {
+  flex: none;
+  display: grid;
+  gap: 5px;
+  width: clamp(190px, 20vw, 250px);
+  padding: 5px 10px;
+  border-radius: 9px;
+  background: var(--bk-well);
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+}
+
+.xp-run__hp-label {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--bk-dim);
+}
+
+.xp-run__hp-label > b {
+  margin-left: auto;
+  color: var(--bk-ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.xp-run__hp-label > small {
+  color: var(--bk-dim);
+  font-size: 10.5px;
+}
+
+.xp-run__hp .xp-meter {
+  width: 100%;
+  height: 6px;
+}
+
+.xp-menu {
+  position: relative;
+  flex: none;
+}
+
+.xp-menu__trigger {
+  min-height: 34px;
+  padding: 0 11px;
+  gap: 5px;
+}
+
+.xp-menu__list {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 45;
+  display: grid;
+  min-width: 170px;
+  padding: 6px;
+  border-radius: 11px;
+  background: var(--bk-paper);
+  box-shadow: inset 0 0 0 1px var(--bk-line), 0 14px 36px color-mix(in srgb, #000 36%, transparent);
+  animation: ui-pop-in var(--ui-base) var(--ui-ease-out);
+}
+
+.xp-menu__list > button {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--bk-ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.xp-menu__list > button:hover:not(:disabled) {
+  background: var(--bk-raised);
+}
+
+.xp-menu__list > button:disabled {
+  opacity: 0.48;
+  cursor: default;
+}
+
+.xp-danger {
+  color: var(--bk-bad) !important;
+}
+
+.xp-run__error {
+  flex: none;
+  margin: 8px 16px 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bk-bad) 12%, var(--bk-paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bk-bad) 36%, transparent);
+}
+
+/* ==================== 中部双栏（1fr 地图 + 356px 常驻指挥栏） ==================== */
+.xp-run__body {
+  flex: 1 1 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 356px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 16px;
+}
+
+.xp-run__stage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--bk-line);
+  background: var(--xp-stage-bg);
+}
+
+/* ==================== 2.5D 立体圆台 MapStage ==================== */
+.xp-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+  background: var(--xp-stage-bg);
+}
+
+/* 提灯光晕 + 左右迷雾：独立合成层，悬停重绘时不会被重新栅格化 */
+.xp-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* 静态图层固化到自己的纹理：悬停/推进引起的 SVG 重绘不会牵动这里的渐变抖动 */
+  will-change: transform;
+  background:
+    radial-gradient(
+      ellipse 44% 50% at var(--xp-lantern-x, 33%) 50%,
+      color-mix(in srgb, var(--bk-osu) 16%, transparent),
+      color-mix(in srgb, var(--fl-info) 5%, transparent) 56%,
+      transparent 100%
+    ),
+    linear-gradient(90deg, var(--xp-stage-fog) 0%, transparent min(92px, 12%)),
+    linear-gradient(
+      90deg,
+      transparent calc(100% - min(230px, 28%)),
+      color-mix(in srgb, var(--xp-stage-fog) 68%, transparent) calc(100% - min(110px, 13.5%)),
+      var(--xp-stage-fog) 100%
+    );
+}
+
+.xp-svgmap {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.xp-world {
+  transform-origin: 0 0;
+}
+
+.xp-stage[data-animate="true"] .xp-world {
+  transition: transform 420ms var(--ui-ease-out);
+}
+
+/* SVG 氛围渐变色（仅保留光柱，整幅渐变已移入 .xp-atmosphere） */
+.xp-svg-beam-0 { stop-color: var(--bk-osu); stop-opacity: 0.44; }
+.xp-svg-beam-1 { stop-color: var(--bk-osu); stop-opacity: 0.12; }
+.xp-svg-beam-2 { stop-color: var(--bk-osu); stop-opacity: 0; }
+.xp-svg-boss-0 { stop-color: var(--fl-coin); stop-opacity: 0.36; }
+.xp-svg-boss-1 { stop-color: var(--fl-coin); stop-opacity: 0; }
+
+.light .flat-app .xp-run .xp-svg-beam-0 { stop-opacity: 0.32; }
+.light .flat-app .xp-run .xp-atmosphere {
+  background:
+    radial-gradient(
+      ellipse 40% 46% at var(--xp-lantern-x, 33%) 50%,
+      color-mix(in srgb, var(--bk-osu) 12%, transparent),
+      transparent 100%
+    ),
+    linear-gradient(90deg, var(--xp-stage-fog) 0%, transparent 12%),
+    linear-gradient(
+      90deg,
+      transparent 72%,
+      color-mix(in srgb, var(--xp-stage-fog) 56%, transparent) 87%,
+      var(--xp-stage-fog) 100%
+    );
+}
+
+/* 连线 */
+.xp-road {
+  fill: none;
+  stroke: var(--xp-road);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke 180ms ease, opacity 220ms ease;
+}
+
+.xp-road--past {
+  stroke: var(--xp-road-past);
+  stroke-width: 3.5;
+  opacity: 0.65;
+}
+
+.xp-road--next {
+  stroke: color-mix(in srgb, var(--bk-ink) 52%, var(--xp-road));
+  stroke-width: 3;
+  stroke-dasharray: 8 6;
+  opacity: 0.72;
+}
+
+.xp-road--next.is-sel {
+  stroke: var(--bk-osu);
+  stroke-width: 3.6;
+  opacity: 1;
+}
+
+.xp-road--next.is-muted {
+  opacity: 0.34;
+}
+
+.xp-road--next.is-locked {
+  stroke-dasharray: 3 7;
+  opacity: 0.28;
+}
+
+.xp-road__glow {
+  fill: none;
+  stroke: var(--bk-osu);
+  stroke-width: 10;
+  stroke-linecap: round;
+  opacity: 0.22;
+}
+
+.xp-road--horizon {
+  stroke: var(--xp-road);
+  stroke-width: 2.2;
+  opacity: 0.32;
+}
+
+.xp-road--beyond {
+  stroke: var(--xp-road);
+  stroke-width: 2;
+  stroke-dasharray: 4 7;
+  opacity: 0.2;
+}
+
+/* 节点颜色令牌 */
+.xp-k-battle { --xp-k: var(--xp-node-battle); }
+.xp-k-danger { --xp-k: var(--xp-node-danger); }
+.xp-k-boss { --xp-k: var(--xp-node-boss); }
+.xp-k-event { --xp-k: var(--xp-node-event); }
+.xp-k-rest { --xp-k: var(--xp-node-rest); }
+.xp-k-treasure { --xp-k: var(--xp-node-treasure); }
+.xp-k-story { --xp-k: var(--xp-node-story); }
+.xp-k-branch { --xp-k: var(--xp-node-branch); }
+.xp-k-empty { --xp-k: var(--xp-node-empty); }
+
+.xp-node {
+  cursor: pointer;
+  outline: none;
+  transition: opacity 240ms ease;
+}
+
+.xp-node.xp-vis-horizon {
+  cursor: default;
+  opacity: 0.44;
+}
+
+.xp-node.xp-vis-past {
+  opacity: 0.58;
+}
+
+.xp-node.xp-vis-past:hover,
+.xp-node.xp-vis-past.is-sel {
+  opacity: 0.88;
+}
+
+.xp-node.is-dimmed {
+  opacity: 0.62;
+}
+
+.xp-node.is-locked {
+  opacity: 0.46;
+}
+
+.xp-pedestal__shadow {
+  fill: #070406;
+  opacity: 0.48;
+}
+
+.light .flat-app .xp-run .xp-pedestal__shadow {
+  fill: color-mix(in srgb, var(--bk-ink) 36%, transparent);
+  opacity: 0.22;
+}
+
+.xp-pedestal__wall {
+  fill: color-mix(in srgb, var(--xp-k) 34%, var(--xp-pedestal-wall));
+  stroke: color-mix(in srgb, var(--xp-k) 45%, var(--bk-line));
+  stroke-width: 1;
+}
+
+.xp-pedestal__wall--base {
+  fill: color-mix(in srgb, var(--xp-k) 24%, var(--xp-pedestal-wall));
+}
+
+.xp-pedestal__top {
+  fill: color-mix(in srgb, var(--xp-k) 22%, var(--xp-pedestal-surface));
+  stroke: color-mix(in srgb, var(--xp-k) 82%, var(--bk-line));
+  stroke-width: 1.8;
+  transition: fill 160ms ease, stroke-width 160ms ease;
+}
+
+.xp-pedestal__top--base {
+  fill: color-mix(in srgb, var(--xp-k) 16%, var(--xp-pedestal-surface));
+  stroke: color-mix(in srgb, var(--xp-k) 55%, var(--bk-line));
+  stroke-width: 1.4;
+}
+
+.xp-node.xp-vis-current .xp-pedestal__top {
+  fill: color-mix(in srgb, var(--bk-osu) 24%, var(--xp-pedestal-surface));
+  stroke: var(--bk-osu);
+  stroke-width: 2.4;
+}
+
+.xp-node.xp-vis-current .xp-pedestal__wall {
+  fill: color-mix(in srgb, var(--bk-osu) 42%, var(--xp-pedestal-wall));
+}
+
+.xp-node.xp-vis-past .xp-pedestal__top {
+  fill: color-mix(in srgb, var(--xp-node-past) 24%, var(--xp-pedestal-surface));
+  stroke: color-mix(in srgb, var(--xp-node-past) 68%, var(--bk-line));
+}
+
+.xp-node.xp-vis-horizon .xp-pedestal__top {
+  stroke-dasharray: 4 4;
+  stroke-width: 1.4;
+}
+
+.xp-node:hover:not(.xp-vis-horizon) .xp-pedestal__top,
+.xp-node:focus-visible .xp-pedestal__top {
+  fill: color-mix(in srgb, var(--xp-k) 32%, var(--xp-pedestal-surface));
+  stroke-width: 2.4;
+}
+
+.xp-pedestal__inner-ring {
+  fill: none;
+  stroke: color-mix(in srgb, var(--bk-osu) 62%, #fff);
+  stroke-width: 1.2;
+  stroke-opacity: 0.65;
+}
+
+.xp-pedestal__ring {
+  fill: none;
+  stroke: color-mix(in srgb, var(--xp-k) 72%, transparent);
+  stroke-width: 1.6;
+  stroke-dasharray: 5 5;
+  opacity: 0;
+  transition: opacity 160ms ease, stroke 160ms ease;
+}
+
+.xp-node.xp-vis-next:hover .xp-pedestal__ring,
+.xp-node.xp-vis-next:focus-visible .xp-pedestal__ring {
+  opacity: 0.72;
+}
+
+.xp-node.xp-vis-next.is-sel .xp-pedestal__ring {
+  stroke: var(--bk-osu);
+  stroke-width: 2;
+  opacity: 0.95;
+}
+
+.xp-pedestal__check {
+  fill: var(--bk-good);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* 当前格悬浮信标 */
+.xp-beacon {
+  animation: xp-beacon-float 2.6s ease-in-out infinite;
+}
+
+.xp-beacon__halo {
+  fill: var(--bk-osu);
+  opacity: 0.22;
+}
+
+.xp-beacon__outer {
+  fill: var(--bk-osu);
+  stroke: color-mix(in srgb, #fff 75%, var(--bk-osu));
+  stroke-width: 1.6;
+}
+
+.xp-beacon__core {
+  fill: #fff8fc;
+}
+
+/* 前方 1 步竖立徽章 */
+.xp-crest__bg {
+  fill: color-mix(in srgb, var(--xp-k) 20%, var(--xp-pedestal-surface));
+  stroke: var(--xp-k);
+  stroke-width: 1.6;
+}
+
+.xp-threat-tag > rect {
+  fill: color-mix(in srgb, var(--bk-bad) 24%, var(--bk-paper));
+  stroke: color-mix(in srgb, var(--bk-bad) 65%, transparent);
+  stroke-width: 1;
+}
+
+.xp-threat-tag > text {
+  fill: var(--bk-bad);
+  font-size: 9.5px;
+  font-weight: 800;
+}
+
+.xp-threat-tag.is-good > rect {
+  fill: color-mix(in srgb, var(--bk-good) 20%, var(--bk-paper));
+  stroke: color-mix(in srgb, var(--bk-good) 60%, transparent);
+}
+
+.xp-threat-tag.is-good > text {
+  fill: var(--bk-good);
+}
+
+/* 圆台文字标签 */
+.xp-label--current > rect {
+  fill: color-mix(in srgb, var(--bk-osu) 24%, var(--bk-paper));
+  stroke: var(--bk-osu);
+  stroke-width: 1.2;
+}
+
+.xp-label--current > text {
+  fill: var(--bk-ink);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.xp-label__title {
+  fill: var(--bk-ink);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.xp-label__hint {
+  fill: var(--bk-dim);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.xp-label--horizon > text,
+.xp-label--past > text {
+  fill: var(--bk-dim);
+  font-size: 10.5px;
+  font-weight: 650;
+}
+
+.xp-fog-copy {
+  position: absolute;
+  top: var(--xp-fog-y, 50%);
+  left: var(--xp-fog-x, 88%);
+  z-index: 2;
+  display: grid;
+  gap: 2px;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.xp-fog-copy > b {
+  color: var(--bk-dim);
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  opacity: 0.84;
+}
+
+.xp-fog-copy > span {
+  color: var(--bk-dim);
+  font-size: 11px;
+  opacity: 0.68;
+}
+
+/* 节点图标颜色 & 动效 */
+.xp-node__icon {
+  color: var(--xp-k);
+}
+
+.xp-ico__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.xp-ico__line-only {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.xp-ico__solid {
+  fill: currentColor;
+  stroke: none;
+}
+
+.xp-ico__soft {
+  fill: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.xp-ico__gem {
+  fill: var(--bk-paper);
+}
+
+.xp-ico__seam {
+  fill: none;
+  stroke: var(--bk-paper);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.xp-badge {
+  flex: none;
+  display: block;
+}
+
+.xp-badge__bg {
+  fill: color-mix(in srgb, var(--xp-k) 18%, var(--bk-well));
+  stroke: color-mix(in srgb, var(--xp-k) 55%, transparent);
+  stroke-width: 1.3;
+}
+
+.xp-badge__icon {
+  color: var(--xp-k);
+}
+
+.xp-fx-danger {
+  fill: color-mix(in srgb, var(--bk-bad) 26%, transparent);
+  animation: xp-pulse 2.2s ease-in-out infinite;
+}
+
+.xp-fx-bossglow {
+  fill: color-mix(in srgb, var(--fl-coin) 22%, transparent);
+  animation: xp-pulse 2.8s ease-in-out infinite;
+}
+
+.xp-fx-aura {
+  fill: none;
+  stroke: var(--fl-coin);
+  stroke-width: 1.4;
+  opacity: 0.55;
+  animation: xp-pulse 3s ease-in-out infinite;
+}
+
+.xp-fx-shine {
+  fill: #fff;
+  opacity: 0.24;
+  animation: xp-shine 3.4s ease-in-out infinite;
+}
+
+.xp-fx-mote {
+  fill: var(--bk-good);
+  opacity: 0.65;
+  animation: xp-mote 2.6s ease-in-out infinite;
+}
+
+.xp-fx-mote--b { animation-delay: 0.7s; }
+.xp-fx-mote--c { animation-delay: 1.4s; }
+.xp-fx-spark { animation: xp-pulse 2.4s ease-in-out infinite; }
+.xp-fx-spark--late { animation-delay: 1s; }
+.xp-fx-flame { animation: xp-pulse 2s ease-in-out infinite; }
+.xp-fx-float { animation: xp-story-float 3.2s ease-in-out infinite; }
+.xp-fx-flicker { animation: xp-pulse 1.9s ease-in-out infinite; }
+
+.xp-legend {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bk-paper) 84%, transparent);
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+  font-size: 11px;
+  color: var(--bk-dim);
+  pointer-events: none;
+}
+
+.xp-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ==================== 右侧 356px 常驻战术指挥侧栏 ==================== */
+.xp-cmd {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 10px;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.xp-cmd__tabs {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 9px;
+  background: var(--bk-well);
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+}
+
+.xp-cmd__tabs > button {
+  min-height: 30px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--bk-dim);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.xp-cmd__tabs > button[aria-selected="true"] {
+  background: var(--bk-osu-soft);
+  color: var(--bk-osu-text);
+}
+
+.xp-cmd__tabs > button small {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.xp-cmd__panel {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 10px;
+}
+
+.xp-cmd__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--bk-line);
+}
+
+.xp-cmd__title {
+  flex: 1;
+  min-width: 0;
+}
+
+.xp-cmd__title > h2 {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--bk-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xp-cmd__back {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--bk-line);
+  border-radius: 7px;
+  background: var(--bk-well);
+  color: var(--bk-dim);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.xp-cmd__back:hover {
+  color: var(--bk-ink);
+  background: var(--bk-raised);
+}
+
+.xp-cmd__scroll {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.xp-cmd__foot {
+  flex: none;
+  padding-top: 8px;
+  border-top: 1px solid var(--bk-line);
+}
+
+.xp-cmd__empty {
+  margin: 8px 0;
+  color: var(--bk-dim);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+.xp-prose {
+  margin: 0;
+  color: var(--bk-ink);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.xp-note {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bk-bad) 10%, var(--bk-well));
+  color: var(--bk-bad);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.xp-panel__action {
+  width: 100%;
+  min-height: 40px;
+  font-weight: 800;
+}
+
+/* 敌情卡 */
+.xp-foe-card {
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bk-well);
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+}
+
+.xp-foe-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.xp-foe-card__top b {
+  display: block;
+  font-size: 14px;
+  color: var(--bk-ink);
+}
+
+.xp-foe-card__top small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--bk-dim);
+}
+
+.xp-foe-card__tier {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bk-raised);
+  color: var(--bk-dim);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.xp-foe-card__tier[data-tier="elite"] {
+  background: color-mix(in srgb, var(--bk-bad) 18%, var(--bk-paper));
+  color: var(--bk-bad);
+}
+
+.xp-foe-card__tier[data-tier="boss"] {
+  background: color-mix(in srgb, var(--fl-coin) 22%, var(--bk-paper));
+  color: var(--fl-coin);
+}
+
+.xp-foe-card__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.xp-foe-card__stats > div {
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: var(--bk-paper);
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+}
+
+.xp-foe-card__stats dt {
+  font-size: 10.5px;
+  color: var(--bk-dim);
+}
+
+.xp-foe-card__stats dd {
+  margin: 3px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bk-ink);
+}
+
+.xp-foe-card__stats dd > small {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--bk-dim);
+}
+
+.xp-foe-card__weak {
+  display: grid;
+  gap: 5px;
+}
+
+.xp-foe-card__weak > span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--bk-dim);
+}
+
+.xp-foe-card__weak-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.xp-foe-card__weak-list em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--bk-dim);
+}
+
+.xp-foe-card__stars {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.xp-foe-card__stars > li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11.5px;
+}
+
+.xp-foe-card__stars > li > span {
+  color: var(--fl-coin);
+  font-weight: 800;
+}
+
+.xp-foe-card__stars > li > small {
+  color: var(--bk-dim);
+}
+
+.xp-el-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--bk-paper);
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--bk-ink);
+}
+
+.xp-el-pill > i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+/* 前路抉择卡片 */
+.xp-branches {
+  display: grid;
+  gap: 8px;
+}
+
+.xp-branches__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--bk-dim);
+}
+
+.xp-branch {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--bk-line);
+  border-radius: 10px;
+  background: var(--bk-well);
+  color: var(--bk-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.xp-branch:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--xp-k) 60%, var(--bk-line));
+}
+
+.xp-branch[data-on="true"] {
+  border-color: var(--bk-osu);
+  background: color-mix(in srgb, var(--bk-osu) 11%, var(--bk-well));
+}
+
+.xp-branch__top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.xp-branch__top > b {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.xp-branch__kind {
+  font-size: 11px;
+  color: var(--bk-dim);
+}
+
+.xp-branch__hint {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--bk-dim);
+  line-height: 1.45;
+}
+
+.xp-branch__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--bk-dim);
+}
+
+.xp-preview-card {
+  display: grid;
+  gap: 10px;
+}
+
+.xp-preview-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* 事件与剧情面板（内联于指挥侧栏） */
+.xp-story {
+  display: grid;
+  gap: 9px;
+}
+
+.xp-story__line {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bk-well);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.xp-story__line > b {
+  margin-right: 6px;
+  color: var(--bk-osu-text);
+}
+
+.xp-story__choices,
+.xp-event-options {
+  display: grid;
+  gap: 8px;
+}
+
+.xp-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--bk-line);
+  border-radius: 9px;
+  background: var(--bk-well);
+  color: var(--bk-ink);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.xp-choice[data-on="true"] {
+  border-color: var(--bk-osu);
+  background: color-mix(in srgb, var(--bk-osu) 12%, var(--bk-well));
+}
+
+.xp-choice__mark {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  border-radius: 50%;
+  border: 2px solid var(--bk-dim);
+}
+
+.xp-choice[data-on="true"] .xp-choice__mark {
+  border-color: var(--bk-osu);
+  background: radial-gradient(circle, var(--bk-osu) 45%, transparent 50%);
+}
+
+.xp-choice__body {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.xp-choice__effects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.xp-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--bk-paper);
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+  color: var(--bk-dim);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.xp-chip--warn {
+  background: color-mix(in srgb, var(--bk-bad) 14%, var(--bk-paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bk-bad) 42%, transparent);
+  color: var(--bk-bad);
+}
+
+.xp-chip--good {
+  background: color-mix(in srgb, var(--bk-good) 14%, var(--bk-paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bk-good) 42%, transparent);
+  color: var(--bk-good);
+}
+
+/* 战利品 & 目标标签页 */
+.xp-run__reward-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.xp-obj-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.xp-obj-list > li {
+  display: grid;
+  gap: 5px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: var(--bk-well);
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+}
+
+.xp-obj-list > li[data-met="true"] {
+  background: color-mix(in srgb, var(--bk-good) 10%, var(--bk-well));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bk-good) 44%, transparent);
+}
+
+.xp-obj-list__badge {
+  justify-self: start;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--bk-paper);
+  color: var(--bk-dim);
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+.xp-obj-list > li[data-met="true"] .xp-obj-list__badge {
+  color: var(--bk-good);
+}
+
+.xp-obj-list > li > p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--bk-ink);
+  line-height: 1.45;
+}
+
+/* ==================== 底部 108px 紧凑出征队伍栏 ==================== */
+.xp-run__squad {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 108px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--bk-line);
+  background: var(--bk-paper);
+}
+
+.xp-run__squad-summary {
+  flex: none;
+  display: grid;
+  gap: 4px;
+  min-width: 172px;
+  padding-right: 14px;
+  border-right: 1px solid var(--bk-line);
+}
+
+.xp-run__squad-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.xp-run__squad-title > b {
+  font-size: 14px;
+  color: var(--bk-ink);
+}
+
+.xp-run__squad-meta {
+  display: grid;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--bk-dim);
+}
+
+.xp-run__squad-meta strong {
+  color: var(--bk-good);
+  font-weight: 800;
+}
+
+.xp-run__squad-meta b {
+  color: var(--bk-ink);
+}
+
+.xp-run__cards {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 2px 0;
+}
+
+.xp-squad-chip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 196px;
+  height: 78px;
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: var(--bk-well);
+  box-shadow: inset 0 0 0 1px var(--bk-line);
+}
+
+.xp-squad-chip[data-main] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bk-osu) 55%, var(--bk-line));
+}
+
+.xp-squad-chip__art {
+  flex: none;
+  width: 44px;
+  height: 62px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.xp-squad-chip__info {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.xp-squad-chip__name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.xp-squad-chip__name > b {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--bk-ink);
+}
+
+.xp-squad-chip__role {
+  flex: none;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--bk-paper);
+  color: var(--bk-dim);
+  font-size: 9.5px;
+  font-weight: 800;
+}
+
+.xp-squad-chip__role[data-main] {
+  background: var(--bk-osu-soft);
+  color: var(--bk-osu-text);
+}
+
+.xp-squad-chip__sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--bk-dim);
+}
+
+.xp-squad-chip__sub > i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+.xp-squad-chip__nums {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.xp-squad-chip__hp {
+  color: var(--bk-good);
+}
+
+.xp-squad-chip__bp {
+  color: var(--bk-dim);
+}
+
+/* ==================== 动画与减动效 ==================== */
+@keyframes xp-beacon-float {
+  0%, 100% { transform: translate(0, -40px); }
+  50% { transform: translate(0, -44px); }
+}
+
+@keyframes xp-story-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes xp-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes xp-shine {
+  0%, 72%, 100% { transform: translateX(-28px); opacity: 0; }
+  84% { opacity: 0.28; }
+  94% { transform: translateX(36px); opacity: 0; }
+}
+
+@keyframes xp-mote {
+  0%, 100% { transform: translateY(0); opacity: 0.25; }
+  50% { transform: translateY(-8px); opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xp-stage[data-animate="true"] .xp-world { transition: none; }
+  .xp-beacon,
+  .xp-fx-danger,
+  .xp-fx-bossglow,
+  .xp-fx-aura,
+  .xp-fx-shine,
+  .xp-fx-mote,
+  .xp-fx-spark,
+  .xp-fx-flame,
+  .xp-fx-float,
+  .xp-fx-flicker {
+    animation: none !important;
+  }
+}
+
+/* ==================== 响应式断点 ==================== */
+@media (max-width: 1199px) {
+  .xp-run__body {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+}
+
+@media (max-width: 959px) {
+  .flat-main:has(> .xp-run) {
+    overflow-y: auto;
+  }
+
+  .xp-run {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+
+  .xp-run__top {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 8px 10px;
+  }
+
+  .xp-run__heading {
+    flex: 1 1 100%;
+  }
+
+  .xp-threat,
+  .xp-run__hp {
+    flex: 1 1 180px;
+    width: auto;
+  }
+
+  .xp-run__body {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 340px auto;
+    padding: 10px 12px;
+  }
+
+  .xp-cmd {
+    min-height: 320px;
+  }
+
+  .xp-run__squad {
+    height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 12px;
+  }
+
+  .xp-run__squad-summary {
+    border-right: 0;
+    border-bottom: 1px solid var(--bk-line);
+    padding-right: 0;
+    padding-bottom: 8px;
+  }
+
+  .xp-run__squad-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+  }
+}
+
+@media (max-width: 599px) {
+  .xp-run__body {
+    grid-template-rows: 264px auto;
+  }
+
+  /* 窄屏没有空间放图例（会盖住圆台），迷雾提示也改为贴底一行，不再压住 horizon 圆台 */
+  .xp-legend {
+    display: none;
+  }
+
+  .xp-fog-copy {
+    top: auto;
+    right: 10px;
+    bottom: 8px;
+    left: auto;
+    transform: none;
+    text-align: right;
+    gap: 0;
+  }
+
+  .xp-fog-copy > span {
+    display: none;
+  }
+
+  .xp-fog-copy > b {
+    font-size: 11px;
+  }
+}

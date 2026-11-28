@@ -57,7 +57,7 @@
   }
   25% {
     transform: translateY(-9px);
-    background: #ff66aa;
+    background: var(--brand-pink);
   }
 }
 

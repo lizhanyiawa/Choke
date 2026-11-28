@@ -14,7 +14,7 @@
   --op-ink: #f2e9ed;
   --op-ink-dim: #cbbdc4;
   --op-surface: #3a2c33;
-  --op-osu: #ff66aa;
+  --op-osu: var(--brand-pink);
   position: fixed;
   inset: 0;
   z-index: 80;
@@ -25,7 +25,7 @@
   user-select: none;
 }
 /* 全翻完：结果排回到正中 */
-.op.is-done {
+.op.is-done:not(.op--flat) {
   --row-y: -14px;
 }
 /* 窄屏：卡缩一点，不再被 110px 下限顶出屏幕 */
@@ -406,9 +406,9 @@
 .cb__frame {
   position: absolute;
   inset: 5cqw;
-  border: max(0.7cqw, 1px) solid rgb(255 102 170 / 0.8);
+  border: max(0.7cqw, 1px) solid color-mix(in srgb, var(--brand-pink) 80%, transparent);
   border-radius: 2.4cqw;
-  outline: max(0.5cqw, 1px) solid rgb(255 102 170 / 0.38);
+  outline: max(0.5cqw, 1px) solid color-mix(in srgb, var(--brand-pink) 38%, transparent);
   outline-offset: 1.2cqw;
   background: rgb(0 0 0 / 0.16);
 }
@@ -442,7 +442,7 @@
   content: "";
   width: 9cqw;
   height: max(0.5cqw, 1px);
-  background: rgb(255 102 170 / 0.55);
+  background: color-mix(in srgb, var(--brand-pink) 55%, transparent);
 }
 /* 最后一个字母后面带着一格字距，把右边那道线拉回来对称 */
 .cb__word::after {
@@ -508,13 +508,13 @@
   cursor: default;
 }
 .op__btn--main {
-  --btn-edge: #b03a72;
+  --btn-edge: color-mix(in srgb, var(--brand-pink) 80%, #000);
   background: var(--op-osu);
   color: #1c1216;
   font-weight: 800;
 }
 .op__btn--main:hover:not(:disabled) {
-  background: #ff80b9;
+  background: color-mix(in srgb, var(--brand-pink) 70%, #fff);
 }
 
 /* 拖放框：梅子色托盘 + 虚线边；有卡被拖起时整框变粉 */
@@ -544,7 +544,7 @@
 .op__drop.is-active {
   border-style: solid;
   border-color: var(--op-osu);
-  background: rgb(255 102 170 / 0.16);
+  background: color-mix(in srgb, var(--brand-pink) 16%, transparent);
   color: var(--op-ink);
   scale: 1.03;
 }
@@ -557,7 +557,7 @@
   text-indent: 0.12em;
 }
 .op__drop.is-active b {
-  color: #ffb3d4;
+  color: color-mix(in srgb, var(--brand-pink) 55%, #fff);
 }
 .op__drop span {
   font-size: 11px;
@@ -684,6 +684,92 @@
   transition-property: transform, opacity;
 }
 
+/* 最后一张归位后，在同一层内从翻牌过渡到扁平结算。 */
+.op--flat .op-card[data-phase="slot"] { cursor: default; }
+.op--flat.is-done {
+  display: grid;
+  place-items: safe center;
+  box-sizing: border-box;
+  padding: 20px 14px calc(20px + env(safe-area-inset-bottom));
+  overflow: auto;
+}
+.op--flat.is-done .op__backdrop { position: fixed; }
+.op--flat .op__hint { padding-inline: 16px; text-align: center; }
+.op__settlement {
+  position: relative;
+  width: min(940px, 100%);
+  box-sizing: border-box;
+  padding: clamp(14px, 3vw, 26px);
+  border-radius: 12px;
+  background: var(--bk-paper);
+  color: var(--bk-ink);
+  box-shadow: inset 0 0 0 1px var(--bk-line), 0 24px 54px rgb(0 0 0 / 0.4);
+}
+.op--flat[data-handoff] .op__table {
+  position: fixed;
+  pointer-events: none;
+  animation: op-table-out 240ms ease-in forwards;
+}
+.op--flat[data-handoff] .op__settlement {
+  animation: op-result-in 300ms var(--ui-ease-out, ease-out);
+}
+@keyframes op-table-out {
+  to { opacity: 0; }
+}
+@keyframes op-result-in {
+  from { opacity: 0; transform: translateY(10px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .op--flat[data-handoff] .op__table { opacity: 0; animation: none; }
+  .op--flat[data-handoff] .op__settlement { animation: none; }
+}
+.op__settlement-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.op__settlement-head h2 { margin: 0; font-size: 18px; }
+.op__settlement-head span {
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  color: var(--bk-good);
+  font-size: 12px;
+}
+.op__settlement-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 125px));
+  justify-content: center;
+  gap: 12px;
+  padding: 0;
+  margin: 20px 0;
+  list-style: none;
+}
+.op__settlement-cards li { min-width: 0; text-align: center; }
+.op__bonus { display: inline-block; margin-top: 6px; color: var(--bk-osu-text); font-size: 12px; }
+.op__settlement-error { margin: 0 0 12px; color: var(--bk-bad); font-size: 13px; }
+.op__settlement .op__actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid var(--bk-line);
+}
+.op__settlement .op__btn { min-height: 44px; letter-spacing: 0; }
+.op__settlement .op__btn:first-child { min-width: 108px; }
+.op__settlement .op__btn:not(.op__btn--main) {
+  --btn-edge: var(--bk-edge);
+  background: var(--bk-raised);
+  color: var(--bk-ink);
+}
+.op__settlement .op__btn:not(.op__btn--main):hover:not(:disabled) { background: var(--bk-raised-hi); }
+@media (max-width: 620px) {
+  .op__settlement-cards { grid-template-columns: repeat(3, minmax(0, 108px)); gap: 8px; }
+  .op__settlement .op__actions { gap: 8px; }
+  .op__settlement .op__btn { flex: 1 1 auto; padding: 0 10px; letter-spacing: 0; }
+}
+
 /* 第 6 张额外镜像卡：玻璃碎裂闪白与裂纹过渡 + 卡面角标 */
 .op__shatter {
   position: fixed;
@@ -718,7 +804,7 @@
   z-index: 4;
   padding: 2px 6px;
   border-radius: 999px;
-  background: rgb(255 102 170 / 0.92);
+  background: color-mix(in srgb, var(--brand-pink) 92%, transparent);
   color: #fff;
   font-size: 10px;
   font-weight: 700;

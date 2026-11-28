@@ -5,7 +5,7 @@
 .choke-viewport {
   width: 100%;
   height: 100%;
-  min-height: 100dvh;
+  min-height: 0;
   display: grid;
   place-items: center;
   background: var(--bk-well);
@@ -920,7 +920,7 @@
 .choke-intent-box__icon svg {
   width: 1.32cqw;
   height: 1.32cqw;
-  color: color-mix(in srgb, var(--el, #ffb3d4) 65%, #fff);
+  color: color-mix(in srgb, var(--el, color-mix(in srgb, var(--brand-pink) 55%, #fff)) 65%, #fff);
 }
 .choke-intent-box__order {
   position: absolute;
@@ -1262,7 +1262,7 @@
   color: var(--bk-well);
   background: var(--bk-osu);
   border-color: #ffc2de;
-  box-shadow: 0 0 0.5cqw rgb(255 102 170 / 0.65);
+  box-shadow: 0 0 0.5cqw color-mix(in srgb, var(--brand-pink) 65%, transparent);
 }
 .choke-ap-gem[data-preview="true"] {
   background: #ff8c52;

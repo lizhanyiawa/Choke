@@ -19,6 +19,12 @@ export interface BattleHostHooks {
   syncNote?: ReactNode
 }
 
+export interface BattleExit {
+  href: string
+  label: string
+}
+
+export const DESK_BATTLE_EXIT: BattleExit = { href: "/home", label: "桌面" }
 /** 教学战顶部实时 4 步战术教练提示，随战局自动切换 */
 export function tutorialBattleHint(battle: BattleState): string | null {
   if (battle.phase !== "player") return null

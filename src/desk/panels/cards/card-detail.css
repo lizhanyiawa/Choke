@@ -82,7 +82,7 @@
 }
 .card-detail__tab[aria-selected="true"] {
   border-color: var(--bk-osu);
-  background: rgb(255 102 170 / 0.18);
+  background: color-mix(in srgb, var(--brand-pink) 18%, transparent);
   color: var(--bk-ink);
 }
 .card-detail__close {
@@ -299,7 +299,7 @@
 }
 .card-detail__reroll-opt:hover:not(:disabled) {
   border-color: var(--bk-osu);
-  background: rgb(255 102 170 / 0.12);
+  background: color-mix(in srgb, var(--brand-pink) 12%, transparent);
 }
 .card-detail__reroll-opt-top {
   display: flex;

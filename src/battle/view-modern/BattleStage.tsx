@@ -35,7 +35,7 @@ import { ELEMENT_COLOR, ELEMENT_LABEL, JOB_LABEL, battlePower } from "@/card/dat
 import { pointerCommand, useSkillRows } from "../useSkillRows"
 import { usePlaybackSpeed } from "../usePlaybackSpeed"
 import { useAutoEndTurn } from "../useAutoEndTurn"
-import { tutorialBattleHint, type BattleHostHooks } from "../host"
+import { DESK_BATTLE_EXIT, tutorialBattleHint, type BattleExit, type BattleHostHooks } from "../host"
 import { impact, reducedImpactMotion, sustainHurtTint } from "../impact"
 import type { CardFaceData, Element } from "@/card/types"
 
@@ -83,6 +83,7 @@ interface Props {
   onSwitchUi?: () => void
   /** 嵌在别的流程里时由宿主接管退出和结算按钮；不传是独立战斗页 */
   host?: BattleHostHooks
+  exit?: BattleExit
 }
 
 function bossBgStyle(background: string): CSSProperties {
@@ -208,6 +209,7 @@ export function BattleStage({
   onRestart,
   onSwitchUi,
   host,
+  exit = DESK_BATTLE_EXIT,
 }: Props) {
   const [intentHover, setIntentHover] = useState<{ id: string; anchor: HTMLElement; pointer: { x: number; y: number } } | null>(null)
   const [previewAp, setPreviewAp] = useState(0)
@@ -695,9 +697,9 @@ export function BattleStage({
       <span>{host.exitLabel}</span>
     </button>
   ) : (
-    <a className="choke-tool-btn" href="/" data-sfx="close">
+    <a className="choke-tool-btn" href={exit.href} data-sfx="close">
       <b>‹</b>
-      <span>桌面</span>
+      <span>{exit.label}</span>
     </a>
   )
 
@@ -1496,7 +1498,7 @@ export function BattleStage({
                     <button type="button" onClick={() => begin(onRestart)} data-sfx="none">
                       再来一场
                     </button>
-                    <a href="/">返回桌面</a>
+                    <a href={exit.href}>返回{exit.label}</a>
                   </>
                 )}
               </div>

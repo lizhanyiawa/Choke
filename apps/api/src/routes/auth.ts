@@ -263,7 +263,7 @@ export async function authRoutes(app: FastifyInstance) {
       if (entry.bindUserId) {
         // 绑定：回来的必须还是发起绑定的那个登录态，防止别人把自己的 state 塞给你
         if (readSession(request.cookies[COOKIE_NAME]) !== entry.bindUserId) {
-          return reply.redirect(`${WEB_BASE}/?bind=error&reason=session_changed`)
+          return reply.redirect(`${WEB_BASE}/home?bind=error&reason=session_changed`)
         }
         try {
           await claimHeroCard(entry.bindUserId, me, false)
@@ -272,7 +272,7 @@ export async function authRoutes(app: FastifyInstance) {
         }
         const result = await beginBind(entry.bindUserId, me)
         const outcome = result.kind === "rejected" ? `error&reason=${result.reason}` : result.kind
-        return reply.redirect(`${WEB_BASE}/?bind=${outcome}`)
+        return reply.redirect(`${WEB_BASE}/home?bind=${outcome}`)
       }
 
       // 按 osu! id 找人（邮箱号绑定过 osu! 之后，id 不再是 osu-xxx）；没有才建新号

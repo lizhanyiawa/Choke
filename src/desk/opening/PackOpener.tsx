@@ -32,22 +32,30 @@ export interface OriginRect {
   height: number
 }
 
-interface Props {
+interface CommonProps {
   cards: CardData[]
   pool: PackPool
   /** 桌上那个卡包的视口矩形，大包从这里放大出来 */
   origin?: OriginRect
-  /** 全部放到桌面 */
-  onDone: () => void
-  /** 直接收进卡册（卡已经落库，关掉开包层即可） */
-  onQuick: () => void
   /** 背包里同等级卡包还剩几个 */
   remaining?: number
   /** 继续开下一个同等级卡包 */
   onOpenNext?: () => void
-  /** 单张拖到桌面 */
-  onDropCard: (card: CardData) => void
 }
+
+type Props = CommonProps & ({
+  mode?: "desk"
+  onDone: () => void
+  onQuick: () => void
+  onDropCard: (card: CardData) => void
+} | {
+  mode: "flat"
+  skip?: boolean
+  bonus?: CardData
+  busy?: boolean
+  error?: string | null
+  onClose: () => void
+})
 
 const RARITY_ORDER = RARITIES
 /** 未翻开就关掉时需要二次确认的最低档位 */
@@ -87,7 +95,14 @@ const OpenerFace = memo(function OpenerFace({ card }: { card: CardData }) {
  * 从低到高翻，最好的一张留到最后；E 以上翻开前先抬起蓄光，L 以上桌面还会暗下来、翻开时扫一道光。
  * 手动亮相后等玩家确认；全部翻开则自动归位。
  */
-export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, remaining = 0, onOpenNext }: Props) {
+export function PackOpener(props: Props) {
+  const { cards, pool, origin, remaining = 0, onOpenNext } = props
+  const isFlat = props.mode === "flat"
+  const flat = isFlat ? props : null
+  const onDropCard = isFlat ? undefined : props.onDropCard
+  const [skipToResult, setSkipToResult] = useState(!!flat?.skip)
+  const [finishAnimation, setFinishAnimation] = useState(false)
+  const [resultEntered, setResultEntered] = useState(false)
   const [stage, setStage] = useState<Stage>("seal")
   const [progress, setProgress] = useState(0)
   const [snapping, setSnapping] = useState(false)
@@ -109,6 +124,7 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
   const rootRef = useRef<HTMLDivElement>(null)
   const live = useRef({ skip: () => {}, canSkip: false })
   const dropRef = useRef(onDropCard)
+  const settlementRef = useRef<HTMLHeadingElement>(null)
   const finale = useRef(RARITY_ORDER.length - 1)
 
   useEffect(() => {
@@ -117,17 +133,17 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
 
   useEffect(() => {
     const root = rootRef.current
-    if (!root) return
+    if (!root || isFlat) return
     const onDrop = (event: Event) => {
       if (!(event.target instanceof Element) || !event.target.closest("[data-card-drop]")) return
       const { payload } = (event as CustomEvent<CardPointerDrop>).detail
       if (!payload.card) return
       event.preventDefault()
-      dropRef.current(payload.card)
+      dropRef.current?.(payload.card)
     }
     root.addEventListener(CARD_POINTER_DROP_EVENT, onDrop)
     return () => root.removeEventListener(CARD_POINTER_DROP_EVENT, onDrop)
-  }, [])
+  }, [isFlat])
 
   const later = (ms: number, fn: () => void) => {
     const id = window.setTimeout(fn, ms)
@@ -137,10 +153,10 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
 
   useEffect(() => {
     // 大包从桌上飞到面前
-    playSfx("whoosh")
+    if (!flat?.skip) playSfx("whoosh")
     const pending = timers.current
     return () => pending.forEach((id) => window.clearTimeout(id))
-  }, [])
+  }, [flat?.skip])
 
   // 从桌上的小包原位放大
   useLayoutEffect(() => {
@@ -172,12 +188,16 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
   })
   const spotlightPhase = spotlight && phaseOf(spotlight)
   const waitingForFlip = !auto && spotlightPhase === "show"
-  const allOpen = stage === "stack" && unrevealed.length === 0 && !spotlight
+  const allOpen = skipToResult || (stage === "stack" && unrevealed.length === 0 && !spotlight)
+  const flatSettled = isFlat && (skipToResult || finishAnimation)
+  const crossfade = isFlat && finishAnimation && !skipToResult && !reduced
+  const handoff = crossfade && !resultEntered
+  const canOpenNext = remaining > 0 && onOpenNext !== undefined
   const pendingHigh = sorted.filter((card) => {
     const phase = phaseOf(card)
     return (phase === "stack" || phase === "charge") && RARITY_ORDER.indexOf(card.rarity) >= CONFIRM_FROM
   }).length
-  const asking = confirming && pendingHigh > 0
+  const asking = confirming && pendingHigh > 0 && !allOpen
   const tally = useMemo(
     () =>
       [...RARITY_ORDER]
@@ -268,8 +288,8 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
   })
 
   useEffect(() => {
-    live.current = { skip: skipReveal, canSkip: !!spotlight && !waitingForFlip }
-    finale.current = Math.max(...sorted.map((card) => RARITY_ORDER.indexOf(card.rarity)))
+    live.current = { skip: skipReveal, canSkip: !flatSettled && !!spotlight && !waitingForFlip }
+    finale.current = Math.max(...sorted.map((card) => RARITY_ORDER.indexOf(card.rarity)), flat?.bonus ? RARITY_ORDER.indexOf(flat.bonus.rarity) : -1)
   })
 
   useEffect(() => {
@@ -287,6 +307,16 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
   useEffect(() => {
     if (allOpen) playSfx(finale.current >= FINALE_FROM ? "levelup" : "success")
   }, [allOpen])
+
+  useEffect(() => {
+    if (!isFlat || !allOpen || skipToResult) return
+    const timer = window.setTimeout(() => setFinishAnimation(true), reduced ? 0 : MANUAL_FLIP_MS)
+    return () => window.clearTimeout(timer)
+  }, [allOpen, isFlat, reduced, skipToResult])
+
+  useEffect(() => {
+    if (flatSettled) settlementRef.current?.focus({ preventScroll: true })
+  }, [flatSettled])
 
   const tearOpen = () => {
     if (torn.current) return
@@ -360,15 +390,27 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
     }
   }
 
+  const quickClose = () => {
+    if (props.mode !== "flat") props.onQuick()
+    else if (flatSettled) props.onClose()
+    else {
+      timers.current.forEach((id) => window.clearTimeout(id))
+      setAuto(false)
+      setConfirming(false)
+      setSkipToResult(true)
+    }
+  }
+
   /** Esc 和 × 共用：还有 E 以上的卡没翻开时先问一句 */
   const requestClose = () => {
+    if (flat?.busy) return
     if (asking) {
       setConfirming(false)
       return
     }
     playSfx("close")
-    if (pendingHigh > 0) setConfirming(true)
-    else onQuick()
+    if (!allOpen && pendingHigh > 0) setConfirming(true)
+    else quickClose()
   }
 
   useModal(rootRef, { onClose: requestClose })
@@ -438,7 +480,7 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
             : next
               ? `点最上面那张翻开 · 还剩 ${unrevealed.length} 张`
               : allOpen
-                ? "把卡拖到下面的框里单张放到桌面，或者一次处理全部"
+                ? isFlat ? "本包已收入卡册" : "把卡拖到下面的框里单张放到桌面，或者一次处理全部"
                 : ""
   const announce = stage === "stack" && !allOpen && said ? said : hint
   const dim = !!spotlight && BIG[spotlight.rarity]
@@ -446,12 +488,13 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
   return (
     <div
       ref={rootRef}
-      className={`op ${allOpen ? "is-done" : ""}`}
+      className={`op ${(!isFlat && allOpen) || flatSettled ? "is-done" : ""}${flat ? " op--flat" : ""}`}
       data-stage={stage}
-      data-dim={dim ? "" : undefined}
+      data-dim={dim && !flatSettled ? "" : undefined}
+      data-handoff={handoff ? "" : undefined}
       role="dialog"
       aria-modal="true"
-      aria-label="开包"
+      aria-label={flatSettled ? "开包结算" : "开包"}
       style={
         {
           "--gaps": Math.max(1, sorted.length - 1),
@@ -459,9 +502,9 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
         } as CSSProperties
       }
     >
-      <div className="op__backdrop" onClick={skipReveal} />
-      <i className="op__burst" data-rarity={dim ? spotlight?.rarity : undefined} aria-hidden />
-      {burst && (
+      <div className="op__backdrop" onClick={flatSettled ? undefined : skipReveal} />
+      {!flatSettled && <i className="op__burst" data-rarity={dim ? spotlight?.rarity : undefined} aria-hidden />}
+      {burst && !flatSettled && (
         <div
           key={burst.id}
           className="op__boom"
@@ -482,7 +525,7 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
       )}
       {shattering && <div className="op__shatter" aria-hidden />}
       {/* E 以上亮相时在卡下方报出稀有度；额外镜像卡标出「额外获得」 */}
-      {spotlight && (spotlightPhase === "show" || spotlightPhase === "hold") && (
+      {!flatSettled && spotlight && (spotlightPhase === "show" || spotlightPhase === "hold") && (
         <div
           key={keyOf(spotlight)}
           className="op__title"
@@ -497,7 +540,8 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
         </div>
       )}
 
-      <div className="op__table">
+      {(!flatSettled || handoff) && (
+      <div className="op__table" inert={handoff} aria-hidden={handoff || undefined}>
         {sorted.map((card, order) => {
           const phase = phaseOf(card)
           const flipped = phase === "show" || phase === "hold" || phase === "slot"
@@ -511,7 +555,7 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
               data-bonus={card.isBonus ? "" : undefined}
               style={cardStyle(card, order)}
               onPointerDown={(event) => {
-                if (phase === "slot") startCardPointerDrag(event, { card }, {
+                if (!isFlat && phase === "slot") startCardPointerDrag(event, { card }, {
                   onStart: () => setDraggingCard(true),
                   onFinish: () => setDraggingCard(false),
                 })
@@ -569,14 +613,16 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
                 onPointerMove={onTearMove}
                 onPointerUp={() => onTearUp(false)}
                 onPointerCancel={() => onTearUp(true)}
+                onClick={(event) => { if (isFlat && event.detail === 0) tearOpen() }}
                 onKeyDown={onTearKey}
               />
             )}
           </div>
         )}
       </div>
+      )}
 
-      {allOpen && (
+      {allOpen && !isFlat && (
         <ul className="op__tally" aria-label="本包稀有度汇总">
           {tally.map(({ rarity, count }) => (
             <li key={rarity} style={{ "--c": RARITY_COLOR[rarity] } as CSSProperties}>
@@ -588,7 +634,7 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
         </ul>
       )}
 
-      {allOpen && (
+      {allOpen && !isFlat && (
         <div
           className={`op__drop ${draggingCard ? "is-active" : ""}`}
           data-card-drop
@@ -598,6 +644,38 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
         </div>
       )}
 
+      {flatSettled && flat && (
+        <section
+          className="op__settlement"
+          aria-busy={flat.busy}
+          onAnimationEnd={(event) => {
+            if (event.target === event.currentTarget) setResultEntered(true)
+          }}
+        >
+          <header className="op__settlement-head">
+            <h2 ref={settlementRef} tabIndex={-1}>本包已收入卡册</h2>
+            <span>获得 {cards.length + (flat.bonus ? 1 : 0)} 张卡</span>
+          </header>
+          <ul className="op__settlement-cards" aria-label="本包卡牌">
+            {sorted.map((card) => (
+              <li key={keyOf(card)}><OpenerFace card={card} /></li>
+            ))}
+            {flat.bonus && <li key={keyOf(flat.bonus)}><OpenerFace card={flat.bonus} /><span className="op__bonus">镜像奖励</span></li>}
+          </ul>
+          {flat.error && <p role="alert" className="op__settlement-error">{flat.error}</p>}
+          <div className="op__actions">
+            <button type="button" className={`op__btn${canOpenNext ? "" : " op__btn--main"}`} disabled={flat.busy} onClick={requestClose}>
+              关闭
+            </button>
+            {canOpenNext && (
+              <button type="button" className="op__btn op__btn--main" disabled={flat.busy} onClick={onOpenNext}>
+                {flat.busy ? "开启中…" : `继续开包（剩 ${remaining}）`}
+              </button>
+            )}
+          </div>
+        </section>
+      )}
+      {!flatSettled && (
       <div className="op__foot">
         {hint && (
           // key 用提示本身：换了一句就重新淡入
@@ -618,14 +696,14 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
             全部翻开
           </button>
         ))}
-        {allOpen && (
+        {allOpen && props.mode !== "flat" && (
           <div className="op__actions">
             <button
               type="button"
               className="op__btn"
               onClick={() => {
                 playSfx("slide")
-                onQuick()
+                props.onQuick()
               }}
             >
               存入卡册
@@ -635,7 +713,7 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
               className="op__btn op__btn--main"
               onClick={() => {
                 playSfx("whoosh")
-                onDone()
+                props.onDone()
               }}
             >
               全部放到桌面
@@ -655,8 +733,9 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
           </div>
         )}
       </div>
+      )}
 
-      <p className="op__sr" role="status" aria-live="polite">
+      <p className="op__sr" role="status" aria-live="polite" hidden={flatSettled}>
         {announce}
       </p>
 
@@ -671,7 +750,7 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
             className="op__btn op__btn--main"
             onClick={() => {
               playSfx("close")
-              onQuick()
+              quickClose()
             }}
           >
             确定跳过
@@ -679,10 +758,12 @@ export function PackOpener({ cards, pool, origin, onDone, onQuick, onDropCard, r
         </div>
       )}
 
-      <button type="button" className="op__close" onClick={requestClose} aria-label="关闭开包，卡牌收进卡册">
-        ×
-      </button>
-      <CardDragLayer root={rootRef} />
+      {!flatSettled && (
+        <button type="button" className="op__close" onClick={requestClose} aria-label={flat ? "关闭开包" : "关闭开包，卡牌收进卡册"}>
+          ×
+        </button>
+      )}
+      {!isFlat && <CardDragLayer root={rootRef} />}
     </div>
   )
 }

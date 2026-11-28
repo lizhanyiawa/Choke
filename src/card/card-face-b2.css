@@ -294,7 +294,7 @@
     linear-gradient(160deg, color-mix(in srgb, var(--r) 30%, #15141a), #0c0b0e);
 }
 
-.cfb2__banner img {
+ .cfb2__banner img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -425,7 +425,7 @@
     0 1.8cqw 3.4cqw rgb(0 0 0 / 0.5);
 }
 
-.cfb2__avatar > img {
+.cfb2__avatar > :is(img, canvas) {
   display: block;
   width: 100%;
   height: 100%;
@@ -777,7 +777,9 @@ button.cfb2__skill:hover {
   }
 
   .cfb2__bp b {
-    font-size: 13cqw;
+    min-width: 0;
+    font-size: var(--bp-size);
+    white-space: nowrap;
   }
 
   .cfb2__lv b {

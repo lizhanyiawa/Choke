@@ -8,6 +8,7 @@ interface Props {
   className?: string
   /** 书里的邻页提前加载，避免翻过去时才开始请求插画 */
   eager?: boolean
+  thumbnail?: boolean
   skillActions?: readonly ButtonHTMLAttributes<HTMLButtonElement>[]
 }
 

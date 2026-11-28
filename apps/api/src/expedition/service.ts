@@ -25,6 +25,7 @@ import {
   maxMapStars,
   unsupportedNode,
   type MapDef,
+  type MapNode,
   type Reward,
 } from "@choke/shared/expedition/content"
 import {
@@ -40,10 +41,9 @@ import { isRewardEmpty, mapStarTier, mergeRewards, rollRewardTable } from "@chok
 import type {
   ExpeditionBattleView,
   ExpeditionEnd,
-  ExpeditionEventView,
+  ExpeditionNodePreview,
   ExpeditionPoolCard,
   ExpeditionSettlement,
-  ExpeditionStoryView,
   ExpeditionView,
   ObjectiveResult,
 } from "@choke/shared/expedition/view"
@@ -146,28 +146,91 @@ function battleView(row: BattleRow): ExpeditionBattleView {
   }
 }
 
+const NODE_TITLE: Record<MapNode["type"], string> = {
+  battle: "战斗",
+  boss: "首领",
+  story: "剧情",
+  treasure: "宝箱",
+  rest: "休息",
+  branch: "分叉",
+  event: "事件",
+  slot: "槽位",
+  empty: "空地",
+}
+
+function nodePreview(nodeId: string, node: MapNode): ExpeditionNodePreview {
+  const preview: ExpeditionNodePreview = {
+    nodeId,
+    title: node.title ?? NODE_TITLE[node.type],
+    type: node.type,
+    hint: node.hint ?? (node.type === "branch" ? node.prompt : undefined),
+    threat: node.threat,
+  }
+
+  if (isFightNode(node)) {
+    const encounter = BATTLE_CONTENT.encounters[node.encounter]
+    const enemy = encounter && BATTLE_CONTENT.enemies[encounter.enemy]
+    if (encounter && enemy) {
+      preview.encounter = {
+        name: enemy.name,
+        title: enemy.title,
+        tier: enemy.tier,
+        element: enemy.element,
+        weaknesses: enemy.weaknesses,
+        hp: enemy.stats.hp,
+        summary: encounter.summary,
+      }
+    }
+    preview.rewardHint = node.rewards ? "战斗胜利后确定掉落。" : "战斗奖励将在胜利后结算。"
+  } else if (node.type === "treasure") {
+    preview.rewardHint = "进入宝箱格时确定掉落。"
+  } else if (node.type === "rest") {
+    preview.hint ??= "抵达后恢复队伍血量。"
+  } else if (node.type === "story") {
+    const def = WORLD_CONTENT.stories[node.story]
+    if (def) {
+      preview.title = node.title ?? def.title
+      preview.story = { nodeId, title: def.title, lines: def.lines }
+    }
+  } else if (node.type === "event") {
+    const def = WORLD_CONTENT.events[node.event]
+    if (def) {
+      preview.title = node.title ?? def.title
+      preview.event = { nodeId, title: def.title, text: def.text, options: def.options }
+    }
+  }
+
+  return preview
+}
+
+/** 玩家现在看得见详情的格子：当前格、前方一步、身后一步。更远的不下发，免得从接口里提前看到 */
+function previewWindow(nodes: Record<string, MapNode>, position: string): Set<string> {
+  const visible = new Set<string>([position])
+  for (const next of nodes[position]?.next ?? []) visible.add(next)
+  for (const [nodeId, node] of Object.entries(nodes)) {
+    if (node.next.includes(position)) visible.add(nodeId)
+  }
+  return visible
+}
+
 async function buildView(exec: Exec, exp: ExpRow): Promise<ExpeditionView> {
   const battles = await loadBattles(exec, exp.id)
   const node = exp.map.nodes[exp.position]
   const current = battles.find((battle) => battle.nodeId === exp.position)
 
-  let story: ExpeditionStoryView | null = null
-  if (node?.type === "story" && !exp.nodeDone) {
-    const def = WORLD_CONTENT.stories[node.story]
-    if (def) story = { nodeId: exp.position, title: def.title, lines: def.lines }
+  const nodePreviews: ExpeditionView["nodePreviews"] = {}
+  for (const nodeId of previewWindow(exp.map.nodes, exp.position)) {
+    const mapNode = exp.map.nodes[nodeId]
+    if (mapNode) nodePreviews[nodeId] = nodePreview(nodeId, mapNode)
   }
-
-  let event: ExpeditionEventView | null = null
-  if (node?.type === "event" && !exp.nodeDone) {
-    const def = WORLD_CONTENT.events[node.event]
-    if (def) event = { nodeId: exp.position, title: def.title, text: def.text, options: def.options }
-  }
+  const currentPreview = nodePreviews[exp.position]
 
   return {
     id: exp.id,
     status: exp.status,
     mapId: exp.mapId,
     map: exp.map,
+    nodePreviews,
     seed: exp.seed,
     allocation: exp.allocation,
     pool: exp.pool,
@@ -183,8 +246,8 @@ async function buildView(exec: Exec, exp: ExpRow): Promise<ExpeditionView> {
     startedAt: exp.startedAt.toISOString(),
     expiresAt: exp.expiresAt.toISOString(),
     battle: current && isFightNode(node) ? battleView(current) : null,
-    story,
-    event,
+    story: exp.nodeDone ? null : (currentPreview?.story ?? null),
+    event: exp.nodeDone ? null : (currentPreview?.event ?? null),
     difficulty: difficultyStatus(exp.map, exp.threat),
     settlement: exp.settlement ?? null,
   }
@@ -298,6 +361,7 @@ export async function startExpedition(userId: string, input: StartInput, now = D
       const { card, owned } = byId.get(userCardId)!
       return {
         userCardId,
+        exp: owned.exp,
         face: faceFromDef(cardDefOf(card), {
           level: owned.level,
           constellation: owned.constellation,

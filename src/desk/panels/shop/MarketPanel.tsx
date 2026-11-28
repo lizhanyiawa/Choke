@@ -19,6 +19,7 @@ import {
 import { Pages, useBook } from "@/desk/shell/BookPages"
 import { ConfirmBar } from "@/desk/shell/ConfirmBar"
 import { emitDeskData } from "@/desk/session/events"
+import { FLAT_ROUTES } from "@/flat/router"
 import { useTutorialProgress } from "@/tutorial/store"
 import { isModuleUnlocked, lockHintOf } from "@/tutorial/unlocks"
 import "@/desk/panels/shop/market-panel.css"
@@ -37,13 +38,7 @@ interface Notice {
   error?: boolean
 }
 
-export function MarketPanel({
-  userId,
-  onOpenAlbum,
-}: {
-  userId: string | null
-  onOpenAlbum: () => void
-}) {
+export function MarketPanel({ userId }: { userId: string | null }) {
   const book = useBook()
   const [listings, setListings] = useState<MarketListing[]>([])
   const [own, setOwn] = useState<OwnMarketListing[]>([])
@@ -192,13 +187,11 @@ export function MarketPanel({
               <b>{coins == null ? "—" : coins.toLocaleString("en-US")}</b>
               <span>我的金币</span>
             </div>
-            <button type="button" className="bk-btn bk-btn--main" onClick={onOpenAlbum}>
-              去卡册上架
-            </button>
+            {userId && !tradeLocked && <a className="bk-btn bk-btn--main" href={`${FLAT_ROUTES.album}?mode=list`}>去卡册上架</a>}
           </div>
 
           <p className="bk-note">
-            用金币买卖卡。上架入口在卡册的卡牌详情里。精华只能通过分解闪卡获得，只用于给卡镀闪。
+            用金币买卖卡。要上架，请从「去卡册上架」选择卡牌。
             {!userId && " 登录后才能买卖。"}
           </p>
 

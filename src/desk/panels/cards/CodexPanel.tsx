@@ -14,6 +14,7 @@ import {
   fetchUserCodexStats,
   type ApiCardDef,
   type ApiUserCard,
+  type CodexStats,
 } from "@/desk/session/api"
 import { RARITY_COLOR } from "@/desk/lib/rarity"
 import { FitArea } from "@/desk/shell/FitArea"
@@ -38,18 +39,6 @@ const OWNED_FILTERS = [
 
 type CodexSort = (typeof SORTS)[number]["id"]
 type OwnedFilter = (typeof OWNED_FILTERS)[number]["id"]
-
-interface RarityStat {
-  total: number
-  owned: number
-}
-
-interface CodexStats {
-  total: number
-  owned: number
-  byRarity: Record<string, RarityStat>
-  countries: { code: string; total: number; owned: number }[]
-}
 
 interface Result {
   rows: ApiCardDef[]
@@ -113,7 +102,7 @@ export const CodexPanel = memo(function CodexPanel({ userId }: { userId: string 
     if (!userId) {
       Promise.all([fetchCardStats(), fetchCardCountries(controller.signal)])
         .then(([statsData, countryData]) => {
-          const byRarity: Record<string, RarityStat> = {}
+          const byRarity: CodexStats["byRarity"] = {}
           for (const [key, value] of Object.entries(statsData.byRarity)) {
             byRarity[key] = { total: Number(value), owned: 0 }
           }
@@ -136,7 +125,7 @@ export const CodexPanel = memo(function CodexPanel({ userId }: { userId: string 
 
     fetchUserCodexStats(userId, controller.signal)
       .then((data) => {
-        if (data) setStats(data as CodexStats)
+        setStats(data)
         onDone()
       })
       .catch(onFail)

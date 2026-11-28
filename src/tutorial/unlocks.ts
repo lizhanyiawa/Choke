@@ -1,5 +1,10 @@
 import type { PanelId } from "@/desk/shell/DeskBook"
-import { lockReason, unlockLevelOf as featureLevel } from "@choke/shared/unlocks"
+import {
+  lockMessage,
+  lockReason,
+  unlockLevelOf as featureLevel,
+  type FeatureId,
+} from "@choke/shared/unlocks"
 
 import type { PlayerProgress } from "./types"
 
@@ -44,5 +49,29 @@ export function lockHintOf(id: ModuleId, progress: UnlockProgress): string {
       return `需要 Lv.${need} 解锁，还差 ${need - progress.level} 级`
     default:
       return `需要 Lv.${need} 解锁`
+  }
+}
+
+/**
+ * 任意功能的锁提示（不限于桌面上的模块：喂养、融合、镀闪、分解、NPC 回收、体力药水……）。
+ * 解锁了返回 null；文案和服务端拒绝时给的是同一句。
+ */
+export function featureLockHint(id: FeatureId, progress: UnlockProgress): string | null {
+  const reason = lockReason(id, contextOf(progress))
+  return reason ? lockMessage(id, reason) : null
+}
+
+/** 锁的短标记，给放不下一句话的地方用（导航项的角标）。解锁了返回 null */
+export function featureLockTag(id: FeatureId, progress: UnlockProgress): string | null {
+  const reason = lockReason(id, contextOf(progress))
+  switch (reason?.kind) {
+    case "level":
+      return `Lv.${reason.level}`
+    case "account":
+      return "未绑定"
+    case "tutorial":
+      return "未解锁"
+    default:
+      return null
   }
 }

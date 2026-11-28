@@ -147,7 +147,7 @@
 }
 
 .pool-lab__slot[data-active] {
-  outline: 2px solid #ed5f9f;
+  outline: 2px solid var(--brand-pink);
   outline-offset: 4px;
   border-radius: 14px;
 }
@@ -287,7 +287,7 @@
   transform: translateY(0) scale(0.98);
 }
 .pool-lab__slot[data-active] {
-  outline-color: #ff66aa;
+  outline-color: var(--brand-pink);
 }
 .pool-lab__file:active {
   translate: 0 1px;

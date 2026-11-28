@@ -26,6 +26,12 @@
   pointer-events: none;
 }
 
+/* 小卡格只保留一道静态彩膜；不创建扫光、遮罩和混合层。 */
+.card-foil--static {
+  background: linear-gradient(120deg, transparent 18%, rgb(255 122 178 / .16) 32%,
+    rgb(159 226 255 / .23) 43%, rgb(255 229 138 / .16) 51%, transparent 68%);
+}
+
 .card-foil > i {
   position: absolute;
   inset: 0;

@@ -1,0 +1,61 @@
+/* =========================================================
+   今日推荐谱面卡。任务页右栏在用，首页以后也会单独用，
+   所以样式自成一份：只靠外壳的 fl-* 和 book.css 的 bk-*，不引用 quests.css。
+   颜色全部走令牌。
+   ========================================================= */
+
+/* 小标题比卡片标题轻：这张卡的主角是谱面名 */
+.osu-daily__label {
+  margin: 0;
+  color: var(--bk-dim);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.osu-daily__map {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+/* 谱面名带着难度名，常常很长：允许折行，连在一起的英文也能断开 */
+.osu-daily__title {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.osu-daily__rule {
+  color: var(--bk-dim);
+  font-size: 12px;
+}
+.osu-daily__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/* 两个按钮平分一行；卡片窄到放不下就各占一行 */
+.osu-daily__actions > .bk-btn {
+  flex: 1 1 112px;
+}
+.osu-daily__passed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  font-size: 14px;
+}
+.osu-daily__claimed {
+  color: var(--bk-dim);
+  font-size: 12px;
+}
+.osu-daily__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+}
+/* 文字链接字小：行高撑到 32px，手指点得中 */
+.osu-daily__links > .fl-link {
+  line-height: 32px;
+}

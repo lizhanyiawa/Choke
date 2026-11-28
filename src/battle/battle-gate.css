@@ -90,7 +90,7 @@
     0 2px 0 #b03a72;
 }
 .choke-gate__actions > :first-child:hover {
-  background: #ff80b9;
+  background: color-mix(in srgb, var(--brand-pink) 70%, #fff);
 }
 .choke-gate__actions > :active {
   translate: 0 1px;

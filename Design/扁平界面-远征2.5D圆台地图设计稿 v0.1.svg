@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="map-title map-desc" font-family="'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif">
+  <title id="map-title">Choke! 远征 2.5D 立体圆台与四层视野迷雾设计稿 v0.1</title>
+  <desc id="map-desc">水平展开 2.5D 立体圆台、锁定推进镜头（当前格锚定在水平 33%、垂直 50%）与四层推进视野迷雾规范：身后 1 步渐隐、当前格抬升光柱、前方 1 步明牌、前方 2 步仅露类别轮廓、≥3 步沉入右侧未知前路迷雾，严禁剧透地图总步数。</desc>
+
+  <defs>
+    <linearGradient id="stage-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#191116" />
+      <stop offset="50%" stop-color="#1f151c" />
+      <stop offset="100%" stop-color="#120b0f" />
+    </linearGradient>
+    <radialGradient id="cur-lantern" cx="33%" cy="52%" r="38%">
+      <stop offset="0%" stop-color="#ff66aa" stop-opacity="0.18" />
+      <stop offset="55%" stop-color="#8b5cb8" stop-opacity="0.07" />
+      <stop offset="100%" stop-color="#120b0f" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="cur-beam" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#ff66aa" stop-opacity="0.46" />
+      <stop offset="55%" stop-color="#ff66aa" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="#ff66aa" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="boss-beam" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#f2c46d" stop-opacity="0.34" />
+      <stop offset="100%" stop-color="#f2c46d" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="fog-l" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#130c10" stop-opacity="0.96" />
+      <stop offset="100%" stop-color="#130c10" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="fog-r" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#130c10" stop-opacity="0" />
+      <stop offset="48%" stop-color="#130c10" stop-opacity="0.72" />
+      <stop offset="100%" stop-color="#130c10" stop-opacity="0.99" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="620" fill="#120b0f" />
+
+  <!-- Top Header -->
+  <rect x="20" y="16" width="1160" height="40" rx="8" fill="#271d23" />
+  <text x="36" y="41" font-size="16" font-weight="740" fill="#f2e9ed">Choke! · 2.5D 立体圆台推进地图 &amp; 四层视野迷雾规范 v0.1</text>
+  <text x="1164" y="41" font-size="12" fill="#c7b3be" text-anchor="end">锁定推进镜头 (33%, 50%) · COL_STEP 196 · LANE_STEP 132 · 禁止缩放拖拽</text>
+
+  <!-- Main 2.5D Map Stage -->
+  <rect x="20" y="70" width="1160" height="410" rx="12" fill="url(#stage-bg)" stroke="#3e2f37" />
+  <rect x="20" y="70" width="1160" height="410" rx="12" fill="url(#cur-lantern)" />
+
+  <!-- Subtle column guide lines -->
+  <g stroke="#ffffff" stroke-opacity="0.06" stroke-dasharray="4 6">
+    <line x1="196" y1="90" x2="196" y2="460" />
+    <line x1="392" y1="90" x2="392" y2="460" />
+    <line x1="588" y1="90" x2="588" y2="460" />
+    <line x1="784" y1="90" x2="784" y2="460" />
+    <line x1="980" y1="90" x2="980" y2="460" />
+  </g>
+
+  <!-- Column headers -->
+  <text x="196" y="102" font-size="12" font-weight="700" fill="#9c8993" text-anchor="middle">Layer -1 · 身后 1 步</text>
+  <text x="392" y="102" font-size="12" font-weight="700" fill="#ff8ec2" text-anchor="middle">Layer 0 · 当前格 (锚点 33%)</text>
+  <text x="588" y="102" font-size="12" font-weight="700" fill="#f2e9ed" text-anchor="middle">Layer +1 · 前方 1 步（明牌）</text>
+  <text x="784" y="102" font-size="12" font-weight="700" fill="#c7b3be" text-anchor="middle">Layer +2 · 前方 2 步（仅露类别）</text>
+  <text x="1030" y="102" font-size="12" font-weight="700" fill="#84727c" text-anchor="middle">Layer ≥+3 · 未知前路迷雾</text>
+
+  <!-- Bezier Tracks -->
+  <path d="M 196 284 C 294 284, 294 284, 392 284" fill="none" stroke="#8c7883" stroke-width="4" stroke-opacity="0.55" />
+  <path d="M 392 284 C 490 284, 490 202, 588 202" fill="none" stroke="#ff66aa" stroke-width="4" stroke-dasharray="8 6" />
+  <path d="M 392 284 C 490 284, 490 366, 588 366" fill="none" stroke="#998490" stroke-width="3" stroke-dasharray="7 7" stroke-opacity="0.55" />
+  <path d="M 588 202 C 686 202, 686 202, 784 202" fill="none" stroke="#b09aa6" stroke-width="2.5" stroke-opacity="0.34" />
+  <path d="M 588 366 C 686 366, 686 366, 784 366" fill="none" stroke="#b09aa6" stroke-width="2.5" stroke-opacity="0.30" />
+  <!-- Short fading trails into fog -->
+  <path d="M 784 202 L 882 202" fill="none" stroke="#b09aa6" stroke-width="2" stroke-opacity="0.20" stroke-dasharray="5 6" />
+  <path d="M 784 366 L 882 366" fill="none" stroke="#b09aa6" stroke-width="2" stroke-opacity="0.18" stroke-dasharray="5 6" />
+
+  <!-- Layer -1: Past Pedestal -->
+  <g transform="translate(196 284)" opacity="0.56">
+    <ellipse cx="0" cy="14" rx="35" ry="18" fill="#090508" opacity="0.6" />
+    <path d="M -32 0 L -32 11 A 32 17 0 0 0 32 11 L 32 0 Z" fill="#2c2228" />
+    <ellipse cx="0" cy="0" rx="32" ry="17" fill="#3a2d34" stroke="#6f5c66" stroke-width="1.5" />
+    <text x="0" y="5" font-size="14" font-weight="700" fill="#79e0ad" text-anchor="middle">✓</text>
+    <text x="0" y="36" font-size="11" fill="#a894a0" text-anchor="middle">已通过 · 可点回看</text>
+  </g>
+
+  <!-- Layer 0: Current Elevated Pedestal + Vertical Light Beam -->
+  <g transform="translate(392 278)">
+    <ellipse cx="0" cy="28" rx="54" ry="26" fill="#070406" opacity="0.72" />
+    <rect x="-40" y="-138" width="80" height="138" fill="url(#cur-beam)" />
+    <path d="M -46 0 L -46 18 A 46 24 0 0 0 46 18 L 46 0 Z" fill="#632946" />
+    <ellipse cx="0" cy="0" rx="46" ry="24" fill="#3d1f30" stroke="#ff66aa" stroke-width="2.5" />
+    <ellipse cx="0" cy="0" rx="32" ry="16" fill="none" stroke="#ffb3d4" stroke-opacity="0.6" stroke-width="1.2" />
+    <circle cx="0" cy="-36" r="15" fill="#ff66aa" />
+    <circle cx="0" cy="-36" r="6" fill="#fff5fa" />
+    <rect x="-54" y="32" width="108" height="22" rx="11" fill="#482236" stroke="#ff66aa" />
+    <text x="0" y="47" font-size="11" font-weight="720" fill="#ffe4f0" text-anchor="middle">当前 · 抬升光柱</text>
+  </g>
+
+  <!-- Layer +1: Next Top (Selected Danger Battle) -->
+  <g transform="translate(588 202)">
+    <ellipse cx="0" cy="18" rx="44" ry="22" fill="#090508" opacity="0.66" />
+    <ellipse cx="0" cy="0" rx="50" ry="26" fill="none" stroke="#ff66aa" stroke-width="1.6" stroke-dasharray="5 5" />
+    <path d="M -40 0 L -40 15 A 40 21 0 0 0 40 15 L 40 0 Z" fill="#59282d" />
+    <ellipse cx="0" cy="0" rx="40" ry="21" fill="#3d1e23" stroke="#ff7a8a" stroke-width="2" />
+    <circle cx="0" cy="-29" r="14" fill="#3a1c22" stroke="#ff7a8a" stroke-width="1.6" />
+    <text x="0" y="-24" font-size="13" fill="#ff98a4" text-anchor="middle">⚔</text>
+    <rect x="24" y="-44" width="52" height="18" rx="9" fill="#5c262d" />
+    <text x="50" y="-31" font-size="10" font-weight="700" fill="#ff9ca7" text-anchor="middle">威胁 +8</text>
+    <text x="0" y="38" font-size="12" font-weight="720" fill="#f2e9ed" text-anchor="middle">失谐巡逻队</text>
+    <text x="0" y="54" font-size="11" fill="#b4a2ab" text-anchor="middle">名称 + hint + 威胁</text>
+  </g>
+
+  <!-- Layer +1: Next Bottom (Rest) -->
+  <g transform="translate(588 366)">
+    <ellipse cx="0" cy="18" rx="44" ry="22" fill="#090508" opacity="0.6" />
+    <path d="M -40 0 L -40 15 A 40 21 0 0 0 40 15 L 40 0 Z" fill="#233c36" />
+    <ellipse cx="0" cy="0" rx="40" ry="21" fill="#1e312c" stroke="#62c49f" stroke-width="1.8" />
+    <circle cx="0" cy="-29" r="14" fill="#1a2c27" stroke="#62c49f" stroke-width="1.5" />
+    <text x="0" y="-24" font-size="13" fill="#79e0ad" text-anchor="middle">✦</text>
+    <text x="0" y="38" font-size="12" font-weight="700" fill="#e6d8df" text-anchor="middle">寂静休整室</text>
+    <text x="0" y="54" font-size="11" fill="#9c8993" text-anchor="middle">恢复队伍生命</text>
+  </g>
+
+  <!-- Layer +2: Horizon Top (Boss two-tier silhouette) -->
+  <g transform="translate(784 202)" opacity="0.46">
+    <rect x="-36" y="-88" width="72" height="88" fill="url(#boss-beam)" />
+    <path d="M -50 6 L -50 18 A 50 25 0 0 0 50 18 L 50 6 Z" fill="#4a381d" />
+    <ellipse cx="0" cy="6" rx="50" ry="25" fill="#362815" stroke="#d4b06a" stroke-width="1.4" stroke-dasharray="4 4" />
+    <path d="M -38 -4 L -38 6 A 38 19 0 0 0 38 6 L 38 -4 Z" fill="#5e4621" />
+    <ellipse cx="0" cy="-4" rx="38" ry="19" fill="#423117" stroke="#f2c46d" stroke-width="1.4" />
+    <text x="0" y="1" font-size="12" fill="#f2c46d" text-anchor="middle">♛</text>
+    <text x="0" y="48" font-size="11" fill="#d9c6cf" text-anchor="middle">首领（仅轮廓·禁点击）</text>
+  </g>
+
+  <!-- Layer +2: Horizon Bottom (Event silhouette) -->
+  <g transform="translate(784 366)" opacity="0.40">
+    <path d="M -32 0 L -32 11 A 32 17 0 0 0 32 11 L 32 0 Z" fill="#2c243a" />
+    <ellipse cx="0" cy="0" rx="32" ry="17" fill="#221c2e" stroke="#9e87d4" stroke-width="1.4" stroke-dasharray="4 4" />
+    <text x="0" y="5" font-size="12" fill="#c1aef2" text-anchor="middle">?</text>
+    <text x="0" y="34" font-size="11" fill="#c7b3be" text-anchor="middle">事件（仅轮廓·禁点击）</text>
+  </g>
+
+  <!-- Left & Right Atmospheric Fog -->
+  <rect x="20" y="70" width="110" height="410" rx="12" fill="url(#fog-l)" />
+  <rect x="820" y="70" width="360" height="410" rx="12" fill="url(#fog-r)" />
+  <text x="1038" y="274" font-size="16" font-weight="700" fill="#b4a2ab" opacity="0.82" text-anchor="middle">未知前路</text>
+  <text x="1038" y="298" font-size="12" fill="#8b7983" opacity="0.78" text-anchor="middle">第 +3 步起完全隐没 · 步步揭晓</text>
+
+  <!-- Spec Legend Footer -->
+  <g transform="translate(20 498)">
+    <rect width="276" height="104" rx="10" fill="#23191f" stroke="#3e2f37" />
+    <text x="16" y="26" font-size="13" font-weight="720" fill="#f2e9ed">1. 锁定自动跟拍镜头</text>
+    <text x="16" y="48" font-size="11" fill="#b4a2ab">• 无滚轮缩放、无拖拽平移、无全图按钮</text>
+    <text x="16" y="68" font-size="11" fill="#b4a2ab">• 当前格锁定在画布 (33%, 50%)</text>
+    <text x="16" y="88" font-size="11" fill="#b4a2ab">• 移动时 420ms ease-out 平滑向左推进</text>
+  </g>
+  <g transform="translate(314 498)">
+    <rect width="276" height="104" rx="10" fill="#23191f" stroke="#3e2f37" />
+    <text x="16" y="26" font-size="13" font-weight="720" fill="#f2e9ed">2. 2.5D 立体圆台分级</text>
+    <text x="16" y="48" font-size="11" fill="#b4a2ab">• empty：低矮小圆踏石 (rx=18, depth=7)</text>
+    <text x="16" y="68" font-size="11" fill="#b4a2ab">• next：标准圆台 (rx=40, depth=15) + 徽章</text>
+    <text x="16" y="88" font-size="11" fill="#b4a2ab">• current / boss：抬升大圆台 / 双层阶梯</text>
+  </g>
+  <g transform="translate(608 498)">
+    <rect width="276" height="104" rx="10" fill="#23191f" stroke="#3e2f37" />
+    <text x="16" y="26" font-size="13" font-weight="720" fill="#f2e9ed">3. 前方 2 步视野迷雾</text>
+    <text x="16" y="48" font-size="11" fill="#b4a2ab">• behind=1：已通过 ✓，允许点选回看</text>
+    <text x="16" y="68" font-size="11" fill="#b4a2ab">• ahead=1：明牌名/hint/威胁，不剧透台词</text>
+    <text x="16" y="88" font-size="11" fill="#b4a2ab">• ahead=2：仅轮廓类别，tabIndex=-1 禁点</text>
+  </g>
+  <g transform="translate(902 498)">
+    <rect width="278" height="104" rx="10" fill="#23191f" stroke="#3e2f37" />
+    <text x="16" y="26" font-size="13" font-weight="720" fill="#f2e9ed">4. 零总步数剧透约束</text>
+    <text x="16" y="48" font-size="11" fill="#b4a2ab">• ahead≥3 与错过支路彻底不渲染</text>
+    <text x="16" y="68" font-size="11" fill="#b4a2ab">• 顶部 HUD 仅展示「已行进 第 N 步」</text>
+    <text x="16" y="88" font-size="11" fill="#b4a2ab">• 亮/暗双主题均配独立迷雾与侧壁色值</text>
+  </g>
+</svg>

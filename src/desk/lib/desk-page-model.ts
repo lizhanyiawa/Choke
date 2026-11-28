@@ -1,4 +1,4 @@
-import type { ApiUserCard } from "@/desk/session/api"
+import type { ApiUserCard, ItemWallet } from "@/desk/session/api"
 import type { DeskObjectId } from "@/desk/lib/objects"
 import { EVENT_POOLS, POOL_META } from "@/desk/lib/rarity"
 import type { DeskItem, PackPool } from "@/desk/lib/types"
@@ -37,6 +37,8 @@ export interface DeskUser {
   avatarUrl: string | null
   essence: number
   coins: number
+  expPool?: number
+  items?: ItemWallet
   hero: ApiUserCard | null
   onboarded: boolean
 }

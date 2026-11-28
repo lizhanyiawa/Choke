@@ -59,7 +59,9 @@ export function ReadoutTip({ anchor, pointer, children, id }: {
       window.removeEventListener("resize", place)
     }
   }, [anchor, pointer])
-  return createPortal(<div className="battle-readout-tip" role="tooltip" id={id} ref={tip}>{children}</div>, document.body)
+  // 远征战斗有独立的全屏层；提示放在战斗视口内，避免挂到 body 后被全屏层盖住。
+  const viewport = anchor.closest(".choke-viewport") ?? anchor.ownerDocument.body
+  return createPortal(<div className="battle-readout-tip" role="tooltip" id={id} ref={tip}>{children}</div>, viewport)
 }
 
 export function SkillHint({ hint }: { hint: SkillPreview | null }) {

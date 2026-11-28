@@ -4,6 +4,8 @@ import { installUiSfx } from "@/audio/ui-sfx"
 import { BackToDesk } from "@/components/BackToDesk"
 import { PageLoading } from "@/components/PageLoading"
 import { DeskPage } from "@/desk/DeskPage"
+import { hasBindReturn } from "@/desk/panels/player/bind-return"
+import { matchFlatRoute } from "@/flat/router"
 import "@/ui/motion.css"
 
 // 任何按钮被点到都至少有一声反馈；各面板自己的专属音效优先
@@ -33,11 +35,29 @@ const LoginPage = lazy(() =>
 const AdminPage = lazy(() =>
   import("@/admin/AdminPage").then((m) => ({ default: m.AdminPage }))
 )
-const ExpeditionPage = lazy(() =>
-  import("@/expedition/ExpeditionPage").then((m) => ({ default: m.ExpeditionPage }))
+// 扁平界面：单独的 chunk，留在桌面上的玩家不会下载
+const FlatApp = lazy(() =>
+  import("@/flat/FlatApp").then((m) => ({ default: m.FlatApp }))
 )
 
 const FALLBACK = <PageLoading />
+
+// 在挂载前收拢旧入口，保留深链参数与锚点；绑定结果已由 bind-return 捕获。
+function normalizeEntry() {
+  const url = new URL(window.location.href)
+  const path = url.pathname.replace(/\/+$/, "")
+  if (
+    path === "/desk" ||
+    path === "/intro" ||
+    path === "/gacha" ||
+    (path === "" && (hasBindReturn() || url.searchParams.has("panel")))
+  ) {
+    url.pathname = "/home"
+    if (path === "/gacha") url.searchParams.set("panel", "packs")
+    window.history.replaceState(null, "", url)
+  }
+}
+normalizeEntry()
 
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, "")
@@ -55,13 +75,6 @@ export function App() {
       </Suspense>
     )
   }
-  if (path.endsWith("expedition")) {
-    return (
-      <Suspense fallback={FALLBACK}>
-        <ExpeditionPage />
-      </Suspense>
-    )
-  }
   if (path.endsWith("battle")) {
     // 战斗舞台自己带「桌面」按钮，不再叠一个悬浮的返回键（会压住左下角的战报）
     return (
@@ -69,15 +82,6 @@ export function App() {
         <BattlePage />
       </Suspense>
     )
-  }
-  if (path.endsWith("intro")) {
-    // 旧的引导页已经换成桌上的邀请函
-    window.history.replaceState(null, "", "/")
-    return <DeskPage />
-  }
-  if (path.endsWith("gacha")) {
-    window.history.replaceState(null, "", "/?panel=packs")
-    return <DeskPage />
   }
   if (path.endsWith("card-editor")) {
     return (
@@ -117,6 +121,13 @@ export function App() {
         </Suspense>
         <BackToDesk />
       </>
+    )
+  }
+  if (matchFlatRoute(path) !== null) {
+    return (
+      <Suspense fallback={FALLBACK}>
+        <FlatApp />
+      </Suspense>
     )
   }
   return <DeskPage />

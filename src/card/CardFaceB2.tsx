@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 
 import { ElementGlyph, JobGlyph } from "./CardFace"
 import { CardFoil } from "./CardFoil"
+import { StaticCardArt } from "./StaticCardArt"
 import {
   ELEMENT_COLOR,
   ELEMENT_LABEL,
@@ -32,6 +33,7 @@ interface Props {
   version?: "v1" | "v2"
   className?: string
   eager?: boolean
+  thumbnail?: boolean
   skillActions?: readonly ButtonHTMLAttributes<HTMLButtonElement>[]
 }
 
@@ -40,6 +42,7 @@ interface Props {
  * 右边从上到下：banner（世界排名水印 + 本体卡徽章 + 稀有度牌）→ 头像压 banner 下沿
  * + 国旗排名 / pp / 大号 BP → 名字 → 技能 → 底标。类名前缀 cfb2（cb 已被开包卡背占用）。
  * 闪卡膜是和肖像版共用的 CardFoil，跟着光标反光。
+ * 卡组候选缩略图不加载横幅动图，头像绘制为静态小图；卡册、详情和开包保留完整效果。
  */
 export const CardFaceB2 = memo(function CardFaceB2({
   card,
@@ -48,6 +51,7 @@ export const CardFaceB2 = memo(function CardFaceB2({
   version = "v2",
   className,
   eager = false,
+  thumbnail = false,
   skillActions,
 }: Props) {
   useEffect(trackCardLight, [])
@@ -64,7 +68,10 @@ export const CardFaceB2 = memo(function CardFaceB2({
   const banner = rawBanner && brokenBanner !== rawBanner ? rawBanner : null
   const art = card.art && brokenArt !== card.art ? card.art : null
 
-  const triangles = useMemo(() => (banner ? null : motifTriangles(card.id)), [banner, card.id])
+  const bpLabel = bp.toLocaleString("en-US")
+  const bpDigits = bpLabel.replaceAll(",", "").length
+  const bpFontSize = Math.max(6.5, 9.5 - Math.max(0, bpDigits - 4) * 1.1)
+  const triangles = useMemo(() => thumbnail || banner ? null : motifTriangles(card.id), [banner, card.id, thumbnail])
   const loading = eager ? "eager" : "lazy"
 
   const modBlock = (where: ModPlacement) =>
@@ -88,6 +95,7 @@ export const CardFaceB2 = memo(function CardFaceB2({
       data-foil={card.foil ? "true" : undefined}
       // 镜像卡视觉等美术 PR；先留数据钩子，不做临时样式
       data-mirror={card.isMirror ? "true" : undefined}
+      data-thumbnail={thumbnail || undefined}
       style={{ "--name-size": `${nameSizeOf(card.name) * (version === "v1" ? 1.05 : 1.22)}cqw` } as CSSProperties}
     >
       <div className="cfb2__frame" aria-hidden />
@@ -109,7 +117,7 @@ export const CardFaceB2 = memo(function CardFaceB2({
 
       <div className="cfb2__main">
         <div className="cfb2__banner">
-          {banner ? (
+          {banner && !thumbnail ? (
             <img
               src={banner}
               alt=""
@@ -119,13 +127,13 @@ export const CardFaceB2 = memo(function CardFaceB2({
               referrerPolicy="no-referrer"
               onError={() => setBrokenBanner(banner)}
             />
-          ) : (
+          ) : !thumbnail ? (
             <svg className="cfb2__motif" viewBox="0 0 100 50" preserveAspectRatio="xMidYMid slice" aria-hidden>
               {triangles?.map((t, i) => (
                 <path key={i} d={t.d} data-fill={t.filled ? "" : undefined} />
               ))}
             </svg>
-          )}
+          ) : null}
           {card.globalRank != null && (
             <b className="cfb2__watermark" aria-hidden>
               #{card.globalRank.toLocaleString("en-US")}
@@ -142,7 +150,9 @@ export const CardFaceB2 = memo(function CardFaceB2({
 
         <div className="cfb2__id">
           <div className="cfb2__avatar">
-            {art ? (
+            {art && thumbnail ? (
+              <StaticCardArt src={art} eager={eager} onError={setBrokenArt} />
+            ) : art ? (
               <img
                 src={art}
                 alt=""
@@ -181,7 +191,7 @@ export const CardFaceB2 = memo(function CardFaceB2({
             )}
             <span className="cfb2__bp" style={{ "--bp": bpColor(bp) } as CSSProperties}>
               <i>BP</i>
-              <b>{bp.toLocaleString("en-US")}</b>
+              <b style={{ "--bp-size": `${bpFontSize}cqw` } as CSSProperties}>{bpLabel}</b>
             </span>
           </div>
         </div>
@@ -239,7 +249,7 @@ export const CardFaceB2 = memo(function CardFaceB2({
         </footer>
       </div>
 
-      {card.foil && <CardFoil seed={card.id} />}
+      {card.foil && (thumbnail ? <div className="card-foil card-foil--static" aria-hidden /> : <CardFoil seed={card.id} />)}
     </div>
   )
 })

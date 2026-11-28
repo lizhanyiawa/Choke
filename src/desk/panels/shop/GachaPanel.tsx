@@ -15,7 +15,11 @@ import type { PackId } from "@choke/shared/content"
 import { emitTutorialEvent, requestTutorialStarter } from "@/tutorial/events"
 import { useTutorialProgress } from "@/tutorial/store"
 
-import { ApiError, fetchPackInventory, openPack as apiOpenPack } from "@/desk/session/api"
+import {
+  ApiError,
+  fetchPackInventory,
+  openPack as apiOpenPack,
+} from "@/desk/session/api"
 import { emitDeskData, onDeskData } from "@/desk/session/events"
 import { Pages } from "@/desk/shell/BookPages"
 import {
@@ -114,7 +118,7 @@ export function GachaPanel({
           if (isCurrent()) setPacksFailed(true)
         })
     },
-    [userId]
+    [userId],
   )
 
   useEffect(() => {

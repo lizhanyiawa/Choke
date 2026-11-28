@@ -20,8 +20,8 @@
   --bk-dim: #6b5f55;
   --bk-faint: #a0958a;
   --bk-line: rgb(70 50 35 / 0.12);
-  --bk-osu-soft: rgb(255 102 170 / 0.14);
-  --bk-osu-text: #c8337a;
+  --bk-osu-soft: color-mix(in srgb, var(--brand-pink) 14%, transparent);
+  --bk-osu-text: color-mix(in srgb, var(--brand-pink) 85%, #000);
   --bk-good: #2f9a5c;
   --bk-bad: #d64545;
 }
@@ -40,7 +40,7 @@
 .light .choke-stage .choke-prep-foe {
   --bk-ink: #fff5f8;
   --bk-dim: #f2dfe7;
-  --bk-osu-text: #ffc4df;
+  --bk-osu-text: color-mix(in srgb, var(--brand-pink) 50%, #fff);
   color: var(--bk-ink);
 }
 .light .choke-stage .choke-btn-start {
@@ -63,7 +63,7 @@
   color: #5c5047;
 }
 .light .desk-level b {
-  color: #c8337a;
+  color: color-mix(in srgb, var(--brand-pink) 85%, #000);
 }
 .light .desk-level__track {
   background: #dcd3c9;
@@ -106,8 +106,8 @@
   box-shadow: 0 8px 24px rgb(50 35 25 / 0.2);
 }
 .light .desk-card-drop {
-  background: rgb(255 102 170 / 0.12);
-  color: #c8337a;
+  background: color-mix(in srgb, var(--brand-pink) 12%, transparent);
+  color: color-mix(in srgb, var(--brand-pink) 85%, #000);
 }
 
 /* ---------- 抽屉：和布垫同一块料 ---------- */
@@ -130,11 +130,11 @@
 }
 .light .desk-drawer__cell:hover,
 .light .desk-drawer__cell:focus-visible {
-  background: rgb(255 102 170 / 0.14);
+  background: color-mix(in srgb, var(--brand-pink) 14%, transparent);
 }
 .light .desk-drawer__cell:hover .desk-drawer__tag,
 .light .desk-drawer__cell:focus-visible .desk-drawer__tag {
-  color: #c8337a;
+  color: color-mix(in srgb, var(--brand-pink) 85%, #000);
 }
 .light .desk-drawer__front {
   outline-color: rgb(255 250 244 / 0.45);
@@ -205,13 +205,13 @@
 }
 .light .tut-portrait__placeholder {
   background:
-    linear-gradient(160deg, rgb(255 102 170 / 0.12), transparent 58%),
+    linear-gradient(160deg, color-mix(in srgb, var(--brand-pink) 12%, transparent), transparent 58%),
     rgb(250 246 240 / 0.92);
-  color: #c8337a;
+  color: color-mix(in srgb, var(--brand-pink) 85%, #000);
 }
 .light .tut-dialog__speaker,
 .light .tut-dialog__hint {
-  color: #c8337a;
+  color: color-mix(in srgb, var(--brand-pink) 85%, #000);
 }
 .light .tut-dialog__hint.is-warn {
   color: #b7791f;
@@ -227,13 +227,13 @@
 }
 .light .tut-dialog__skip:hover,
 .light .tut-skip__no:hover {
-  color: #c8337a;
+  color: color-mix(in srgb, var(--brand-pink) 85%, #000);
 }
 .light .tut-skip {
   background: linear-gradient(160deg, #fdfaf6, #f2ebe2), #f8f4ee;
 }
 .light .tut-skip b {
-  color: #c8337a;
+  color: color-mix(in srgb, var(--brand-pink) 85%, #000);
 }
 .light .tut-skip p {
   color: #6b5f55;

@@ -174,6 +174,8 @@ export interface QuestView {
   id: string
   name: string
   desc: string
+  /** 这条任务数的是哪种事件；界面按它决定「前往」带玩家去哪 */
+  event: QuestEvent
   /** 成就页的分栏小标题 */
   group?: string
   target: number

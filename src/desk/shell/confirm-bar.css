@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: inset 0 0 0 1px rgb(255 102 170 / 0.45);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-pink) 45%, transparent);
 }
 .confirm-bar__text {
   margin: 0;

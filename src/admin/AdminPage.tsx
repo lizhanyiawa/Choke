@@ -169,7 +169,7 @@ export function AdminPage() {
                 去登录
               </a>
             )}
-            <a className="bk-btn bk-btn--ghost" href="/">
+            <a className="bk-btn bk-btn--ghost" href="/home">
               返回桌面
             </a>
           </div>
@@ -187,7 +187,7 @@ export function AdminPage() {
         </div>
         <div className="admin-head__user">
           <span className="bk-note">{name}</span>
-          <a className="bk-btn bk-btn--ghost bk-btn--sm" href="/">
+          <a className="bk-btn bk-btn--ghost bk-btn--sm" href="/home">
             返回桌面
           </a>
         </div>
