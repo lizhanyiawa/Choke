@@ -180,11 +180,8 @@
 .light .deck-slot__flag {
   color: #fff;
 }
-.light .bk-btn--main {
-  background: #e8509a;
-}
 .light .bk-btn--main:hover:not(:disabled) {
-  background: #f0609f;
+  background: color-mix(in srgb, var(--brand-pink) 88%, #000);
 }
 /* Prismatic 的色点是近白色，浅纸上加一圈描边 */
 .light .bk-chip > i,

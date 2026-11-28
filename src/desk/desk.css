@@ -1,5 +1,5 @@
 /* ===== 桌面 ===== */
-/* 色调取自 osugacha：紫黑底 #1c1216、梅子色面板、osu! 粉 #ff66aa 做强调。平涂，少纹理。 */
+/* 色调取自 osugacha：紫黑底 #1c1216、梅子色面板、品牌粉（--brand-pink）做强调。平涂，少纹理。 */
 .desk-root {
   --d-ink: #f2e9ed;
   --d-ink-dim: #9e8e95;
@@ -11,7 +11,7 @@
   flex-direction: column;
   background: #1c1216;
   color: var(--d-ink);
-  font-family: "Outfit Variable", "Outfit", sans-serif;
+  font-family: "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
   overflow: hidden;
   user-select: none;
 }
@@ -80,7 +80,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--d-osu), #5fcfb8);
+  background: linear-gradient(90deg, var(--d-osu), var(--brand-cyan));
   transition: width 0.35s ease;
 }
 .desk-level em {
@@ -376,7 +376,7 @@
   letter-spacing: 0.24em;
 }
 .desk-card-drop b {
-  font-family: "Fredoka", "Outfit", sans-serif;
+  font-family: "Fredoka Variable", "Fredoka", "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 28px;
 }
 

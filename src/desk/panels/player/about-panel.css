@@ -87,7 +87,7 @@ a.about-person:focus-visible {
   padding: 24px;
   background: rgb(14 8 11 / 0.6);
   color: var(--bk-ink);
-  font-family: "Outfit Variable", "Outfit", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
   animation: ui-fade-in var(--ui-base) ease-out both;
 }
 .light .about-policy-layer {

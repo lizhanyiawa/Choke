@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/outfit";
 @import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource-variable/fredoka";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -23,11 +24,12 @@
 @theme {
     /* Choke! 色彩矩阵；品牌粉以 Design/brand/README.md 为准，全站只在这里写一次 */
     --brand-pink: #d9488a;
+    --brand-cyan: #3cbadb;
     --color-choke: #18171c;
     --color-choke-void: #0d0c11;
     --color-choke-pink: var(--brand-pink);
     --color-choke-blue: #1d5db5;
-    --color-choke-cyan: #7cc4ff;
+    --color-choke-cyan: var(--brand-cyan);
 
     /* 中文标题 / 数值字体 */
     --font-cn: "HYWenHei", "汉仪文黑-85W", "PingFang SC", "Microsoft YaHei",

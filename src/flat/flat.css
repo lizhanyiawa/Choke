@@ -29,7 +29,7 @@
     / 208px minmax(0, 1fr);
   background: var(--fl-bg);
   color: var(--d-ink);
-  font-family: "Outfit Variable", "Outfit", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 .light .flat-app {
@@ -202,7 +202,7 @@ button.fl-pill[aria-expanded="true"] {
 }
 .fl-pill__label {
   color: var(--d-ink-dim);
-  font-family: "Outfit Variable", "Outfit", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "Outfit Variable", "Outfit", "HYWenHei", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 12px;
   font-weight: 700;
 }
